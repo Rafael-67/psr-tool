@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSR Assessment Platform — Multi-institutional Biosafety</title>
+<meta name="description" content="PSR biosafety assessment platform with persistent storage, audit trail, and inter-rater reliability analysis.">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#fafaf8;--card:#fff;--bg2:#f5f5f0;--bg3:#eeedfe;--text:#222;--text2:#666;--text3:#999;--border:#e0ddd4;--accent:#534ab7;--accent-bg:#eeedfe;--green:#1d9e75;--green-bg:#eaf3de;--green-text:#3b6d11;--amber-bg:#faeeda;--amber-text:#854f0b;--red-bg:#fcebeb;--red-text:#a32d2d;--blue-bg:#e6f1fb;--blue-text:#0c447c;--purple-bg:#eeedfe;--purple-text:#534ab7;--teal-bg:#e1f5ee;--teal-text:#085041;--r:8px;--rl:12px}
+@media(prefers-color-scheme:dark){:root{--bg:#18181a;--card:#222220;--bg2:#2a2a28;--bg3:#2d2b3d;--text:#e0ddd4;--text2:#a0a098;--text3:#706f6a;--border:#3a3a38;--accent:#afa9ec;--accent-bg:#2d2b3d;--green-bg:#1a2a10;--green-text:#97c459;--amber-bg:#2a1f08;--amber-text:#f0c060;--red-bg:#2a1010;--red-text:#f09595;--blue-bg:#0a1a2a;--blue-text:#85b7eb;--purple-bg:#2d2b3d;--purple-text:#cecbf6;--teal-bg:#0a2a20;--teal-text:#5dcaa5}}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;padding:16px}
+.wrap{max-width:800px;margin:0 auto}
+h1{font-size:22px;font-weight:600}
+h2{font-size:17px;font-weight:600;margin-bottom:4px}
+.sub{font-size:13px;color:var(--text2);margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:20px 24px;margin-bottom:16px}
+.pill{display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:500}
+.p-green{background:var(--green-bg);color:var(--green-text)}.p-amber{background:var(--amber-bg);color:var(--amber-text)}.p-red{background:var(--red-bg);color:var(--red-text)}.p-blue{background:var(--blue-bg);color:var(--blue-text)}.p-purple{background:var(--purple-bg);color:var(--purple-text)}.p-gray{background:var(--bg2);color:var(--text2)}.p-teal{background:var(--teal-bg);color:var(--teal-text)}
+.steps-bar{display:flex;gap:3px;align-items:center;margin:12px 0 16px}
+.sd{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;cursor:pointer;transition:.2s}
+.sd.done{background:var(--green);color:#fff}.sd.on{background:var(--accent);color:#fff}.sd.off{background:var(--bg2);color:var(--text3)}
+.sl{flex:1;height:2px;border-radius:1px}.sl.done{background:#9fe1cb}.sl.off{background:var(--border)}
+.opt-g{display:grid;gap:8px}.c2{grid-template-columns:1fr 1fr}.c3{grid-template-columns:1fr 1fr 1fr}
+.opt{padding:10px 12px;border-radius:var(--r);border:1px solid var(--border);cursor:pointer;text-align:left;font-size:13px;background:transparent;color:var(--text);transition:.15s}
+.opt.sel{border:2px solid var(--accent);background:var(--accent-bg)}
+.opt b{font-weight:500;display:block}.opt small{font-size:11px;color:var(--text2)}
+input[type=text],input[type=date],textarea,select{width:100%;padding:10px 12px;border-radius:var(--r);border:1px solid var(--border);font-size:13px;font-family:inherit;background:var(--card);color:var(--text);resize:vertical}
+.fl{margin-bottom:14px}.fl label{font-size:13px;font-weight:500;display:block;margin-bottom:6px}
+.btn{padding:10px 20px;border-radius:var(--r);font-size:14px;cursor:pointer;border:none;transition:.15s;display:inline-block}
+.btn:disabled{opacity:.4;cursor:default}
+.bo{background:transparent;border:1px solid var(--border);color:var(--text)}
+.bp{background:var(--accent);color:#fff;font-weight:500}
+.bs{background:var(--green);color:#fff;font-weight:500}
+.bd{background:var(--red-bg);color:var(--red-text)}
+.metric{flex:1;padding:12px;border-radius:var(--r);text-align:center;background:var(--bg2)}
+.mv{font-size:22px;font-weight:500}.ml{font-size:11px;color:var(--text2)}
+.alert-metric{background:var(--red-bg)}.alert-metric .mv{color:var(--red-text)}
+.note{padding:12px;border-radius:var(--r);font-size:13px;margin-top:10px}
+.n-pur{background:var(--accent-bg);color:var(--purple-text)}.n-amb{background:var(--amber-bg);color:var(--amber-text)}.n-red{background:var(--red-bg);color:var(--red-text)}.n-teal{background:var(--teal-bg);color:var(--teal-text)}
+.mod-row{display:grid;grid-template-columns:110px 1fr;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid var(--border)}
+.mod-btn{flex:1;padding:4px 5px;border-radius:6px;cursor:pointer;font-size:10px;text-align:center;border:1px solid var(--border);background:transparent;color:var(--text);line-height:1.2;transition:.15s}
+.mod-btn.sel{border:2px solid var(--accent)}.mod-btn.sf{background:var(--green-bg)}.mod-btn.su{background:var(--red-bg)}
+.nav{display:flex;justify-content:space-between;margin-top:12px;gap:8px}
+.matrix{width:100%;border-collapse:collapse;font-size:13px}
+.matrix th,.matrix td{padding:8px;border-bottom:1px solid var(--border)}
+.matrix th{font-weight:500}.matrix .hi{background:var(--accent-bg);font-weight:600;border:2px solid var(--accent);border-radius:4px}
+.toast{position:fixed;top:16px;right:16px;padding:10px 20px;border-radius:var(--r);font-size:13px;font-weight:500;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.1);transition:opacity .3s}
+.home-btn{padding:6px 14px;border-radius:var(--r);border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;font-size:12px;text-decoration:none;display:inline-block;margin-bottom:16px}
+@media print{.nav,.steps-bar,.btn,.toast,.home-btn{display:none}.card{break-inside:avoid;border:1px solid #ccc}}
+@media(max-width:600px){.c2,.c3{grid-template-columns:1fr}.mod-row{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+const V="1.0.0";
+const BSL={RG1:{Low:"BSL-1",Moderate:"BSL-1*",High:"BSL-2**"},RG2:{Low:"BSL-2",Moderate:"BSL-2",High:"BSL-2+"},RG3:{Low:"BSL-2+",Moderate:"BSL-3",High:"BSL-3"},"RG3*":{Low:"BSL-2+",Moderate:"BSL-2+/BSL-3",High:"BSL-3"},RG4:{Low:"BSL-4",Moderate:"BSL-4",High:"BSL-4"}};
+const MF=[
+  {id:"volume",l:"Volume",inc:">100 mL",dec:"<10 mL",neu:"10–100 mL"},
+  {id:"concentration",l:"Concentration",inc:">10⁸ CFU/PFU",dec:"<10⁶ CFU/PFU",neu:"10⁶–10⁸"},
+  {id:"frequency",l:"Frequency",inc:"Daily/Weekly",dec:"Occasional",neu:"Monthly"},
+  {id:"aerosol",l:"Aerosol",inc:"High (sonication)",dec:"Minimal (BSC)",neu:"Moderate"},
+  {id:"stability",l:"Env. stability",inc:"High (AAV, spores)",dec:"Low (lentivirus)",neu:"Moderate"},
+  {id:"experience",l:"Operator exp.",inc:"<6 months",dec:">2 years",neu:"6m–2y"},
+  {id:"supervision",l:"Supervision",inc:"None",dec:"Direct",neu:"Periodic"},
+  {id:"infrastructure",l:"Infrastructure",inc:"Inadequate",dec:"Appropriate+BSC III",neu:"Appropriate"},
+  {id:"incidents",l:"Incidents",inc:"Previous",dec:"None",neu:"No data"},
+];
+const CTRL={
+  "BSL-1":{e:["Open bench","Handwashing sink"],p:["Lab coat","Gloves","Eye protection if splash"],a:["Standard practices","Biohazard signage"]},
+  "BSL-1*":{e:["BSC for aerosol steps","Contained sonicator"],p:["Lab coat","Gloves","Eye protection","N95 for aerosol"],a:["Aerosol training","SOPs for high-aerosol"]},
+  "BSL-2":{e:["Class II BSC for aerosol","Autoclave"],p:["Lab coat","Gloves","Eye protection","Face shield"],a:["Restricted access","Biohazard signage","SOPs","Spill response"]},
+  "BSL-2+":{e:["Mandatory Class II BSC","Sealed centrifuge buckets","Dedicated lab area"],p:["Double gloves","Goggles/face shield","Gown","N95 if aerosol"],a:["Documented risk assessment","IBC approval","Competency verification","Supervised new operators","Training program"]},
+  "BSL-2**":{e:["Class II BSC mandatory","Contained aerosol equipment"],p:["Double gloves","Eye protection","Lab coat"],a:["Documented justification","Aerosol SOP"]},
+  "BSL-2+/BSL-3":{e:["Class II BSC or BSL-3","Sealed buckets","HEPA exhaust"],p:["Double gloves","Eye protection","Respiratory","Gown"],a:["IBC approval","Risk assessment","Consider BSL-3 if ≥2 unfavorable"]},
+  "BSL-3":{e:["BSL-3 directional airflow","HEPA exhaust","Double-door","Class II/III BSC"],p:["Dedicated clothing","Double gloves","Respiratory","Full face shield"],a:["Controlled entry","Medical surveillance","Training","Emergency plan","Incident reporting"]},
+  "BSL-4":{e:["Maximum containment","Class III BSC/suit","Chemical shower","Double HEPA"],p:["Positive-pressure suit","Full decontamination"],a:["National authorization","Dedicated team","Continuous monitoring","Emergency protocols"]},
+};
+
+// Storage
+const LS={
+  save(a){const id=a.id||`psr_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;const r={...a,id,updatedAt:new Date().toISOString(),version:V};localStorage.setItem(`psr:${id}`,JSON.stringify(r));const idx=JSON.parse(localStorage.getItem("psr:index")||"[]");if(!idx.includes(id)){idx.push(id);localStorage.setItem("psr:index",JSON.stringify(idx))}return r},
+  loadAll(){const idx=JSON.parse(localStorage.getItem("psr:index")||"[]");return idx.map(id=>{try{return JSON.parse(localStorage.getItem(`psr:${id}`))}catch{return null}}).filter(Boolean).sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))},
+  del(id){localStorage.removeItem(`psr:${id}`);const idx=JSON.parse(localStorage.getItem("psr:index")||"[]").filter(i=>i!==id);localStorage.setItem("psr:index",JSON.stringify(idx))},
+  profile(p){if(p)localStorage.setItem("psr:profile",JSON.stringify(p));try{return JSON.parse(localStorage.getItem("psr:profile"))}catch{return null}},
+};
+
+// Algorithm
+function cPSR(ae,vo,co){const s={l:0,m:0,h:0};[ae,vo,co].forEach(v=>{if(v==="low")s.l++;else if(v==="moderate")s.m++;else if(v==="high")s.h++});if(s.h>=2||(s.h>=1&&s.m>=1))return"High";if(s.m>=2||(s.h===1&&s.l>=2))return"Moderate";return"Low"}
+function compute(d){
+  const erg=d.isGMO&&d.replComp==="no"&&d.riskGroup==="RG3"?"RG3*":d.riskGroup;
+  const pp=(d.procedures||[]).map(p=>p.aerosol&&p.volume&&p.concentration?cPSR(p.aerosol,p.volume,p.concentration):null);
+  const O={Low:0,Moderate:1,High:2};
+  const mx=pp.reduce((m,p)=>p&&O[p]>O[m]?p:m,"Low");
+  const u=Object.values(d.modFactors||{}).filter(v=>v==="increase").length;
+  const f=Object.values(d.modFactors||{}).filter(v=>v==="decrease").length;
+  let ap=mx;if(u>=2&&mx==="Low")ap="Moderate";if(u>=2&&mx==="Moderate")ap="High";if(f>=2&&mx==="High"&&u===0)ap="Moderate";
+  const bsl=erg?(BSL[erg]?.[ap]||"—"):"—";
+  return{erg,pp,mx,ap,u,f,bsl};
+}
+
+// State
+let view="loading",profile=null,assessments=[],cur=null,stp=0,toastTimer=null;
+function blank(){return{id:null,agentName:"",riskGroup:"",isGMO:false,parentalOrg:"",geneticMod:"",replComp:"",procedures:[{name:"",aerosol:"",volume:"",concentration:""}],modFactors:Object.fromEntries(MF.map(f=>[f.id,"neutral"])),justification:"",reviewer:"",institution:"",reviewDate:new Date().toISOString().slice(0,10),triggers:"",addCtrl:"",status:"draft",createdAt:new Date().toISOString()}}
+
+// Pills
+function pp(l){const c=l==="Low"?"green":l==="Moderate"?"amber":"red";return`<span class="pill p-${c}">${l} PSR</span>`}
+function bp(l){const m={"BSL-1":"green","BSL-1*":"green","BSL-2":"blue","BSL-2**":"blue","BSL-2+":"amber","BSL-2+/BSL-3":"amber","BSL-3":"red","BSL-4":"purple"};return`<span class="pill p-${m[l]||"gray"}">${l}</span>`}
+function sp(s){return`<span class="pill p-${s==="final"?"green":"gray"}">${s}</span>`}
+function esc(s){return(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function toast(t,type="info"){const el=document.createElement("div");el.className="toast";el.style.background=type==="success"?"var(--green-bg)":type==="error"?"var(--red-bg)":"var(--blue-bg)";el.style.color=type==="success"?"var(--green-text)":type==="error"?"var(--red-text)":"var(--blue-text)";el.textContent=t;document.body.appendChild(el);clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.remove(),3000)}
+
+function R(){
+  profile=LS.profile();
+  if(!profile){view="onboard"}else{assessments=LS.loadAll();if(view==="loading")view="dash"}
+  
+  let h="";
+  if(view==="onboard")h=rOnboard();
+  else if(view==="dash")h=rDash();
+  else if(view==="assess"&&cur)h=rAssess();
+  else if(view==="irr")h=rIRR();
+  else h="<p>Loading...</p>";
+  document.getElementById("app").innerHTML=h;
+}
+
+function rOnboard(){
+  return`<div style="max-width:500px;margin:60px auto"><div class="card">
+    <h1>PSR assessment platform</h1>
+    <p class="sub">Configure your profile for audit trail and multi-institutional comparison.</p>
+    <div class="fl"><label>Full name</label><input type="text" id="pName" placeholder="e.g., Dr. Jane Smith"></div>
+    <div class="fl"><label>Institution</label><input type="text" id="pInst" placeholder="e.g., University of Valladolid"></div>
+    <div class="fl"><label>Role</label><select id="pRole"><option value="">Select...</option><option value="pi">Principal Investigator</option><option value="bso">Biosafety Officer</option><option value="ibc">IBC Member</option><option value="researcher">Researcher</option></select></div>
+    <button class="btn bp" style="width:100%" onclick="saveProfile()">Start using the platform</button>
+  </div></div>`;
+}
+window.saveProfile=function(){const n=document.getElementById("pName").value,i=document.getElementById("pInst").value,r=document.getElementById("pRole").value;if(!n||!i||!r)return toast("Complete all fields","error");LS.profile({name:n,institution:i,role:r});view="dash";R()};
+
+function rDash(){
+  const fc=assessments.filter(a=>a.status==="final").length;
+  const dc=assessments.filter(a=>a.status==="draft").length;
+  let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:8px">
+    <div><h1>PSR assessment platform</h1><p style="font-size:13px;color:var(--text2)">${esc(profile.name)} · ${esc(profile.institution)}</p></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn bp" onclick="startNew()">+ New assessment</button><button class="btn bo" onclick="view='irr';R()">IRR analysis</button><button class="btn bo" onclick="view='onboard';R()">Settings</button></div>
+  </div>`;
+  h+=`<div style="display:flex;gap:12px;margin-bottom:20px">`
+  h+=`<div class="metric"><div class="mv">${assessments.length}</div><div class="ml">Total</div></div>`;
+  h+=`<div class="metric"><div class="mv">${fc}</div><div class="ml">Finalized</div></div>`;
+  h+=`<div class="metric"><div class="mv">${dc}</div><div class="ml">Drafts</div></div></div>`;
+  
+  h+=`<div class="card"><h2>My assessments</h2><p class="sub">Click to edit. Finalized assessments are available for IRR analysis.</p>`;
+  if(assessments.length===0)h+=`<p style="font-size:13px;color:var(--text2);padding:16px 0">No assessments yet.</p>`;
+  else assessments.forEach(a=>{
+    const c=compute(a);
+    h+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border-radius:var(--r);margin-bottom:8px;cursor:pointer" onclick="editA('${a.id}')">
+      <div style="flex:1"><div style="font-weight:500;font-size:14px">${esc(a.agentName)||"Untitled"}</div><div style="font-size:11px;color:var(--text2)">${(a.updatedAt||"").slice(0,10)} · ${esc(a.institution||"—")}</div></div>
+      ${sp(a.status)} ${pp(c.ap)} ${bp(c.bsl)}
+      <button onclick="event.stopPropagation();delA('${a.id}')" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text3)">×</button>
+    </div>`;
+  });
+  h+=`</div>`;
+
+  // Export all as CSV for external analysis
+  if(assessments.length>0){
+    h+=`<button class="btn bo" style="width:100%;margin-bottom:16px" onclick="exportCSV()">Export all assessments as CSV (for statistical analysis)</button>`;
+  }
+  return h;
+}
+window.startNew=function(){cur=blank();cur.reviewer=profile.name;cur.institution=profile.institution;stp=0;view="assess";R()};
+window.editA=function(id){const a=assessments.find(x=>x.id===id);if(a){cur={...a,procedures:[...a.procedures.map(p=>({...p}))],modFactors:{...a.modFactors}};stp=0;view="assess";R()}};
+window.delA=function(id){if(!confirm("Delete this assessment?"))return;LS.del(id);assessments=LS.loadAll();R();toast("Deleted")};
+
+function rAssess(){
+  const c=compute(cur);
+  let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
+    <button class="btn bo" onclick="view='dash';R()">← Dashboard</button>
+    <div style="display:flex;gap:6px;flex-wrap:wrap">
+      <button class="btn bo" onclick="saveDraft()">Save draft</button>
+      <button class="btn bs" onclick="saveFinal()">Finalize</button>
+      <button class="btn bo" onclick="exportTXT()">Export</button>
+    </div></div>`;
+  
+  // Step bar
+  h+=`<div class="steps-bar">`;
+  for(let i=0;i<8;i++){h+=`<div class="sd ${i<stp?'done':i===stp?'on':'off'}" onclick="stp=${i};R()">${i+1}</div>`;if(i<7)h+=`<div class="sl ${i<stp?'done':'off'}"></div>`}
+  h+=`</div>`;
+
+  h+=`<div class="card">`;
+  if(stp===0)h+=rS1();
+  else if(stp===1)h+=rS2();
+  else if(stp===2)h+=rS3(c);
+  else if(stp===3)h+=rS4(c);
+  else if(stp===4)h+=rS5(c);
+  else if(stp===5)h+=rS6(c);
+  else if(stp===6)h+=rS7(c);
+  else if(stp===7)h+=rS8(c);
+  h+=`</div>`;
+
+  h+=`<div class="nav"><button class="btn bo" onclick="stp=Math.max(0,stp-1);R()" ${stp===0?"disabled":""}>Previous</button>
+    <button class="btn bp" onclick="stp=Math.min(7,stp+1);R()" ${stp===7?"disabled":""}>Next step</button></div>`;
+  return h;
+}
+
+// Sync inputs
+window.U=function(k,v){cur[k]=v};
+window.UP=function(i,k,v){cur.procedures[i][k]=v};
+window.UM=function(id,v){cur.modFactors[id]=v;R()};
+window.setRG=function(v){cur.riskGroup=v;R()};
+window.setGMO=function(el){cur.isGMO=el.checked;R()};
+window.setRepl=function(v){cur.replComp=v;R()};
+window.addProc=function(){cur.procedures.push({name:"",aerosol:"",volume:"",concentration:""});R()};
+window.rmProc=function(i){cur.procedures.splice(i,1);R()};
+window.setPA=function(i,k,v){cur.procedures[i][k]=v;R()};
+
+function rS1(){
+  let h=`<h2>Step 1: Agent identification</h2><p class="sub">Determine Risk Group (RG1–4). For GMOs, evaluate parental organism + genetic modification.</p>`;
+  h+=`<div class="fl"><label>Biological agent</label><input type="text" value="${esc(cur.agentName)}" onchange="U('agentName',this.value)" placeholder="e.g., HIV-1 lentiviral vector"></div>`;
+  h+=`<div class="fl"><label>Risk Group</label><div class="opt-g c2">`;
+  [{v:"RG1",d:"No/low risk"},{v:"RG2",d:"Moderate individual"},{v:"RG3",d:"High individual"},{v:"RG4",d:"High individual+community"}].forEach(r=>{
+    h+=`<button class="opt ${cur.riskGroup===r.v?"sel":""}" onclick="setRG('${r.v}')"><b>${r.v}</b><small>${r.d}</small></button>`;
+  });
+  h+=`</div></div>`;
+  h+=`<label style="display:flex;gap:8px;font-size:13px;cursor:pointer;margin-bottom:14px"><input type="checkbox" ${cur.isGMO?"checked":""} onchange="setGMO(this)"> Genetically modified organism (GMO)</label>`;
+  if(cur.isGMO){
+    h+=`<div style="padding:14px;background:var(--bg2);border-radius:var(--r)">`;
+    h+=`<div class="fl"><label>Parental organism</label><input type="text" value="${esc(cur.parentalOrg)}" onchange="U('parentalOrg',this.value)"></div>`;
+    h+=`<div class="fl"><label>Genetic modification</label><input type="text" value="${esc(cur.geneticMod)}" onchange="U('geneticMod',this.value)"></div>`;
+    h+=`<div class="fl"><label>Replication competent?</label><div class="opt-g c2">`;
+    h+=`<button class="opt ${cur.replComp==="yes"?"sel":""}" onclick="setRepl('yes')"><b>Yes</b></button>`;
+    h+=`<button class="opt ${cur.replComp==="no"?"sel":""}" onclick="setRepl('no')"><b>No — replication-defective</b></button></div></div>`;
+    if(cur.replComp==="no"&&cur.riskGroup==="RG3")h+=`<div class="note n-teal">RG3 replication-defective → RG3*. BSL-2+ permissible under documented conditions.</div>`;
+    h+=`</div>`;
+  }
+  return h;
+}
+
+function rS2(){
+  let h=`<h2>Step 2: Procedure characterization</h2><p class="sub">List procedures, identify aerosol-generating steps, estimate volumes and concentrations.</p>`;
+  cur.procedures.forEach((p,i)=>{
+    h+=`<div style="padding:14px;background:var(--bg2);border-radius:var(--r);margin-bottom:10px">`;
+    h+=`<div style="display:flex;justify-content:space-between;margin-bottom:10px"><b style="font-size:14px">Procedure ${i+1}</b>`;
+    if(cur.procedures.length>1)h+=`<button style="font-size:12px;color:var(--red-text);background:none;border:none;cursor:pointer" onclick="rmProc(${i})">Remove</button>`;
+    h+=`</div>`;
+    h+=`<div class="fl"><label>Name</label><input type="text" value="${esc(p.name)}" onchange="UP(${i},'name',this.value)"></div>`;
+    h+=rOpts("Aerosol",["low:Minimal","moderate:Moderate","high:High"],p.aerosol,i,"aerosol",3);
+    h+=rOpts("Volume",["low:<10 mL","moderate:10–100 mL","high:>100 mL"],p.volume,i,"volume",3);
+    h+=rOpts("Concentration",["low:<10⁶","moderate:10⁶–10⁸","high:>10⁸"],p.concentration,i,"concentration",3);
+    h+=`</div>`;
+  });
+  h+=`<button class="btn bo" style="width:100%;border-style:dashed" onclick="addProc()">+ Add procedure</button>`;
+  return h;
+}
+function rOpts(label,opts,val,pi,key,cols){
+  let h=`<div class="fl"><label>${label}</label><div class="opt-g c${cols}">`;
+  opts.forEach(o=>{const[v,l]=o.split(":");h+=`<button class="opt ${val===v?"sel":""}" onclick="setPA(${pi},'${key}','${v}')"><b>${l}</b></button>`});
+  return h+`</div></div>`;
+}
+
+function rS3(c){
+  let h=`<h2>Step 3: PSR classification</h2><p class="sub">Assign Low/Moderate/High PSR to each procedure.</p>`;
+  cur.procedures.forEach((p,i)=>{if(!p.name)return;
+    h+=`<div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--bg2);border-radius:var(--r);margin-bottom:6px"><span>${esc(p.name)}</span>${c.pp[i]?pp(c.pp[i]):'<span class="pill p-gray">Incomplete</span>'}</div>`;
+  });
+  h+=`<div class="note n-pur"><b>Maximum PSR:</b> ${pp(c.mx)}<div style="margin-top:4px;font-size:12px">Highest PSR determines baseline. Adjusted by modulating factors next.</div></div>`;
+  return h;
+}
+
+function rS4(c){
+  let h=`<h2>Step 4: Modulating factors</h2><p class="sub">≥2 unfavorable factors triggers BSL escalation.</p>`;
+  MF.forEach(f=>{const v=cur.modFactors[f.id];
+    h+=`<div class="mod-row"><span style="font-size:11px;font-weight:500">${f.l}</span><div style="display:flex;gap:4px">`;
+    [{k:"decrease",l:"Favorable",d:f.dec,cls:"sf"},{k:"neutral",l:"Neutral",d:f.neu,cls:""},{k:"increase",l:"Unfavorable",d:f.inc,cls:"su"}].forEach(o=>{
+      h+=`<button class="mod-btn ${v===o.k?"sel ":""} ${v===o.k?o.cls:""}" onclick="UM('${f.id}','${o.k}')"><div style="font-weight:500">${o.l}</div><div style="font-size:8px;opacity:.7">${o.d}</div></button>`;
+    });
+    h+=`</div></div>`;
+  });
+  h+=`<div style="display:flex;gap:12px;margin-top:14px">`;
+  h+=`<div class="metric ${c.u>=2?"alert-metric":""}"><div class="mv">${c.u}</div><div class="ml">Unfavorable</div></div>`;
+  h+=`<div class="metric"><div class="mv">${c.f}</div><div class="ml">Favorable</div></div></div>`;
+  if(c.u>=2)h+=`<div class="note n-red">≥2 unfavorable → escalation: ${c.mx} → ${c.ap}</div>`;
+  return h;
+}
+
+function rS5(c){
+  let h=`<h2>Step 5: Likelihood × Severity</h2><p class="sub">Integrate agent RG with adjusted PSR.</p>`;
+  h+=`<table class="matrix"><thead><tr><th style="text-align:left">RG</th><th>Low</th><th>Moderate</th><th>High</th></tr></thead><tbody>`;
+  Object.entries(BSL).forEach(([rg,ps])=>{h+=`<tr><td style="font-weight:500">${rg}</td>`;["Low","Moderate","High"].forEach(p=>{h+=`<td style="text-align:center" ${rg===c.erg&&p===c.ap?'class="hi"':''}>${ps[p]}</td>`});h+=`</tr>`});
+  h+=`</tbody></table>`;
+  h+=`<div style="text-align:center;padding:14px;background:var(--accent-bg);border-radius:var(--r);margin-top:12px"><div style="font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap">
+    <span class="pill p-gray">${c.erg||"—"}</span> × ${pp(c.ap)} = ${bp(c.bsl)}</div></div>`;
+  return h;
+}
+
+function rS6(c){
+  let h=`<h2>Step 6: BSL assignment</h2><p class="sub">Final biosafety level determination.</p>`;
+  h+=`<div style="text-align:center;padding:20px 0"><div style="font-size:14px;color:var(--text2);margin-bottom:6px">Assigned biosafety level</div>
+    <div style="font-size:36px;font-weight:600">${c.bsl}</div>
+    <div style="margin-top:10px"><span class="pill p-gray">${esc(cur.agentName)||"—"}</span> · <span class="pill p-gray">${c.erg}</span> · ${pp(c.ap)}</div></div>`;
+  if(c.erg==="RG3*"&&c.bsl.includes("BSL-2+"))h+=`<div class="note n-amb"><b>BSL-2+ for RG3*:</b> requires (1) documented risk assessment, (2) IBC approval, (3) Class II BSC + double gloves + eye protection, (4) personnel competency. Default BSL-3 if uncertain.</div>`;
+  h+=`<div class="fl" style="margin-top:14px"><label>Justification narrative</label><textarea rows="5" onchange="U('justification',this.value)" placeholder="Written rationale for this BSL assignment...">${esc(cur.justification)}</textarea></div>`;
+  return h;
+}
+
+function rS7(c){
+  const ctrl=CTRL[c.bsl]||CTRL["BSL-2"];
+  let h=`<h2>Step 7: Control selection</h2><p class="sub">Recommended controls for ${bp(c.bsl)}</p>`;
+  [{k:"e",t:"Engineering controls"},{k:"p",t:"PPE"},{k:"a",t:"Administrative controls"}].forEach(s=>{
+    h+=`<div style="margin-bottom:14px"><div style="font-size:14px;font-weight:500;margin-bottom:6px">${s.t}</div>`;
+    (ctrl[s.k]||[]).forEach(item=>{h+=`<label style="display:flex;gap:8px;font-size:13px;padding:5px 10px;border-radius:6px;background:var(--bg2);margin-bottom:4px;cursor:pointer"><input type="checkbox" checked> ${item}</label>`});
+    h+=`</div>`;
+  });
+  h+=`<div class="fl"><label>Additional controls</label><textarea rows="3" onchange="U('addCtrl',this.value)" placeholder="Procedure-specific controls...">${esc(cur.addCtrl)}</textarea></div>`;
+  return h;
+}
+
+function rS8(c){
+  let h=`<h2>Step 8: Documentation and review</h2><p class="sub">Document, obtain approval, establish review triggers.</p>`;
+  h+=`<div class="fl"><label>Assessor</label><input type="text" value="${esc(cur.reviewer||profile.name)}" onchange="U('reviewer',this.value)"></div>`;
+  h+=`<div class="fl"><label>Institution</label><input type="text" value="${esc(cur.institution||profile.institution)}" onchange="U('institution',this.value)"></div>`;
+  h+=`<div class="fl"><label>Date</label><input type="date" value="${esc(cur.reviewDate)}" onchange="U('reviewDate',this.value)"></div>`;
+  h+=`<div class="fl"><label>Review triggers</label><textarea rows="2" onchange="U('triggers',this.value)" placeholder="Agent change, procedure modification, incident, annual review...">${esc(cur.triggers)}</textarea></div>`;
+
+  h+=`<div style="margin-top:16px;padding:18px;background:var(--bg2);border-radius:var(--rl)">
+    <div style="font-size:16px;font-weight:600;margin-bottom:12px">Assessment summary</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
+      <div><span style="color:var(--text2)">Agent:</span> ${esc(cur.agentName)||"—"}</div>
+      <div><span style="color:var(--text2)">RG:</span> ${c.erg||"—"}</div>
+      <div><span style="color:var(--text2)">Max PSR:</span> ${pp(c.mx)}</div>
+      <div><span style="color:var(--text2)">Adjusted:</span> ${pp(c.ap)}</div>
+      <div><span style="color:var(--text2)">BSL:</span> ${bp(c.bsl)}</div>
+      <div><span style="color:var(--text2)">Unfavorable:</span> ${c.u}</div>
+      <div><span style="color:var(--text2)">Status:</span> ${sp(cur.status)}</div>
+      <div><span style="color:var(--text2)">Assessor:</span> ${esc(cur.reviewer)||"—"}</div>
+    </div>`;
+  cur.procedures.filter(p=>p.name).forEach((p,i)=>{h+=`<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:13px">${esc(p.name)} ${c.pp[i]?pp(c.pp[i]):""}</div>`});
+  if(cur.justification)h+=`<div style="margin-top:8px;font-size:13px;font-style:italic">${esc(cur.justification)}</div>`;
+  h+=`</div>`;
+
+  h+=`<div style="display:flex;gap:8px;margin-top:14px">
+    <button class="btn bs" style="flex:1" onclick="saveFinal()">Finalize</button>
+    <button class="btn bo" style="flex:1" onclick="exportTXT()">Export report</button>
+    <button class="btn bo" style="flex:1" onclick="window.print()">Print PDF</button>
+  </div>`;
+  return h;
+}
+
+// IRR
+function rIRR(){
+  const all=assessments.filter(a=>a.status==="final");
+  const grouped={};
+  all.forEach(a=>{const k=(a.agentName||"").toLowerCase().trim();if(!k)return;if(!grouped[k])grouped[k]=[];grouped[k].push(a)});
+  const pairs=Object.entries(grouped).filter(([_,v])=>v.length>1);
+  
+  let agreements=0,total=0;
+  pairs.forEach(([_,g])=>{for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++){total++;if(compute(g[i]).bsl===compute(g[j]).bsl)agreements++}});
+  const rate=total>0?Math.round(agreements/total*100):0;
+
+  let h=`<button class="btn bo" onclick="view='dash';R()" style="margin-bottom:16px">← Dashboard</button>`;
+  h+=`<h1>Inter-rater reliability analysis</h1><p class="sub">Compares BSL assignments across assessors for the same agent (matched by name). Requires ≥2 finalized assessments of the same agent.</p>`;
+  
+  if(total>0){
+    h+=`<div style="display:flex;gap:12px;margin-bottom:20px">`;
+    h+=`<div class="metric ${rate<80?"alert-metric":""}"><div class="mv">${rate}%</div><div class="ml">Agreement rate</div></div>`;
+    h+=`<div class="metric"><div class="mv">${agreements}</div><div class="ml">Concordant pairs</div></div>`;
+    h+=`<div class="metric"><div class="mv">${total}</div><div class="ml">Total comparisons</div></div></div>`;
+  }
+
+  if(pairs.length===0)h+=`<div class="card"><p style="font-size:13px;color:var(--text2);padding:16px 0">No agents with multiple finalized assessments found. Create and finalize assessments for the same agent by different evaluators to enable IRR analysis.</p></div>`;
+  else pairs.forEach(([_,g])=>{
+    h+=`<div class="card"><h2>${esc(g[0].agentName)}</h2><p class="sub">${g.length} assessments from ${new Set(g.map(a=>a.reviewer||a.institution)).size} evaluators</p>`;
+    g.forEach(a=>{const c=compute(a);
+      h+=`<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border-radius:var(--r);margin-bottom:6px;font-size:13px">
+        <div style="flex:1"><b>${esc(a.reviewer||"Anon")}</b><div style="font-size:11px;color:var(--text2)">${esc(a.institution)} · ${(a.updatedAt||"").slice(0,10)}</div></div>
+        <span class="pill p-gray">${c.erg}</span> ${pp(c.ap)} ${bp(c.bsl)}</div>`;
+    });
+    const bsls=g.map(a=>compute(a).bsl);const ok=bsls.every(b=>b===bsls[0]);
+    h+=`<div class="note ${ok?"n-teal":"n-red"}">${ok?`Full agreement: all assigned ${bsls[0]}`:`Discrepancy: ${[...new Set(bsls)].join(" vs ")}`}</div></div>`;
+  });
+  return h;
+}
+
+// Save/Export
+window.saveDraft=function(){cur.reviewer=cur.reviewer||profile.name;cur.institution=cur.institution||profile.institution;cur=LS.save({...cur,status:"draft"});assessments=LS.loadAll();toast("Draft saved","success");R()};
+window.saveFinal=function(){cur.reviewer=cur.reviewer||profile.name;cur.institution=cur.institution||profile.institution;cur=LS.save({...cur,status:"final"});assessments=LS.loadAll();toast("Assessment finalized","success");R()};
+
+window.exportTXT=function(){
+  const c=compute(cur);
+  let r=`PSR BIOSAFETY ASSESSMENT REPORT\n${"=".repeat(50)}\nVersion: ${V} | Generated: ${new Date().toISOString()}\n\n`;
+  r+=`AGENT: ${cur.agentName}\nRisk Group: ${c.erg}\n`;
+  if(cur.isGMO)r+=`GMO: Yes | Parental: ${cur.parentalOrg} | Mod: ${cur.geneticMod} | Replication: ${cur.replComp}\n`;
+  r+=`\nPROCEDURES:\n`;
+  cur.procedures.filter(p=>p.name).forEach((p,i)=>{r+=`  ${i+1}. ${p.name} → ${c.pp[i]||"N/A"} PSR (Aer:${p.aerosol} Vol:${p.volume} Conc:${p.concentration})\n`});
+  r+=`\nPSR: Max=${c.mx} | Adjusted=${c.ap} | Unfav=${c.u} | Fav=${c.f}\nBSL: ${c.bsl}\n`;
+  r+=`\nMODULATING FACTORS:\n`;MF.forEach(f=>{r+=`  ${f.l}: ${cur.modFactors[f.id]}\n`});
+  r+=`\nJUSTIFICATION: ${cur.justification||"(not provided)"}\n`;
+  r+=`\nASSESSOR: ${cur.reviewer} | INSTITUTION: ${cur.institution} | DATE: ${cur.reviewDate} | STATUS: ${cur.status}\nTRIGGERS: ${cur.triggers||"(not set)"}\n`;
+  r+=`\n${"=".repeat(50)}\nPSR Framework | Front. Bioeng. Biotechnol. — Biosafety & Biosecurity\nhttps://rafael-67.github.io/psr-tool/\n`;
+  const b=new Blob([r],{type:"text/plain"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`PSR_${(cur.agentName||"report").replace(/\s+/g,"_")}_${cur.reviewDate||"undated"}.txt`;a.click()
+};
+
+window.exportCSV=function(){
+  let csv="ID,Agent,RiskGroup,EffectiveRG,MaxPSR,AdjustedPSR,BSL,Unfavorable,Favorable,Status,Reviewer,Institution,Date\n";
+  assessments.forEach(a=>{const c=compute(a);csv+=`"${a.id}","${a.agentName}","${a.riskGroup}","${c.erg}","${c.mx}","${c.ap}","${c.bsl}",${c.u},${c.f},"${a.status}","${a.reviewer}","${a.institution}","${a.reviewDate}"\n`});
+  const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`PSR_Assessments_${new Date().toISOString().slice(0,10)}.csv`;a.click();toast("CSV exported","success")
+};
+
+R();
+</script>
+</body>
+</html>
