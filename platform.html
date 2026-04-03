@@ -394,7 +394,7 @@ window.exportTXT=function(){
   r+=`\nMODULATING FACTORS:\n`;MF.forEach(f=>{r+=`  ${f.l}: ${cur.modFactors[f.id]}\n`});
   r+=`\nJUSTIFICATION: ${cur.justification||"(not provided)"}\n`;
   r+=`\nASSESSOR: ${cur.reviewer} | INSTITUTION: ${cur.institution} | DATE: ${cur.reviewDate} | STATUS: ${cur.status}\nTRIGGERS: ${cur.triggers||"(not set)"}\n`;
-  r+=`\n${"=".repeat(50)}\nPSR Framework | Front. Bioeng. Biotechnol. — Biosafety & Biosecurity\nhttps://rafael-67.github.io/psr-tool/\n`;
+  r+=`\n${"=".repeat(50)}\nPSR Biosafety Assessment Platform\nhttps://rafael-67.github.io/psr-tool/\n`;
   const b=new Blob([r],{type:"text/plain"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`PSR_${(cur.agentName||"report").replace(/\s+/g,"_")}_${cur.reviewDate||"undated"}.txt`;a.click()
 };
 

@@ -8,7 +8,7 @@ Interactive digital implementation of the **Procedure-Specific Risk (PSR) framew
 
 This tool implements the 8-step PSR framework described in:
 
-> [Authors]. *Structured Procedure-Specific Risk (PSR) Framework for Proportionate Biosafety Level Assignment in Modern Biotechnology.* Frontiers in Bioengineering and Biotechnology — Biosafety and Biosecurity (Hypothesis and Theory). [Under review].
+> [Authors]. *Structured Procedure-Specific Risk (PSR) Framework for Proportionate Biosafety Level Assignment in Modern Biotechnology.* [Manuscript in preparation].
 
 The PSR framework operationalizes a shift from static, agent-based biosafety classification toward dynamic, procedure-specific risk assessment. It integrates agent hazard (Risk Group) with procedural exposure likelihood to determine proportionate biosafety level assignments.
 
@@ -97,8 +97,7 @@ If you use this tool in your research, please cite:
 
 ```
 [Authors]. Structured Procedure-Specific Risk (PSR) Framework for Proportionate
-Biosafety Level Assignment in Modern Biotechnology. Front. Bioeng. Biotechnol.
-— Biosafety and Biosecurity. [Under review].
+Biosafety Level Assignment in Modern Biotechnology. [Manuscript in preparation].
 
 Digital tool available at: https://rafael-67.github.io/psr-tool/
 ```
