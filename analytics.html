@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PSR Analytics — Data Exploitation Module</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#fafaf8;--card:#fff;--bg2:#f5f5f0;--text:#222;--text2:#666;--text3:#999;--border:#e0ddd4;--accent:#534ab7;--accent-bg:#eeedfe;--green:#1d9e75;--green-bg:#eaf3de;--green-t:#3b6d11;--amber-bg:#faeeda;--amber-t:#854f0b;--red-bg:#fcebeb;--red-t:#a32d2d;--blue-bg:#e6f1fb;--blue-t:#0c447c;--purple-bg:#eeedfe;--purple-t:#534ab7;--teal-bg:#e1f5ee;--teal-t:#085041;--r:8px;--rl:12px}
+@media(prefers-color-scheme:dark){:root{--bg:#18181a;--card:#222220;--bg2:#2a2a28;--text:#e0ddd4;--text2:#a0a098;--text3:#706f6a;--border:#3a3a38;--accent:#afa9ec;--accent-bg:#2d2b3d;--green-bg:#1a2a10;--green-t:#97c459;--amber-bg:#2a1f08;--amber-t:#f0c060;--red-bg:#2a1010;--red-t:#f09595;--blue-bg:#0a1a2a;--blue-t:#85b7eb;--purple-bg:#2d2b3d;--purple-t:#cecbf6;--teal-bg:#0a2a20;--teal-t:#5dcaa5}}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;padding:16px}
+.wrap{max-width:900px;margin:0 auto}
+h1{font-size:22px;font-weight:600;margin-bottom:4px}
+h2{font-size:17px;font-weight:600;margin-bottom:4px}
+h3{font-size:14px;font-weight:600;margin-bottom:4px}
+.sub{font-size:13px;color:var(--text2);margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:var(--rl);padding:20px 24px;margin-bottom:16px}
+.pill{display:inline-block;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:500}
+.p-green{background:var(--green-bg);color:var(--green-t)}.p-amber{background:var(--amber-bg);color:var(--amber-t)}.p-red{background:var(--red-bg);color:var(--red-t)}.p-blue{background:var(--blue-bg);color:var(--blue-t)}.p-purple{background:var(--purple-bg);color:var(--purple-t)}.p-gray{background:var(--bg2);color:var(--text2)}.p-teal{background:var(--teal-bg);color:var(--teal-t)}
+.metric-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:20px}
+.metric{padding:14px;border-radius:var(--r);text-align:center;background:var(--bg2)}
+.mv{font-size:26px;font-weight:600}.ml{font-size:11px;color:var(--text2);margin-top:2px}
+.alert{background:var(--red-bg)}.alert .mv{color:var(--red-t)}
+.good{background:var(--green-bg)}.good .mv{color:var(--green-t)}
+.chart-wrap{position:relative;height:260px;margin:12px 0}
+.chart-wrap.tall{height:340px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media(max-width:700px){.grid2{grid-template-columns:1fr}}
+table{width:100%;border-collapse:collapse;font-size:13px;margin:8px 0}
+th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left}
+th{font-weight:600;font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.heatcell{padding:6px 8px;border-radius:4px;text-align:center;font-size:12px;font-weight:500}
+.btn{padding:8px 16px;border-radius:var(--r);font-size:13px;cursor:pointer;border:none;transition:.15s;text-decoration:none;display:inline-block}
+.bo{background:transparent;border:1px solid var(--border);color:var(--text)}
+.bp{background:var(--accent);color:#fff;font-weight:500}
+.bs{background:var(--green);color:#fff;font-weight:500}
+.tab-row{display:flex;gap:4px;margin-bottom:20px;flex-wrap:wrap;border-bottom:2px solid var(--border);padding-bottom:8px}
+.tab{padding:6px 14px;border-radius:6px 6px 0 0;font-size:13px;cursor:pointer;border:none;background:transparent;color:var(--text2);font-weight:400;transition:.15s}
+.tab.on{background:var(--accent-bg);color:var(--accent);font-weight:500}
+.note{padding:12px;border-radius:var(--r);font-size:13px;line-height:1.6}
+.empty{padding:32px;text-align:center;color:var(--text3);font-size:14px}
+.kappa-interp{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500}
+@media print{.tab-row,.btn{display:none}.card{break-inside:avoid}}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.7/chart.umd.min.js"></script>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+// ── Core algorithm (same as platform.html) ──
+const BSL_M={RG1:{Low:"BSL-1",Moderate:"BSL-1*",High:"BSL-2**"},RG2:{Low:"BSL-2",Moderate:"BSL-2",High:"BSL-2+"},RG3:{Low:"BSL-2+",Moderate:"BSL-3",High:"BSL-3"},"RG3*":{Low:"BSL-2+",Moderate:"BSL-2+/BSL-3",High:"BSL-3"},RG4:{Low:"BSL-4",Moderate:"BSL-4",High:"BSL-4"}};
+const MF_IDS=["volume","concentration","frequency","aerosol","stability","experience","supervision","infrastructure","incidents"];
+const MF_LABELS=["Volume","Concentration","Frequency","Aerosol","Env. stability","Operator exp.","Supervision","Infrastructure","Incidents"];
+
+function cPSR(a,v,c){const s={l:0,m:0,h:0};[a,v,c].forEach(x=>{if(x==="low")s.l++;else if(x==="moderate")s.m++;else if(x==="high")s.h++});if(s.h>=2||(s.h>=1&&s.m>=1))return"High";if(s.m>=2||(s.h===1&&s.l>=2))return"Moderate";return"Low"}
+function compute(d){
+  const erg=d.isGMO&&d.replComp==="no"&&d.riskGroup==="RG3"?"RG3*":d.riskGroup;
+  const pp=(d.procedures||[]).map(p=>p.aerosol&&p.volume&&p.concentration?cPSR(p.aerosol,p.volume,p.concentration):null);
+  const O={Low:0,Moderate:1,High:2};const mx=pp.reduce((m,p)=>p&&O[p]>O[m]?p:m,"Low");
+  const mf=d.modFactors||{};const u=Object.values(mf).filter(v=>v==="increase").length;const f=Object.values(mf).filter(v=>v==="decrease").length;
+  let ap=mx;if(u>=2&&mx==="Low")ap="Moderate";if(u>=2&&mx==="Moderate")ap="High";if(f>=2&&mx==="High"&&u===0)ap="Moderate";
+  const bsl=erg?(BSL_M[erg]?.[ap]||"—"):"—";
+  return{erg,pp,mx,ap,u,f,bsl};
+}
+
+// ── Load data from localStorage (shared with platform.html) ──
+function loadAll(){
+  const idx=JSON.parse(localStorage.getItem("psr:index")||"[]");
+  return idx.map(id=>{try{return JSON.parse(localStorage.getItem(`psr:${id}`))}catch{return null}}).filter(Boolean);
+}
+
+// ── Import from CSV/JSON ──
+function importCSV(text){
+  const lines=text.trim().split("\n");if(lines.length<2)return[];
+  const headers=lines[0].split(",").map(h=>h.replace(/"/g,"").trim());
+  return lines.slice(1).map(line=>{
+    const vals=line.match(/(".*?"|[^,]+)/g)||[];
+    const obj={};headers.forEach((h,i)=>{obj[h]=vals[i]?vals[i].replace(/"/g,"").trim():""});
+    return obj;
+  });
+}
+
+// ── Statistics ──
+function cohensKappa(ratings1, ratings2){
+  const n=ratings1.length;if(n===0)return{kappa:0,interpretation:"N/A"};
+  const categories=[...new Set([...ratings1,...ratings2])];
+  const k=categories.length;
+  const matrix=Array(k).fill(null).map(()=>Array(k).fill(0));
+  for(let i=0;i<n;i++){
+    const r=categories.indexOf(ratings1[i]);const c=categories.indexOf(ratings2[i]);
+    if(r>=0&&c>=0)matrix[r][c]++;
+  }
+  let po=0;for(let i=0;i<k;i++)po+=matrix[i][i];po/=n;
+  let pe=0;
+  for(let i=0;i<k;i++){
+    let ri=0,ci=0;for(let j=0;j<k;j++){ri+=matrix[i][j];ci+=matrix[j][i]}
+    pe+=(ri*ci);
+  }
+  pe/=(n*n);
+  const kappa=pe===1?1:(po-pe)/(1-pe);
+  let interp="";
+  if(kappa<0)interp="Poor";else if(kappa<.21)interp="Slight";else if(kappa<.41)interp="Fair";
+  else if(kappa<.61)interp="Moderate";else if(kappa<.81)interp="Substantial";else interp="Almost perfect";
+  return{kappa:Math.round(kappa*1000)/1000,po:Math.round(po*1000)/1000,pe:Math.round(pe*1000)/1000,interpretation:interp,categories,matrix,n};
+}
+
+function countBy(arr,fn){const m={};arr.forEach(x=>{const k=fn(x);m[k]=(m[k]||0)+1});return m}
+function pct(n,total){return total>0?Math.round(n/total*100):0}
+
+// ── Charts management ──
+const charts={};
+function makeChart(id,cfg){
+  if(charts[id]){charts[id].destroy()}
+  const ctx=document.getElementById(id);
+  if(!ctx)return;
+  const dark=matchMedia("(prefers-color-scheme:dark)").matches;
+  cfg.options=cfg.options||{};
+  cfg.options.responsive=true;cfg.options.maintainAspectRatio=false;
+  cfg.options.plugins=cfg.options.plugins||{};
+  cfg.options.plugins.legend=cfg.options.plugins.legend||{labels:{color:dark?"#a0a098":"#666",font:{size:11}}};
+  if(cfg.options.scales){
+    Object.values(cfg.options.scales).forEach(s=>{s.ticks=s.ticks||{};s.ticks.color=dark?"#a0a098":"#666";s.grid=s.grid||{};s.grid.color=dark?"rgba(255,255,255,.08)":"rgba(0,0,0,.06)"});
+  }
+  charts[id]=new Chart(ctx,cfg);
+}
+
+// ── Colors ──
+const COLORS={
+  bsl:{"BSL-1":"#97c459","BSL-1*":"#c0dd97","BSL-2":"#85b7eb","BSL-2**":"#b5d4f4","BSL-2+":"#ef9f27","BSL-2+/BSL-3":"#f0997b","BSL-3":"#e24b4a","BSL-4":"#7f77dd"},
+  psr:{Low:"#97c459",Moderate:"#ef9f27",High:"#e24b4a"},
+  rg:{RG1:"#97c459",RG2:"#85b7eb",RG3:"#e24b4a","RG3*":"#f0997b",RG4:"#7f77dd"},
+  mf:{increase:"#e24b4a",neutral:"#b4b2a9",decrease:"#97c459"},
+};
+
+// ── State ──
+let tab="overview",assessments=[],computed_all=[];
+
+function init(){
+  assessments=loadAll();
+  computed_all=assessments.map(a=>({...a,...compute(a)}));
+  render();
+}
+
+function render(){
+  let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px">
+    <div><h1>PSR analytics</h1><p style="font-size:13px;color:var(--text2)">Data exploitation module · ${assessments.length} assessments loaded</p></div>
+    <div style="display:flex;gap:8px"><a href="platform.html" class="btn bo">← Platform</a>
+    <button class="btn bo" onclick="document.getElementById('csvInput').click()">Import CSV/JSON</button>
+    <button class="btn bs" onclick="exportFullCSV()">Export dataset</button>
+    <input type="file" id="csvInput" accept=".csv,.json" style="display:none" onchange="handleImport(this)">
+    </div></div>`;
+
+  h+=`<div class="tab-row">`;
+  ["overview","distributions","modulating_factors","irr_extended","risk_patterns","temporal"].forEach(t=>{
+    const labels={overview:"Overview",distributions:"Distributions",modulating_factors:"Modulating factors",irr_extended:"IRR analysis",risk_patterns:"Risk patterns",temporal:"Temporal"};
+    h+=`<button class="tab ${tab===t?"on":""}" onclick="tab='${t}';render()">${labels[t]}</button>`;
+  });
+  h+=`</div>`;
+
+  if(assessments.length===0){
+    h+=`<div class="empty"><p>No assessment data found.</p><p style="margin-top:8px">Create assessments in the <a href="platform.html">PSR Platform</a>, or import a CSV/JSON dataset.</p></div>`;
+  } else {
+    if(tab==="overview") h+=rOverview();
+    else if(tab==="distributions") h+=rDistributions();
+    else if(tab==="modulating_factors") h+=rModFactors();
+    else if(tab==="irr_extended") h+=rIRR();
+    else if(tab==="risk_patterns") h+=rRiskPatterns();
+    else if(tab==="temporal") h+=rTemporal();
+  }
+
+  document.getElementById("app").innerHTML=h;
+
+  // Render charts after DOM update
+  requestAnimationFrame(()=>{
+    if(tab==="overview") renderOverviewCharts();
+    else if(tab==="distributions") renderDistCharts();
+    else if(tab==="modulating_factors") renderMFCharts();
+    else if(tab==="irr_extended") renderIRRCharts();
+    else if(tab==="risk_patterns") renderRPCharts();
+    else if(tab==="temporal") renderTemporalCharts();
+  });
+}
+
+// ══════════════════════════════════════════════
+// OVERVIEW TAB
+// ══════════════════════════════════════════════
+function rOverview(){
+  const final=computed_all.filter(a=>a.status==="final");
+  const esc_rate=computed_all.filter(a=>a.ap!==a.mx).length;
+  const gmo_count=computed_all.filter(a=>a.isGMO).length;
+  const institutions=[...new Set(computed_all.map(a=>a.institution).filter(Boolean))];
+  const agents=[...new Set(computed_all.map(a=>(a.agentName||"").toLowerCase().trim()).filter(Boolean))];
+
+  let h=`<div class="metric-grid">
+    <div class="metric"><div class="mv">${assessments.length}</div><div class="ml">Total assessments</div></div>
+    <div class="metric"><div class="mv">${final.length}</div><div class="ml">Finalized</div></div>
+    <div class="metric"><div class="mv">${agents.length}</div><div class="ml">Unique agents</div></div>
+    <div class="metric"><div class="mv">${institutions.length}</div><div class="ml">Institutions</div></div>
+    <div class="metric"><div class="mv">${gmo_count}</div><div class="ml">GMO assessments</div></div>
+    <div class="metric ${esc_rate>0?"alert":""}"><div class="mv">${pct(esc_rate,assessments.length)}%</div><div class="ml">Escalation rate</div></div>
+  </div>`;
+
+  h+=`<div class="grid2">
+    <div class="card"><h3>BSL assignment distribution</h3><div class="chart-wrap"><canvas id="ch-bsl"></canvas></div></div>
+    <div class="card"><h3>Risk Group distribution</h3><div class="chart-wrap"><canvas id="ch-rg"></canvas></div></div>
+  </div>`;
+
+  h+=`<div class="card"><h3>Most assessed agents</h3>`;
+  const agentCounts=countBy(computed_all,a=>(a.agentName||"Unknown"));
+  const sorted=Object.entries(agentCounts).sort((a,b)=>b[1]-a[1]).slice(0,10);
+  h+=`<table><thead><tr><th>Agent</th><th>Assessments</th><th>BSL range</th></tr></thead><tbody>`;
+  sorted.forEach(([agent,count])=>{
+    const bsls=[...new Set(computed_all.filter(a=>a.agentName===agent).map(a=>a.bsl))];
+    h+=`<tr><td>${agent}</td><td>${count}</td><td>${bsls.map(b=>bslPill(b)).join(" ")}</td></tr>`;
+  });
+  h+=`</tbody></table></div>`;
+  return h;
+}
+
+function renderOverviewCharts(){
+  const bslDist=countBy(computed_all,a=>a.bsl);
+  makeChart("ch-bsl",{type:"doughnut",data:{labels:Object.keys(bslDist),datasets:[{data:Object.values(bslDist),backgroundColor:Object.keys(bslDist).map(b=>COLORS.bsl[b]||"#999")}]},options:{plugins:{legend:{position:"right"}}}});
+  const rgDist=countBy(computed_all,a=>a.erg||a.riskGroup);
+  makeChart("ch-rg",{type:"doughnut",data:{labels:Object.keys(rgDist),datasets:[{data:Object.values(rgDist),backgroundColor:Object.keys(rgDist).map(r=>COLORS.rg[r]||"#999")}]},options:{plugins:{legend:{position:"right"}}}});
+}
+
+// ══════════════════════════════════════════════
+// DISTRIBUTIONS TAB
+// ══════════════════════════════════════════════
+function rDistributions(){
+  let h=`<div class="grid2">
+    <div class="card"><h3>PSR level distribution (max per assessment)</h3><div class="chart-wrap"><canvas id="ch-psr"></canvas></div></div>
+    <div class="card"><h3>PSR before vs after modulation</h3><div class="chart-wrap"><canvas id="ch-esc"></canvas></div></div>
+  </div>`;
+  h+=`<div class="card"><h3>All procedures by PSR level</h3><div class="chart-wrap"><canvas id="ch-allproc"></canvas></div></div>`;
+  return h;
+}
+
+function renderDistCharts(){
+  const psrDist=countBy(computed_all,a=>a.ap);
+  makeChart("ch-psr",{type:"bar",data:{labels:["Low","Moderate","High"],datasets:[{label:"Assessments",data:["Low","Moderate","High"].map(l=>psrDist[l]||0),backgroundColor:["Low","Moderate","High"].map(l=>COLORS.psr[l])}]},options:{scales:{y:{beginAtZero:true}},plugins:{legend:{display:false}}}});
+
+  const before=countBy(computed_all,a=>a.mx);const after=countBy(computed_all,a=>a.ap);
+  makeChart("ch-esc",{type:"bar",data:{labels:["Low","Moderate","High"],datasets:[{label:"Before modulation",data:["Low","Moderate","High"].map(l=>before[l]||0),backgroundColor:"rgba(133,183,235,0.6)"},{label:"After modulation",data:["Low","Moderate","High"].map(l=>after[l]||0),backgroundColor:"rgba(239,159,39,0.8)"}]},options:{scales:{y:{beginAtZero:true}}}});
+
+  const allProcs=[];computed_all.forEach((a,i)=>{(a.procedures||[]).forEach((p,j)=>{if(a.pp[j])allProcs.push({name:p.name||`Proc ${j+1}`,psr:a.pp[j]})})});
+  const procPSR=countBy(allProcs,p=>p.psr);
+  makeChart("ch-allproc",{type:"bar",data:{labels:["Low","Moderate","High"],datasets:[{label:"Procedures",data:["Low","Moderate","High"].map(l=>procPSR[l]||0),backgroundColor:["Low","Moderate","High"].map(l=>COLORS.psr[l])}]},options:{scales:{y:{beginAtZero:true}},plugins:{legend:{display:false}}}});
+}
+
+// ══════════════════════════════════════════════
+// MODULATING FACTORS TAB
+// ══════════════════════════════════════════════
+function rModFactors(){
+  let h=`<div class="card"><h3>Modulating factor scoring pattern</h3><p class="sub">How often each factor is scored as favorable, neutral, or unfavorable across all assessments.</p>
+    <div class="chart-wrap tall"><canvas id="ch-mf"></canvas></div></div>`;
+  
+  h+=`<div class="card"><h3>Escalation drivers</h3><p class="sub">Among assessments where ≥2 unfavorable factors triggered BSL escalation, which factors are most commonly unfavorable?</p>`;
+  const escalated=computed_all.filter(a=>a.ap!==a.mx);
+  if(escalated.length===0)h+=`<p style="color:var(--text3);padding:8px">No escalations detected in current dataset.</p>`;
+  else{
+    const drivers={};MF_IDS.forEach((id,i)=>{drivers[MF_LABELS[i]]=escalated.filter(a=>(a.modFactors||{})[id]==="increase").length});
+    const sorted=Object.entries(drivers).sort((a,b)=>b[1]-a[1]);
+    h+=`<table><thead><tr><th>Factor</th><th>Unfavorable in escalated</th><th>Rate</th></tr></thead><tbody>`;
+    sorted.forEach(([f,n])=>{h+=`<tr><td>${f}</td><td>${n} / ${escalated.length}</td><td><div style="display:flex;align-items:center;gap:8px"><div style="width:${pct(n,escalated.length)*2}px;height:12px;background:var(--red-t);border-radius:3px;opacity:.6"></div>${pct(n,escalated.length)}%</div></td></tr>`});
+    h+=`</tbody></table>`;
+  }
+  h+=`</div>`;
+
+  h+=`<div class="card"><h3>Factor correlation with BSL elevation</h3><p class="sub">For each factor, comparison of mean unfavorable rate between standard BSL and elevated BSL assignments.</p>
+    <div class="chart-wrap tall"><canvas id="ch-mfcorr"></canvas></div></div>`;
+  return h;
+}
+
+function renderMFCharts(){
+  const fav=[],neu=[],unfav=[];
+  MF_IDS.forEach(id=>{
+    let f=0,n=0,u=0;
+    computed_all.forEach(a=>{const v=(a.modFactors||{})[id];if(v==="decrease")f++;else if(v==="increase")u++;else n++});
+    fav.push(f);neu.push(n);unfav.push(u);
+  });
+  makeChart("ch-mf",{type:"bar",data:{labels:MF_LABELS,datasets:[{label:"Favorable",data:fav,backgroundColor:"rgba(151,196,89,0.7)"},{label:"Neutral",data:neu,backgroundColor:"rgba(180,178,169,0.5)"},{label:"Unfavorable",data:unfav,backgroundColor:"rgba(226,75,74,0.7)"}]},options:{indexAxis:"y",scales:{x:{beginAtZero:true,stacked:true},y:{}},plugins:{legend:{position:"bottom"}}}});
+
+  // Factor correlation with BSL elevation
+  const elevated=computed_all.filter(a=>["BSL-2+","BSL-2+/BSL-3","BSL-3","BSL-4"].includes(a.bsl));
+  const standard=computed_all.filter(a=>["BSL-1","BSL-1*","BSL-2","BSL-2**"].includes(a.bsl));
+  const elevRate=[],stdRate=[];
+  MF_IDS.forEach(id=>{
+    elevRate.push(elevated.length>0?Math.round(elevated.filter(a=>(a.modFactors||{})[id]==="increase").length/elevated.length*100):0);
+    stdRate.push(standard.length>0?Math.round(standard.filter(a=>(a.modFactors||{})[id]==="increase").length/standard.length*100):0);
+  });
+  makeChart("ch-mfcorr",{type:"bar",data:{labels:MF_LABELS,datasets:[{label:"Standard BSL (1, 1*, 2, 2**)",data:stdRate,backgroundColor:"rgba(133,183,235,0.6)"},{label:"Elevated BSL (2+, 3, 4)",data:elevRate,backgroundColor:"rgba(226,75,74,0.7)"}]},options:{indexAxis:"y",scales:{x:{beginAtZero:true,max:100,ticks:{callback:v=>v+"%"}}},plugins:{legend:{position:"bottom"}}}});
+}
+
+// ══════════════════════════════════════════════
+// IRR EXTENDED TAB
+// ══════════════════════════════════════════════
+function rIRR(){
+  const final=computed_all.filter(a=>a.status==="final");
+  const grouped={};
+  final.forEach(a=>{const k=(a.agentName||"").toLowerCase().trim();if(k){if(!grouped[k])grouped[k]=[];grouped[k].push(a)}});
+  const pairs=Object.entries(grouped).filter(([_,v])=>v.length>=2);
+
+  if(pairs.length===0) return`<div class="card"><div class="empty"><p>No agents with ≥2 finalized assessments found.</p><p style="margin-top:8px">For IRR analysis, multiple evaluators must finalize assessments for the same agent.</p></div></div>`;
+
+  // Collect pairwise ratings for Cohen's kappa
+  const allR1=[],allR2=[];
+  pairs.forEach(([_,g])=>{for(let i=0;i<g.length-1;i++){allR1.push(g[i].bsl);allR2.push(g[i+1].bsl)}});
+  const kappa=cohensKappa(allR1,allR2);
+
+  const kappaColor=kappa.kappa>=.61?"var(--green-t)":kappa.kappa>=.41?"var(--amber-t)":"var(--red-t)";
+  const kappaBg=kappa.kappa>=.61?"var(--green-bg)":kappa.kappa>=.41?"var(--amber-bg)":"var(--red-bg)";
+
+  let h=`<div class="metric-grid">
+    <div class="metric ${kappa.kappa>=.61?"good":kappa.kappa<.41?"alert":""}"><div class="mv">${kappa.kappa.toFixed(3)}</div><div class="ml">Cohen's kappa (κ)</div></div>
+    <div class="metric"><div class="mv">${Math.round(kappa.po*100)}%</div><div class="ml">Observed agreement (Pₒ)</div></div>
+    <div class="metric"><div class="mv">${Math.round(kappa.pe*100)}%</div><div class="ml">Expected agreement (Pₑ)</div></div>
+    <div class="metric"><div class="mv">${kappa.n}</div><div class="ml">Pairwise comparisons</div></div>
+  </div>`;
+
+  h+=`<div class="card"><h3>Kappa interpretation</h3>
+    <p style="font-size:14px;margin:8px 0"><span class="kappa-interp" style="background:${kappaBg};color:${kappaColor}">${kappa.interpretation} agreement</span></p>
+    <table><thead><tr><th>κ range</th><th>Interpretation</th><th>Your data</th></tr></thead><tbody>`;
+  [["< 0","Poor"],["0.00–0.20","Slight"],["0.21–0.40","Fair"],["0.41–0.60","Moderate"],["0.61–0.80","Substantial"],["0.81–1.00","Almost perfect"]].forEach(([range,interp])=>{
+    const active=interp===kappa.interpretation;
+    h+=`<tr style="${active?"font-weight:600;background:var(--accent-bg)":""}"><td>${range}</td><td>${interp}</td><td>${active?"← κ = "+kappa.kappa.toFixed(3):""}</td></tr>`;
+  });
+  h+=`</tbody></table></div>`;
+
+  // Agreement by RG
+  h+=`<div class="grid2">`;
+  h+=`<div class="card"><h3>Agreement by Risk Group</h3>`;
+  const rgGroups={};pairs.forEach(([_,g])=>{const rg=g[0].erg||g[0].riskGroup;if(!rgGroups[rg])rgGroups[rg]={agree:0,total:0};
+    for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++){rgGroups[rg].total++;if(g[i].bsl===g[j].bsl)rgGroups[rg].agree++}});
+  h+=`<table><thead><tr><th>RG</th><th>Pairs</th><th>Agreement</th></tr></thead><tbody>`;
+  Object.entries(rgGroups).forEach(([rg,{agree,total}])=>{h+=`<tr><td>${rg}</td><td>${total}</td><td>${pct(agree,total)}%</td></tr>`});
+  h+=`</tbody></table></div>`;
+
+  // Discrepancy detail
+  h+=`<div class="card"><h3>Discrepancies</h3>`;
+  let discrepancies=[];
+  pairs.forEach(([_,g])=>{const bsls=[...new Set(g.map(a=>a.bsl))];if(bsls.length>1)discrepancies.push({agent:g[0].agentName,bsls,assessors:g.map(a=>a.reviewer||a.institution)})});
+  if(discrepancies.length===0)h+=`<p style="color:var(--green-t);padding:8px">No discrepancies — full agreement across all paired assessments.</p>`;
+  else{
+    h+=`<table><thead><tr><th>Agent</th><th>BSL assignments</th><th>Assessors</th></tr></thead><tbody>`;
+    discrepancies.forEach(d=>{h+=`<tr><td>${d.agent}</td><td>${d.bsls.map(b=>bslPill(b)).join(" vs ")}</td><td style="font-size:11px">${d.assessors.join(", ")}</td></tr>`});
+    h+=`</tbody></table>`;
+  }
+  h+=`</div></div>`;
+
+  h+=`<div class="card"><h3>Confusion matrix (BSL assignments)</h3><p class="sub">Rater 1 (rows) vs Rater 2 (columns) for pairwise comparisons.</p>`;
+  if(kappa.categories&&kappa.matrix){
+    h+=`<table><thead><tr><th></th>${kappa.categories.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>`;
+    kappa.categories.forEach((r,i)=>{h+=`<tr><td style="font-weight:600">${r}</td>${kappa.categories.map((_,j)=>{const v=kappa.matrix[i][j];return`<td style="text-align:center;${i===j&&v>0?"background:var(--green-bg);font-weight:600":""}">${v}</td>`}).join("")}</tr>`});
+    h+=`</tbody></table>`;
+  }
+  h+=`</div>`;
+  return h;
+}
+
+function renderIRRCharts(){}
+
+// ══════════════════════════════════════════════
+// RISK PATTERNS TAB
+// ══════════════════════════════════════════════
+function rRiskPatterns(){
+  let h=`<div class="card"><h3>Agent–BSL heatmap</h3><p class="sub">Frequency of BSL assignments by effective Risk Group.</p>
+    <div class="chart-wrap"><canvas id="ch-heatmap"></canvas></div></div>`;
+  
+  h+=`<div class="card"><h3>Procedure type by PSR level</h3><p class="sub">Most common procedure names grouped by their PSR classification.</p>`;
+  const procByPSR={Low:[],Moderate:[],High:[]};
+  computed_all.forEach(a=>{(a.procedures||[]).forEach((p,i)=>{if(p.name&&a.pp[i])procByPSR[a.pp[i]].push(p.name.toLowerCase().trim())})});
+  ["High","Moderate","Low"].forEach(level=>{
+    const counts=countBy(procByPSR[level],x=>x);
+    const top=Object.entries(counts).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    if(top.length>0){
+      const col=level==="Low"?"green":level==="Moderate"?"amber":"red";
+      h+=`<div style="margin-bottom:12px"><span class="pill p-${col}">${level} PSR</span>`;
+      h+=`<div style="margin-top:6px;font-size:13px">${top.map(([name,n])=>`${name} (${n})`).join(" · ")}</div></div>`;
+    }
+  });
+  h+=`</div>`;
+
+  h+=`<div class="card"><h3>GMO vs non-GMO risk profile</h3><div class="chart-wrap"><canvas id="ch-gmo"></canvas></div></div>`;
+  return h;
+}
+
+function renderRPCharts(){
+  // Heatmap as grouped bar
+  const rgs=["RG1","RG2","RG3","RG3*","RG4"];
+  const bsls=[...new Set(computed_all.map(a=>a.bsl))].sort();
+  const datasets=bsls.map(bsl=>({label:bsl,data:rgs.map(rg=>computed_all.filter(a=>(a.erg||a.riskGroup)===rg&&a.bsl===bsl).length),backgroundColor:COLORS.bsl[bsl]||"#999"}));
+  makeChart("ch-heatmap",{type:"bar",data:{labels:rgs,datasets},options:{scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}},plugins:{legend:{position:"bottom"}}}});
+
+  // GMO comparison
+  const gmo=computed_all.filter(a=>a.isGMO);const ngmo=computed_all.filter(a=>!a.isGMO);
+  const psrLevels=["Low","Moderate","High"];
+  makeChart("ch-gmo",{type:"bar",data:{labels:psrLevels,datasets:[{label:"GMO",data:psrLevels.map(l=>gmo.filter(a=>a.ap===l).length),backgroundColor:"rgba(127,119,221,0.7)"},{label:"Non-GMO",data:psrLevels.map(l=>ngmo.filter(a=>a.ap===l).length),backgroundColor:"rgba(93,202,165,0.7)"}]},options:{scales:{y:{beginAtZero:true}}}});
+}
+
+// ══════════════════════════════════════════════
+// TEMPORAL TAB
+// ══════════════════════════════════════════════
+function rTemporal(){
+  let h=`<div class="card"><h3>Assessments over time</h3><div class="chart-wrap"><canvas id="ch-temporal"></canvas></div></div>`;
+  h+=`<div class="card"><h3>Cumulative assessments by institution</h3><div class="chart-wrap"><canvas id="ch-inst"></canvas></div></div>`;
+  return h;
+}
+
+function renderTemporalCharts(){
+  const byMonth={};
+  computed_all.forEach(a=>{const d=(a.reviewDate||a.createdAt||"").slice(0,7);if(d)byMonth[d]=(byMonth[d]||0)+1});
+  const months=Object.keys(byMonth).sort();
+  makeChart("ch-temporal",{type:"line",data:{labels:months,datasets:[{label:"Assessments",data:months.map(m=>byMonth[m]),borderColor:"#534ab7",backgroundColor:"rgba(83,74,183,0.1)",fill:true,tension:0.3}]},options:{scales:{y:{beginAtZero:true}}}});
+
+  const insts=[...new Set(computed_all.map(a=>a.institution).filter(Boolean))];
+  const instData=insts.map((inst,i)=>{
+    const byM={};computed_all.filter(a=>a.institution===inst).forEach(a=>{const d=(a.reviewDate||a.createdAt||"").slice(0,7);if(d)byM[d]=(byM[d]||0)+1});
+    let cum=0;const data=months.map(m=>{cum+=(byM[m]||0);return cum});
+    const colors=["#534ab7","#1d9e75","#ef9f27","#e24b4a","#85b7eb","#7f77dd"];
+    return{label:inst,data,borderColor:colors[i%colors.length],fill:false,tension:0.3};
+  });
+  makeChart("ch-inst",{type:"line",data:{labels:months,datasets:instData},options:{scales:{y:{beginAtZero:true}}}});
+}
+
+// ── Helpers ──
+function bslPill(l){const m={"BSL-1":"green","BSL-1*":"green","BSL-2":"blue","BSL-2**":"blue","BSL-2+":"amber","BSL-2+/BSL-3":"amber","BSL-3":"red","BSL-4":"purple"};return`<span class="pill p-${m[l]||"gray"}">${l}</span>`}
+
+window.handleImport=function(input){
+  const f=input.files[0];if(!f)return;
+  const reader=new FileReader();
+  reader.onload=function(e){
+    try{
+      let data;
+      if(f.name.endsWith(".json"))data=JSON.parse(e.target.result);
+      else data=importCSV(e.target.result);
+      if(Array.isArray(data)&&data.length>0){
+        data.forEach(d=>{
+          if(d.agentName||d.Agent){
+            const a={id:`imp_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,agentName:d.agentName||d.Agent||"",riskGroup:d.riskGroup||d.RiskGroup||d.EffectiveRG||"",isGMO:d.isGMO==="true"||d.isGMO===true,parentalOrg:d.parentalOrg||"",geneticMod:d.geneticMod||"",replComp:d.replComp||"",
+              procedures:d.procedures||[{name:d.KeyProcedures||"Imported",aerosol:d.aerosol||"moderate",volume:d.volume||"moderate",concentration:d.concentration||"moderate"}],
+              modFactors:d.modFactors||Object.fromEntries(MF_IDS.map(id=>[id,"neutral"])),
+              justification:d.justification||d.Justification||"",reviewer:d.reviewer||d.Reviewer||d.Assessor||"",institution:d.institution||d.Institution||"",
+              reviewDate:d.reviewDate||d.Date||new Date().toISOString().slice(0,10),status:d.status||d.Status||"final",createdAt:d.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString(),version:"1.0.0"};
+            localStorage.setItem(`psr:${a.id}`,JSON.stringify(a));
+            const idx=JSON.parse(localStorage.getItem("psr:index")||"[]");idx.push(a.id);localStorage.setItem("psr:index",JSON.stringify(idx));
+          }
+        });
+        init();
+      }
+    }catch(err){alert("Import error: "+err.message)}
+  };
+  reader.readAsText(f);
+};
+
+window.exportFullCSV=function(){
+  let csv="ID,Agent,RiskGroup,EffectiveRG,IsGMO,ParentalOrg,ReplicationComp,MaxPSR,AdjustedPSR,BSL,UnfavorableFactors,FavorableFactors,Escalated,Status,Reviewer,Institution,Date";
+  MF_IDS.forEach(id=>{csv+=`,MF_${id}`});
+  csv+=",NumProcedures,Justification\n";
+  computed_all.forEach(a=>{
+    csv+=`"${a.id}","${a.agentName}","${a.riskGroup}","${a.erg}",${a.isGMO},"${a.parentalOrg||""}","${a.replComp||""}","${a.mx}","${a.ap}","${a.bsl}",${a.u},${a.f},${a.ap!==a.mx},"${a.status}","${a.reviewer||""}","${a.institution||""}","${a.reviewDate||""}"`;
+    MF_IDS.forEach(id=>{csv+=`,"${(a.modFactors||{})[id]||"neutral"}"`});
+    csv+=`,${(a.procedures||[]).length},"${(a.justification||"").replace(/"/g,'""').replace(/\n/g," ")}"\n`;
+  });
+  const b=new Blob([csv],{type:"text/csv"});const el=document.createElement("a");el.href=URL.createObjectURL(b);el.download=`PSR_Full_Dataset_${new Date().toISOString().slice(0,10)}.csv`;el.click();
+};
+
+init();
+</script>
+</body>
+</html>

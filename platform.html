@@ -141,7 +141,7 @@ function rDash(){
   const dc=assessments.filter(a=>a.status==="draft").length;
   let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:8px">
     <div><h1>PSR assessment platform</h1><p style="font-size:13px;color:var(--text2)">${esc(profile.name)} · ${esc(profile.institution)}</p></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn bp" onclick="startNew()">+ New assessment</button><button class="btn bo" onclick="view='irr';R()">IRR analysis</button><button class="btn bo" onclick="view='onboard';R()">Settings</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn bp" onclick="startNew()">+ New assessment</button><button class="btn bo" onclick="view='irr';R()">IRR analysis</button><a href="analytics.html" class="btn bo" style="text-decoration:none">Analytics</a><button class="btn bo" onclick="view='onboard';R()">Settings</button></div>
   </div>`;
   h+=`<div style="display:flex;gap:12px;margin-bottom:20px">`
   h+=`<div class="metric"><div class="mv">${assessments.length}</div><div class="ml">Total</div></div>`;
