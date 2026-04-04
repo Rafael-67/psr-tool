@@ -42,7 +42,7 @@ th{font-weight:600;font-size:12px;color:var(--text2);text-transform:uppercase;le
 .kappa-interp{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500}
 @media print{.tab-row,.btn{display:none}.card{break-inside:avoid}}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.7/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.7/chart.umd.min.js" onerror="window._noChart=true"></script>
 </head>
 <body>
 <div class="wrap" id="app"></div>
@@ -63,10 +63,85 @@ function compute(d){
   return{erg,pp,mx,ap,u,f,bsl};
 }
 
+// ── Built-in example assessments (Supplementary Appendices S3 & S4) ──
+const BUILTIN_EXAMPLES=[
+  {id:"example_s3_lentiviral",agentName:"Third-generation SIN lentiviral vector (pLenti-CRISPR, HIV-1 backbone)",riskGroup:"RG3",isGMO:true,parentalOrg:"HIV-1",
+   geneticMod:"3rd-gen SIN lentiviral. 4-plasmid split-genome. Deletions: gag,pol,env,tat,rev,vif,vpr,vpu,nef. Replication-incompetent.",replComp:"no",
+   procedures:[
+     {name:"HEK293T transfection (T-175 flasks in BSC-II)",aerosol:"low",volume:"high",concentration:"low"},
+     {name:"Viral supernatant harvest (~120 mL)",aerosol:"low",volume:"high",concentration:"low"},
+     {name:"Filtration 0.45 µm (syringe filter in BSC)",aerosol:"low",volume:"high",concentration:"low"},
+     {name:"Ultracentrifugation (SW32Ti, 25,000 rpm, 90 min, non-sealed)",aerosol:"high",volume:"moderate",concentration:"high"},
+     {name:"Viral pellet resuspension (500 µL, 10⁸ TU/mL)",aerosol:"moderate",volume:"low",concentration:"high"},
+     {name:"Aliquoting (50 µL, 10⁸ TU/mL)",aerosol:"low",volume:"low",concentration:"high"}
+   ],
+   modFactors:{volume:"increase",concentration:"increase",frequency:"increase",aerosol:"increase",stability:"decrease",experience:"decrease",supervision:"decrease",infrastructure:"increase",incidents:"decrease"},
+   justification:"RG3* (replication-defective HIV-1 GMO). High-speed ultracentrifugation without sealed cups + 10⁸ TU/mL titer + 4 unfavorable factors → BSL-2+ with respiratory protection.",
+   reviewer:"Dr. John Doe",institution:"University Research Institute",reviewDate:"2025-01-15",status:"final",createdAt:"2025-01-15T09:00:00Z",updatedAt:"2025-01-15T14:30:00Z",version:"1.0.0"},
+  {id:"example_s4_mtb_inactivated",agentName:"Mycobacterium tuberculosis complex (heat-inactivated specimens & purified DNA)",riskGroup:"RG3",isGMO:false,parentalOrg:"",geneticMod:"",replComp:"",
+   procedures:[
+     {name:"Receipt of heat-inactivated specimens (2–5 mL, sealed tubes)",aerosol:"low",volume:"low",concentration:"low"},
+     {name:"Automated DNA extraction (QIAcube in BSC, 200 µL, closed)",aerosol:"low",volume:"low",concentration:"low"},
+     {name:"PCR setup (25 µL reaction, pipetting in BSC)",aerosol:"low",volume:"low",concentration:"low"},
+     {name:"Thermal cycling (sealed PCR tubes)",aerosol:"low",volume:"low",concentration:"low"},
+     {name:"Result analysis (in silico)",aerosol:"low",volume:"low",concentration:"low"}
+   ],
+   modFactors:{volume:"decrease",concentration:"decrease",frequency:"increase",aerosol:"decrease",stability:"decrease",experience:"decrease",supervision:"neutral",infrastructure:"decrease",incidents:"decrease"},
+   justification:"RG3 parental organism but ALL specimens heat-inactivated (56°C/30min) with culture-negative validation. Low PSR, 1 unfavorable factor. Enhanced BSL-2 proportionate; BSL-3 disproportionate.",
+   reviewer:"Dr. Robert Chen",institution:"Clinical Diagnostics Laboratory",reviewDate:"2025-02-01",status:"final",createdAt:"2025-02-01T08:00:00Z",updatedAt:"2025-02-01T12:00:00Z",version:"1.0.0"},
+  // Additional synthetic examples for richer analytics demonstration
+  {id:"example_ecoli_sonication",agentName:"E. coli BL21(DE3) recombinant protein expression",riskGroup:"RG1",isGMO:true,parentalOrg:"E. coli K-12",geneticMod:"BL21(DE3) with pET expression vector, human recombinant protein",replComp:"yes",
+   procedures:[
+     {name:"Bacterial culture (500 mL LB, shaker incubator)",aerosol:"low",volume:"high",concentration:"low"},
+     {name:"IPTG induction",aerosol:"low",volume:"high",concentration:"low"},
+     {name:"Centrifugation (sealed rotor, 4000 rpm)",aerosol:"low",volume:"high",concentration:"moderate"},
+     {name:"Pellet resuspension in lysis buffer (50 mL)",aerosol:"low",volume:"moderate",concentration:"high"},
+     {name:"Sonication (6 × 30 sec cycles, ice bath, open vessel)",aerosol:"high",volume:"moderate",concentration:"high"},
+     {name:"Clarification centrifugation",aerosol:"low",volume:"moderate",concentration:"moderate"},
+     {name:"Protein purification (FPLC chromatography)",aerosol:"low",volume:"low",concentration:"low"}
+   ],
+   modFactors:{volume:"neutral",concentration:"increase",frequency:"increase",aerosol:"increase",stability:"decrease",experience:"decrease",supervision:"neutral",infrastructure:"neutral",incidents:"decrease"},
+   justification:"RG1 agent but sonication generates extreme aerosols at 10⁹–10¹⁰ CFU/mL. BSL-2 practices for sonication step despite RG1. Demonstrates PSR principle that even low-hazard agents warrant enhanced containment for high-aerosol procedures.",
+   reviewer:"Dr. Ana López",institution:"University of Valladolid",reviewDate:"2025-03-10",status:"final",createdAt:"2025-03-10T10:00:00Z",updatedAt:"2025-03-10T15:00:00Z",version:"1.0.0"},
+  {id:"example_hiv_pseudovirus",agentName:"HIV-1 pseudovirus (VSV-G, single-round, replication-defective)",riskGroup:"RG3",isGMO:true,parentalOrg:"HIV-1",geneticMod:"env-deleted, VSV-G pseudotyped, single-round infection, replication-defective",replComp:"no",
+   procedures:[
+     {name:"TZM-bl cell culture and maintenance",aerosol:"low",volume:"low",concentration:"low"},
+     {name:"Infection with pseudovirus (MOI 0.1–1, 24-well plates in BSC-II)",aerosol:"moderate",volume:"low",concentration:"moderate"},
+     {name:"Incubation 48–72h (sealed plates)",aerosol:"low",volume:"low",concentration:"low"},
+     {name:"Cell lysis and luciferase assay",aerosol:"low",volume:"low",concentration:"low"}
+   ],
+   modFactors:{volume:"decrease",concentration:"neutral",frequency:"increase",aerosol:"decrease",stability:"decrease",experience:"decrease",supervision:"neutral",infrastructure:"decrease",incidents:"decrease"},
+   justification:"Single-round replication defect, cannot spread between cells. Small volumes (5–10 mL), BSC-contained. RG3* + Moderate PSR → BSL-2. Standard BSL-2 proportionate.",
+   reviewer:"Dr. Maria García",institution:"University of Valladolid",reviewDate:"2025-03-15",status:"final",createdAt:"2025-03-15T09:00:00Z",updatedAt:"2025-03-15T13:00:00Z",version:"1.0.0"},
+  {id:"example_aav_production",agentName:"Recombinant AAV serotype 2 (dystrophin gene therapy vector)",riskGroup:"RG2",isGMO:true,parentalOrg:"AAV2 (wild-type)",geneticMod:"Recombinant AAV2, rep/cap deleted, dystrophin transgene, produced via triple transfection",replComp:"no",
+   procedures:[
+     {name:"Triple transfection of HEK293T cells",aerosol:"moderate",volume:"high",concentration:"low"},
+     {name:"Cell lysis (freeze-thaw or detergent)",aerosol:"moderate",volume:"high",concentration:"moderate"},
+     {name:"Clarification centrifugation (4000 rpm)",aerosol:"low",volume:"high",concentration:"moderate"},
+     {name:"Iodixanol gradient ultracentrifugation",aerosol:"high",volume:"moderate",concentration:"high"},
+     {name:"Concentration/diafiltration (Amicon, 500 mL → 2 mL)",aerosol:"moderate",volume:"high",concentration:"high"}
+   ],
+   modFactors:{volume:"increase",concentration:"increase",frequency:"neutral",aerosol:"increase",stability:"increase",experience:"decrease",supervision:"decrease",infrastructure:"neutral",incidents:"decrease"},
+   justification:"Nominally RG2 but AAV extreme environmental stability (resistant to temp, pH, detergents) + 25 nm particle remains aerosolized + 10¹² particles/mL + 500 mL volume. 4 unfavorable factors → escalation. BSL-2+ with some protocols recommending BSL-3 for large-scale AAV.",
+   reviewer:"Dr. John Doe",institution:"University Research Institute",reviewDate:"2025-04-20",status:"final",createdAt:"2025-04-20T08:00:00Z",updatedAt:"2025-04-20T16:00:00Z",version:"1.0.0"},
+  {id:"example_crispr_rnp",agentName:"CRISPR-Cas9 RNP electroporation (non-viral delivery)",riskGroup:"RG1",isGMO:false,parentalOrg:"",geneticMod:"",replComp:"",
+   procedures:[
+     {name:"Cas9–gRNA ribonucleoprotein complex preparation",aerosol:"low",volume:"low",concentration:"low"},
+     {name:"Electroporation (closed cuvette system, <5 mL)",aerosol:"low",volume:"low",concentration:"low"},
+     {name:"Post-electroporation cell recovery",aerosol:"low",volume:"low",concentration:"low"}
+   ],
+   modFactors:{volume:"decrease",concentration:"decrease",frequency:"neutral",aerosol:"decrease",stability:"decrease",experience:"decrease",supervision:"neutral",infrastructure:"decrease",incidents:"decrease"},
+   justification:"Non-replicative protein–RNA complex. Transient intracellular activity, rapid degradation. No infectious capability. Closed electroporation. RG1 + Low PSR → BSL-1 with enhanced practices.",
+   reviewer:"Dr. Ana López",institution:"University of Valladolid",reviewDate:"2025-05-05",status:"final",createdAt:"2025-05-05T09:00:00Z",updatedAt:"2025-05-05T11:00:00Z",version:"1.0.0"}
+];
+
 // ── Load data from localStorage (shared with platform.html) ──
 function loadAll(){
   const idx=JSON.parse(localStorage.getItem("psr:index")||"[]");
-  return idx.map(id=>{try{return JSON.parse(localStorage.getItem(`psr:${id}`))}catch{return null}}).filter(Boolean);
+  const stored=idx.map(id=>{try{return JSON.parse(localStorage.getItem(`psr:${id}`))}catch{return null}}).filter(Boolean);
+  // If no stored data, use built-in examples
+  if(stored.length===0) return BUILTIN_EXAMPLES;
+  return stored;
 }
 
 // ── Import from CSV/JSON ──
@@ -107,21 +182,140 @@ function cohensKappa(ratings1, ratings2){
 function countBy(arr,fn){const m={};arr.forEach(x=>{const k=fn(x);m[k]=(m[k]||0)+1});return m}
 function pct(n,total){return total>0?Math.round(n/total*100):0}
 
-// ── Charts management ──
+// ── Charts: use Chart.js if available, SVG fallback otherwise ──
 const charts={};
+const hasChart=()=>typeof Chart!=="undefined"&&!window._noChart;
+
 function makeChart(id,cfg){
-  if(charts[id]){charts[id].destroy()}
-  const ctx=document.getElementById(id);
-  if(!ctx)return;
-  const dark=matchMedia("(prefers-color-scheme:dark)").matches;
-  cfg.options=cfg.options||{};
-  cfg.options.responsive=true;cfg.options.maintainAspectRatio=false;
-  cfg.options.plugins=cfg.options.plugins||{};
-  cfg.options.plugins.legend=cfg.options.plugins.legend||{labels:{color:dark?"#a0a098":"#666",font:{size:11}}};
-  if(cfg.options.scales){
-    Object.values(cfg.options.scales).forEach(s=>{s.ticks=s.ticks||{};s.ticks.color=dark?"#a0a098":"#666";s.grid=s.grid||{};s.grid.color=dark?"rgba(255,255,255,.08)":"rgba(0,0,0,.06)"});
+  if(hasChart()){
+    if(charts[id])charts[id].destroy();
+    const ctx=document.getElementById(id);if(!ctx)return;
+    const dark=matchMedia("(prefers-color-scheme:dark)").matches;
+    cfg.options=cfg.options||{};cfg.options.responsive=true;cfg.options.maintainAspectRatio=false;
+    cfg.options.plugins=cfg.options.plugins||{};
+    cfg.options.plugins.legend=cfg.options.plugins.legend||{labels:{color:dark?"#a0a098":"#666",font:{size:11}}};
+    if(cfg.options.scales)Object.values(cfg.options.scales).forEach(s=>{s.ticks=s.ticks||{};s.ticks.color=dark?"#a0a098":"#666";s.grid=s.grid||{};s.grid.color=dark?"rgba(255,255,255,.08)":"rgba(0,0,0,.06)"});
+    charts[id]=new Chart(ctx,cfg);
   }
-  charts[id]=new Chart(ctx,cfg);
+}
+
+// SVG bar chart generator (fallback)
+function svgBar(data,options={}){
+  const w=options.width||520,h=options.height||220,pad=50,barGap=8;
+  const labels=data.labels||[];const datasets=data.datasets||[];
+  const allVals=datasets.flatMap(ds=>ds.data);const maxV=Math.max(...allVals,1);
+  const stacked=options.stacked;const horizontal=options.horizontal;
+  const nGroups=labels.length;const nSets=datasets.length;
+  const chartW=w-pad*2,chartH=h-pad-30;
+
+  let svg=`<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:${h}px;font-family:-apple-system,sans-serif">`;
+
+  if(horizontal){
+    const barH=Math.min(28,chartH/nGroups-barGap);
+    labels.forEach((label,i)=>{
+      const y=pad+i*(barH+barGap);
+      svg+=`<text x="${pad-6}" y="${y+barH/2+4}" text-anchor="end" font-size="10" fill="var(--text2)">${label.length>14?label.slice(0,14)+'…':label}</text>`;
+      let xOff=0;
+      datasets.forEach((ds,di)=>{
+        const val=ds.data[i]||0;
+        const bw=stacked?(val/maxV)*chartW:(val/maxV)*chartW;
+        svg+=`<rect x="${pad+(stacked?xOff:0)}" y="${y}" width="${Math.max(bw,0)}" height="${barH}" rx="3" fill="${ds.backgroundColor||(Array.isArray(ds.backgroundColor)?ds.backgroundColor[i]:'#534ab7')}" opacity="0.85"/>`;
+        if(val>0)svg+=`<text x="${pad+(stacked?xOff:0)+bw+4}" y="${y+barH/2+4}" font-size="10" fill="var(--text2)">${val}</text>`;
+        if(stacked)xOff+=bw;
+      });
+    });
+    // Legend
+    let lx=pad;datasets.forEach((ds,di)=>{
+      svg+=`<rect x="${lx}" y="${h-18}" width="10" height="10" rx="2" fill="${typeof ds.backgroundColor==='string'?ds.backgroundColor:'#999'}"/>`;
+      svg+=`<text x="${lx+14}" y="${h-9}" font-size="10" fill="var(--text2)">${ds.label||''}</text>`;
+      lx+=(ds.label||'').length*6+30;
+    });
+  } else {
+    const groupW=chartW/nGroups;const barW=stacked?groupW*0.6:Math.min(groupW*0.6/nSets,40);
+    // Y axis
+    for(let i=0;i<=4;i++){
+      const y=pad+chartH-chartH*i/4;const v=Math.round(maxV*i/4);
+      svg+=`<line x1="${pad}" y1="${y}" x2="${w-10}" y2="${y}" stroke="var(--border)" stroke-width="0.5"/>`;
+      svg+=`<text x="${pad-6}" y="${y+4}" text-anchor="end" font-size="10" fill="var(--text3)">${v}</text>`;
+    }
+    labels.forEach((label,i)=>{
+      const gx=pad+i*groupW+groupW/2;
+      svg+=`<text x="${gx}" y="${h-10}" text-anchor="middle" font-size="10" fill="var(--text2)">${label}</text>`;
+      datasets.forEach((ds,di)=>{
+        const val=ds.data[i]||0;
+        const bh=(val/maxV)*chartH;
+        const bx=stacked?gx-barW/2:gx-barW*nSets/2+di*barW;
+        const by=pad+chartH-bh;
+        const color=Array.isArray(ds.backgroundColor)?ds.backgroundColor[i]:ds.backgroundColor||'#534ab7';
+        svg+=`<rect x="${bx}" y="${by}" width="${barW-2}" height="${bh}" rx="3" fill="${color}" opacity="0.85"/>`;
+        if(val>0&&bh>14)svg+=`<text x="${bx+barW/2-1}" y="${by+12}" text-anchor="middle" font-size="9" fill="#fff" font-weight="500">${val}</text>`;
+      });
+    });
+    // Legend
+    if(datasets.length>1){let lx=pad;datasets.forEach(ds=>{
+      svg+=`<rect x="${lx}" y="${pad-16}" width="10" height="10" rx="2" fill="${typeof ds.backgroundColor==='string'?ds.backgroundColor:'#999'}"/>`;
+      svg+=`<text x="${lx+14}" y="${pad-7}" font-size="10" fill="var(--text2)">${ds.label||''}</text>`;
+      lx+=(ds.label||'').length*6+30;
+    })}
+  }
+  svg+=`</svg>`;return svg;
+}
+
+function svgDonut(data,options={}){
+  const w=260,h=220,cx=110,cy=100,r=70,r2=45;
+  const labels=data.labels||[];const vals=data.datasets[0].data;const colors=data.datasets[0].backgroundColor;
+  const total=vals.reduce((s,v)=>s+v,0);if(total===0)return`<div style="text-align:center;padding:32px;color:var(--text3)">No data</div>`;
+  let svg=`<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:${h}px;font-family:-apple-system,sans-serif">`;
+  let angle=-Math.PI/2;
+  vals.forEach((v,i)=>{
+    const sweep=v/total*Math.PI*2;
+    const x1=cx+r*Math.cos(angle),y1=cy+r*Math.sin(angle);
+    const x2=cx+r*Math.cos(angle+sweep),y2=cy+r*Math.sin(angle+sweep);
+    const ix1=cx+r2*Math.cos(angle+sweep),iy1=cy+r2*Math.sin(angle+sweep);
+    const ix2=cx+r2*Math.cos(angle),iy2=cy+r2*Math.sin(angle);
+    const large=sweep>Math.PI?1:0;
+    svg+=`<path d="M${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} L${ix1},${iy1} A${r2},${r2} 0 ${large} 0 ${ix2},${iy2} Z" fill="${colors[i]||'#999'}" opacity="0.85"/>`;
+    angle+=sweep;
+  });
+  // Legend on right
+  labels.forEach((l,i)=>{
+    const ly=30+i*20;
+    svg+=`<rect x="${cx+r+16}" y="${ly}" width="10" height="10" rx="2" fill="${colors[i]||'#999'}"/>`;
+    svg+=`<text x="${cx+r+30}" y="${ly+9}" font-size="10" fill="var(--text2)">${l} (${vals[i]})</text>`;
+  });
+  svg+=`</svg>`;return svg;
+}
+
+function svgLine(data,options={}){
+  const w=520,h=200,pad=50;const labels=data.labels||[];const ds=data.datasets||[];
+  const allVals=ds.flatMap(d=>d.data);const maxV=Math.max(...allVals,1);
+  const chartW=w-pad*2,chartH=h-pad-20;
+  let svg=`<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:${h}px;font-family:-apple-system,sans-serif">`;
+  // Grid
+  for(let i=0;i<=4;i++){const y=pad+chartH-chartH*i/4;svg+=`<line x1="${pad}" y1="${y}" x2="${w-10}" y2="${y}" stroke="var(--border)" stroke-width="0.5"/>`;svg+=`<text x="${pad-6}" y="${y+4}" text-anchor="end" font-size="9" fill="var(--text3)">${Math.round(maxV*i/4)}</text>`}
+  // X labels
+  labels.forEach((l,i)=>{const x=pad+i*chartW/(labels.length-1||1);svg+=`<text x="${x}" y="${h-4}" text-anchor="middle" font-size="9" fill="var(--text2)">${l}</text>`});
+  // Lines
+  ds.forEach(d=>{
+    const pts=d.data.map((v,i)=>{const x=pad+i*chartW/(labels.length-1||1);const y=pad+chartH-(v/maxV)*chartH;return`${x},${y}`});
+    svg+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${d.borderColor||d.backgroundColor||'#534ab7'}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
+    d.data.forEach((v,i)=>{const x=pad+i*chartW/(labels.length-1||1);const y=pad+chartH-(v/maxV)*chartH;svg+=`<circle cx="${x}" cy="${y}" r="3.5" fill="${d.borderColor||'#534ab7'}" stroke="#fff" stroke-width="1.5"/>`});
+  });
+  if(ds.length>1){let lx=pad;ds.forEach(d=>{svg+=`<rect x="${lx}" y="${pad-16}" width="10" height="10" rx="2" fill="${d.borderColor||d.backgroundColor||'#999'}"/><text x="${lx+14}" y="${pad-7}" font-size="10" fill="var(--text2)">${d.label||''}</text>`;lx+=(d.label||'').length*6+30})}
+  svg+=`</svg>`;return svg;
+}
+
+// Wrapper: if Chart.js is available, use canvas; otherwise inject SVG
+function chartOrSVG(id,cfg){
+  if(hasChart()){return`<div style="position:relative;height:260px"><canvas id="${id}"></canvas></div>`}
+  // Generate SVG immediately
+  const type=cfg.type;
+  if(type==="doughnut"||type==="pie")return svgDonut(cfg.data,cfg.options||{});
+  if(type==="line")return svgLine(cfg.data,cfg.options||{});
+  const opts={};
+  if(cfg.options?.indexAxis==="y")opts.horizontal=true;
+  if(cfg.options?.scales?.x?.stacked||cfg.options?.scales?.y?.stacked)opts.stacked=true;
+  return svgBar(cfg.data,opts);
 }
 
 // ── Colors ──
@@ -142,13 +336,24 @@ function init(){
 }
 
 function render(){
+  const isBuiltin=assessments===BUILTIN_EXAMPLES||assessments.some(a=>a.id&&a.id.startsWith("example_"));
+  const storedCount=JSON.parse(localStorage.getItem("psr:index")||"[]").length;
+  const usingBuiltin=storedCount===0;
+
   let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px">
-    <div><h1>PSR analytics</h1><p style="font-size:13px;color:var(--text2)">Data exploitation module · ${assessments.length} assessments loaded</p></div>
-    <div style="display:flex;gap:8px"><a href="platform.html" class="btn bo">← Platform</a>
+    <div><h1>PSR analytics</h1><p style="font-size:13px;color:var(--text2)">Data exploitation module · ${assessments.length} assessments loaded${usingBuiltin?" (built-in examples)":""}</p></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><a href="platform.html" class="btn bo">← Platform</a>
     <button class="btn bo" onclick="document.getElementById('csvInput').click()">Import CSV/JSON</button>
     <button class="btn bs" onclick="exportFullCSV()">Export dataset</button>
     <input type="file" id="csvInput" accept=".csv,.json" style="display:none" onchange="handleImport(this)">
     </div></div>`;
+
+  if(usingBuiltin){
+    h+=`<div class="note" style="background:var(--accent-bg);color:var(--purple-t);margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+      <span>Showing built-in examples from the manuscript (Case Studies 1–6). Create assessments in the Platform or import your own data to replace these.</span>
+      <button class="btn bp" style="font-size:12px;padding:6px 14px" onclick="persistExamples()">Save examples to browser</button>
+    </div>`;
+  }
 
   h+=`<div class="tab-row">`;
   ["overview","distributions","modulating_factors","irr_extended","risk_patterns","temporal"].forEach(t=>{
@@ -201,8 +406,8 @@ function rOverview(){
   </div>`;
 
   h+=`<div class="grid2">
-    <div class="card"><h3>BSL assignment distribution</h3><div class="chart-wrap"><canvas id="ch-bsl"></canvas></div></div>
-    <div class="card"><h3>Risk Group distribution</h3><div class="chart-wrap"><canvas id="ch-rg"></canvas></div></div>
+    <div class="card"><h3>BSL assignment distribution</h3>${chartOrSVG("ch-bsl",{type:"doughnut",data:{labels:Object.keys(countBy(computed_all,a=>a.bsl)),datasets:[{data:Object.values(countBy(computed_all,a=>a.bsl)),backgroundColor:Object.keys(countBy(computed_all,a=>a.bsl)).map(b=>COLORS.bsl[b]||"#999")}]}})}</div>
+    <div class="card"><h3>Risk Group distribution</h3>${chartOrSVG("ch-rg",{type:"doughnut",data:{labels:Object.keys(countBy(computed_all,a=>a.erg||a.riskGroup)),datasets:[{data:Object.values(countBy(computed_all,a=>a.erg||a.riskGroup)),backgroundColor:Object.keys(countBy(computed_all,a=>a.erg||a.riskGroup)).map(r=>COLORS.rg[r]||"#999")}]}})}</div>
   </div>`;
 
   h+=`<div class="card"><h3>Most assessed agents</h3>`;
@@ -218,6 +423,7 @@ function rOverview(){
 }
 
 function renderOverviewCharts(){
+  if(!hasChart())return;
   const bslDist=countBy(computed_all,a=>a.bsl);
   makeChart("ch-bsl",{type:"doughnut",data:{labels:Object.keys(bslDist),datasets:[{data:Object.values(bslDist),backgroundColor:Object.keys(bslDist).map(b=>COLORS.bsl[b]||"#999")}]},options:{plugins:{legend:{position:"right"}}}});
   const rgDist=countBy(computed_all,a=>a.erg||a.riskGroup);
@@ -228,32 +434,30 @@ function renderOverviewCharts(){
 // DISTRIBUTIONS TAB
 // ══════════════════════════════════════════════
 function rDistributions(){
+  const psrDist=countBy(computed_all,a=>a.ap);
+  const before=countBy(computed_all,a=>a.mx);const after=countBy(computed_all,a=>a.ap);
+  const allProcs=[];computed_all.forEach(a=>{(a.procedures||[]).forEach((p,j)=>{if(a.pp&&a.pp[j])allProcs.push({psr:a.pp[j]})})});
+  const procPSR=countBy(allProcs,p=>p.psr);
+
   let h=`<div class="grid2">
-    <div class="card"><h3>PSR level distribution (max per assessment)</h3><div class="chart-wrap"><canvas id="ch-psr"></canvas></div></div>
-    <div class="card"><h3>PSR before vs after modulation</h3><div class="chart-wrap"><canvas id="ch-esc"></canvas></div></div>
+    <div class="card"><h3>PSR level distribution</h3>${chartOrSVG("ch-psr",{type:"bar",data:{labels:["Low","Moderate","High"],datasets:[{label:"Assessments",data:["Low","Moderate","High"].map(l=>psrDist[l]||0),backgroundColor:["Low","Moderate","High"].map(l=>COLORS.psr[l])}]},options:{scales:{y:{beginAtZero:true}}}})}</div>
+    <div class="card"><h3>PSR before vs after modulation</h3>${chartOrSVG("ch-esc",{type:"bar",data:{labels:["Low","Moderate","High"],datasets:[{label:"Before modulation",data:["Low","Moderate","High"].map(l=>before[l]||0),backgroundColor:"rgba(133,183,235,0.7)"},{label:"After modulation",data:["Low","Moderate","High"].map(l=>after[l]||0),backgroundColor:"rgba(239,159,39,0.8)"}]},options:{scales:{y:{beginAtZero:true}}}})}</div>
   </div>`;
-  h+=`<div class="card"><h3>All procedures by PSR level</h3><div class="chart-wrap"><canvas id="ch-allproc"></canvas></div></div>`;
+  h+=`<div class="card"><h3>All procedures by PSR level</h3>${chartOrSVG("ch-allproc",{type:"bar",data:{labels:["Low","Moderate","High"],datasets:[{label:"Procedures",data:["Low","Moderate","High"].map(l=>procPSR[l]||0),backgroundColor:["Low","Moderate","High"].map(l=>COLORS.psr[l])}]},options:{scales:{y:{beginAtZero:true}}}})}</div>`;
   return h;
 }
 
-function renderDistCharts(){
-  const psrDist=countBy(computed_all,a=>a.ap);
-  makeChart("ch-psr",{type:"bar",data:{labels:["Low","Moderate","High"],datasets:[{label:"Assessments",data:["Low","Moderate","High"].map(l=>psrDist[l]||0),backgroundColor:["Low","Moderate","High"].map(l=>COLORS.psr[l])}]},options:{scales:{y:{beginAtZero:true}},plugins:{legend:{display:false}}}});
-
-  const before=countBy(computed_all,a=>a.mx);const after=countBy(computed_all,a=>a.ap);
-  makeChart("ch-esc",{type:"bar",data:{labels:["Low","Moderate","High"],datasets:[{label:"Before modulation",data:["Low","Moderate","High"].map(l=>before[l]||0),backgroundColor:"rgba(133,183,235,0.6)"},{label:"After modulation",data:["Low","Moderate","High"].map(l=>after[l]||0),backgroundColor:"rgba(239,159,39,0.8)"}]},options:{scales:{y:{beginAtZero:true}}}});
-
-  const allProcs=[];computed_all.forEach((a,i)=>{(a.procedures||[]).forEach((p,j)=>{if(a.pp[j])allProcs.push({name:p.name||`Proc ${j+1}`,psr:a.pp[j]})})});
-  const procPSR=countBy(allProcs,p=>p.psr);
-  makeChart("ch-allproc",{type:"bar",data:{labels:["Low","Moderate","High"],datasets:[{label:"Procedures",data:["Low","Moderate","High"].map(l=>procPSR[l]||0),backgroundColor:["Low","Moderate","High"].map(l=>COLORS.psr[l])}]},options:{scales:{y:{beginAtZero:true}},plugins:{legend:{display:false}}}});
-}
+function renderDistCharts(){if(!hasChart())return;}
 
 // ══════════════════════════════════════════════
 // MODULATING FACTORS TAB
 // ══════════════════════════════════════════════
 function rModFactors(){
-  let h=`<div class="card"><h3>Modulating factor scoring pattern</h3><p class="sub">How often each factor is scored as favorable, neutral, or unfavorable across all assessments.</p>
-    <div class="chart-wrap tall"><canvas id="ch-mf"></canvas></div></div>`;
+  const fav=[],neu=[],unfav=[];
+  MF_IDS.forEach(id=>{let f=0,n=0,u=0;computed_all.forEach(a=>{const v=(a.modFactors||{})[id];if(v==="decrease")f++;else if(v==="increase")u++;else n++});fav.push(f);neu.push(n);unfav.push(u)});
+
+  let h=`<div class="card"><h3>Modulating factor scoring pattern</h3><p class="sub">How often each factor is scored across all assessments.</p>
+    ${chartOrSVG("ch-mf",{type:"bar",data:{labels:MF_LABELS,datasets:[{label:"Favorable",data:fav,backgroundColor:"rgba(151,196,89,0.7)"},{label:"Neutral",data:neu,backgroundColor:"rgba(180,178,169,0.5)"},{label:"Unfavorable",data:unfav,backgroundColor:"rgba(226,75,74,0.7)"}]},options:{indexAxis:"y",scales:{x:{beginAtZero:true,stacked:true}}}})}</div>`;
   
   h+=`<div class="card"><h3>Escalation drivers</h3><p class="sub">Among assessments where ≥2 unfavorable factors triggered BSL escalation, which factors are most commonly unfavorable?</p>`;
   const escalated=computed_all.filter(a=>a.ap!==a.mx);
@@ -267,30 +471,20 @@ function rModFactors(){
   }
   h+=`</div>`;
 
-  h+=`<div class="card"><h3>Factor correlation with BSL elevation</h3><p class="sub">For each factor, comparison of mean unfavorable rate between standard BSL and elevated BSL assignments.</p>
-    <div class="chart-wrap tall"><canvas id="ch-mfcorr"></canvas></div></div>`;
+  h+=`<div class="card"><h3>Factor correlation with BSL elevation</h3><p class="sub">Unfavorable rate comparison: standard vs elevated BSL.</p>`;
+  const elevated2=computed_all.filter(a=>["BSL-2+","BSL-2+/BSL-3","BSL-3","BSL-4"].includes(a.bsl));
+  const standard2=computed_all.filter(a=>["BSL-1","BSL-1*","BSL-2","BSL-2**"].includes(a.bsl));
+  const elevRate2=[],stdRate2=[];
+  MF_IDS.forEach(id=>{
+    elevRate2.push(elevated2.length>0?Math.round(elevated2.filter(a=>(a.modFactors||{})[id]==="increase").length/elevated2.length*100):0);
+    stdRate2.push(standard2.length>0?Math.round(standard2.filter(a=>(a.modFactors||{})[id]==="increase").length/standard2.length*100):0);
+  });
+  h+=chartOrSVG("ch-mfcorr",{type:"bar",data:{labels:MF_LABELS,datasets:[{label:"Standard BSL",data:stdRate2,backgroundColor:"rgba(133,183,235,0.6)"},{label:"Elevated BSL",data:elevRate2,backgroundColor:"rgba(226,75,74,0.7)"}]},options:{indexAxis:"y",scales:{x:{beginAtZero:true}}}});
+  h+=`</div>`;
   return h;
 }
 
-function renderMFCharts(){
-  const fav=[],neu=[],unfav=[];
-  MF_IDS.forEach(id=>{
-    let f=0,n=0,u=0;
-    computed_all.forEach(a=>{const v=(a.modFactors||{})[id];if(v==="decrease")f++;else if(v==="increase")u++;else n++});
-    fav.push(f);neu.push(n);unfav.push(u);
-  });
-  makeChart("ch-mf",{type:"bar",data:{labels:MF_LABELS,datasets:[{label:"Favorable",data:fav,backgroundColor:"rgba(151,196,89,0.7)"},{label:"Neutral",data:neu,backgroundColor:"rgba(180,178,169,0.5)"},{label:"Unfavorable",data:unfav,backgroundColor:"rgba(226,75,74,0.7)"}]},options:{indexAxis:"y",scales:{x:{beginAtZero:true,stacked:true},y:{}},plugins:{legend:{position:"bottom"}}}});
-
-  // Factor correlation with BSL elevation
-  const elevated=computed_all.filter(a=>["BSL-2+","BSL-2+/BSL-3","BSL-3","BSL-4"].includes(a.bsl));
-  const standard=computed_all.filter(a=>["BSL-1","BSL-1*","BSL-2","BSL-2**"].includes(a.bsl));
-  const elevRate=[],stdRate=[];
-  MF_IDS.forEach(id=>{
-    elevRate.push(elevated.length>0?Math.round(elevated.filter(a=>(a.modFactors||{})[id]==="increase").length/elevated.length*100):0);
-    stdRate.push(standard.length>0?Math.round(standard.filter(a=>(a.modFactors||{})[id]==="increase").length/standard.length*100):0);
-  });
-  makeChart("ch-mfcorr",{type:"bar",data:{labels:MF_LABELS,datasets:[{label:"Standard BSL (1, 1*, 2, 2**)",data:stdRate,backgroundColor:"rgba(133,183,235,0.6)"},{label:"Elevated BSL (2+, 3, 4)",data:elevRate,backgroundColor:"rgba(226,75,74,0.7)"}]},options:{indexAxis:"y",scales:{x:{beginAtZero:true,max:100,ticks:{callback:v=>v+"%"}}},plugins:{legend:{position:"bottom"}}}});
-}
+function renderMFCharts(){if(!hasChart())return;}
 
 // ══════════════════════════════════════════════
 // IRR EXTENDED TAB
@@ -364,8 +558,12 @@ function renderIRRCharts(){}
 // RISK PATTERNS TAB
 // ══════════════════════════════════════════════
 function rRiskPatterns(){
-  let h=`<div class="card"><h3>Agent–BSL heatmap</h3><p class="sub">Frequency of BSL assignments by effective Risk Group.</p>
-    <div class="chart-wrap"><canvas id="ch-heatmap"></canvas></div></div>`;
+  const rgs=["RG1","RG2","RG3","RG3*","RG4"];
+  const bsls=[...new Set(computed_all.map(a=>a.bsl))].sort();
+  const datasets=bsls.map(bsl=>({label:bsl,data:rgs.map(rg=>computed_all.filter(a=>(a.erg||a.riskGroup)===rg&&a.bsl===bsl).length),backgroundColor:COLORS.bsl[bsl]||"#999"}));
+
+  let h=`<div class="card"><h3>Agent–BSL heatmap</h3><p class="sub">BSL assignments by effective Risk Group.</p>
+    ${chartOrSVG("ch-heatmap",{type:"bar",data:{labels:rgs,datasets},options:{scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}})}</div>`;
   
   h+=`<div class="card"><h3>Procedure type by PSR level</h3><p class="sub">Most common procedure names grouped by their PSR classification.</p>`;
   const procByPSR={Low:[],Moderate:[],High:[]};
@@ -381,50 +579,52 @@ function rRiskPatterns(){
   });
   h+=`</div>`;
 
-  h+=`<div class="card"><h3>GMO vs non-GMO risk profile</h3><div class="chart-wrap"><canvas id="ch-gmo"></canvas></div></div>`;
+  h+=`<div class="card"><h3>GMO vs non-GMO risk profile</h3>`;
+  const gmo2=computed_all.filter(a=>a.isGMO);const ngmo2=computed_all.filter(a=>!a.isGMO);
+  const psrLevels2=["Low","Moderate","High"];
+  h+=chartOrSVG("ch-gmo",{type:"bar",data:{labels:psrLevels2,datasets:[{label:"GMO",data:psrLevels2.map(l=>gmo2.filter(a=>a.ap===l).length),backgroundColor:"rgba(127,119,221,0.7)"},{label:"Non-GMO",data:psrLevels2.map(l=>ngmo2.filter(a=>a.ap===l).length),backgroundColor:"rgba(93,202,165,0.7)"}]},options:{scales:{y:{beginAtZero:true}}}});
+  h+=`</div>`;
   return h;
 }
 
-function renderRPCharts(){
-  // Heatmap as grouped bar
-  const rgs=["RG1","RG2","RG3","RG3*","RG4"];
-  const bsls=[...new Set(computed_all.map(a=>a.bsl))].sort();
-  const datasets=bsls.map(bsl=>({label:bsl,data:rgs.map(rg=>computed_all.filter(a=>(a.erg||a.riskGroup)===rg&&a.bsl===bsl).length),backgroundColor:COLORS.bsl[bsl]||"#999"}));
-  makeChart("ch-heatmap",{type:"bar",data:{labels:rgs,datasets},options:{scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}},plugins:{legend:{position:"bottom"}}}});
-
-  // GMO comparison
-  const gmo=computed_all.filter(a=>a.isGMO);const ngmo=computed_all.filter(a=>!a.isGMO);
-  const psrLevels=["Low","Moderate","High"];
-  makeChart("ch-gmo",{type:"bar",data:{labels:psrLevels,datasets:[{label:"GMO",data:psrLevels.map(l=>gmo.filter(a=>a.ap===l).length),backgroundColor:"rgba(127,119,221,0.7)"},{label:"Non-GMO",data:psrLevels.map(l=>ngmo.filter(a=>a.ap===l).length),backgroundColor:"rgba(93,202,165,0.7)"}]},options:{scales:{y:{beginAtZero:true}}}});
-}
+function renderRPCharts(){if(!hasChart())return;}
 
 // ══════════════════════════════════════════════
 // TEMPORAL TAB
 // ══════════════════════════════════════════════
 function rTemporal(){
-  let h=`<div class="card"><h3>Assessments over time</h3><div class="chart-wrap"><canvas id="ch-temporal"></canvas></div></div>`;
-  h+=`<div class="card"><h3>Cumulative assessments by institution</h3><div class="chart-wrap"><canvas id="ch-inst"></canvas></div></div>`;
-  return h;
-}
-
-function renderTemporalCharts(){
   const byMonth={};
   computed_all.forEach(a=>{const d=(a.reviewDate||a.createdAt||"").slice(0,7);if(d)byMonth[d]=(byMonth[d]||0)+1});
   const months=Object.keys(byMonth).sort();
-  makeChart("ch-temporal",{type:"line",data:{labels:months,datasets:[{label:"Assessments",data:months.map(m=>byMonth[m]),borderColor:"#534ab7",backgroundColor:"rgba(83,74,183,0.1)",fill:true,tension:0.3}]},options:{scales:{y:{beginAtZero:true}}}});
 
   const insts=[...new Set(computed_all.map(a=>a.institution).filter(Boolean))];
+  const colors=["#534ab7","#1d9e75","#ef9f27","#e24b4a","#85b7eb","#7f77dd"];
   const instData=insts.map((inst,i)=>{
     const byM={};computed_all.filter(a=>a.institution===inst).forEach(a=>{const d=(a.reviewDate||a.createdAt||"").slice(0,7);if(d)byM[d]=(byM[d]||0)+1});
     let cum=0;const data=months.map(m=>{cum+=(byM[m]||0);return cum});
-    const colors=["#534ab7","#1d9e75","#ef9f27","#e24b4a","#85b7eb","#7f77dd"];
-    return{label:inst,data,borderColor:colors[i%colors.length],fill:false,tension:0.3};
+    return{label:inst,data,borderColor:colors[i%colors.length],fill:false};
   });
-  makeChart("ch-inst",{type:"line",data:{labels:months,datasets:instData},options:{scales:{y:{beginAtZero:true}}}});
+
+  let h=`<div class="card"><h3>Assessments over time</h3>${chartOrSVG("ch-temporal",{type:"line",data:{labels:months,datasets:[{label:"Assessments",data:months.map(m=>byMonth[m]),borderColor:"#534ab7",backgroundColor:"rgba(83,74,183,0.1)",fill:true}]}})}</div>`;
+  h+=`<div class="card"><h3>Cumulative assessments by institution</h3>${chartOrSVG("ch-inst",{type:"line",data:{labels:months,datasets:instData}})}</div>`;
+  return h;
 }
+
+function renderTemporalCharts(){if(!hasChart())return;}
 
 // ── Helpers ──
 function bslPill(l){const m={"BSL-1":"green","BSL-1*":"green","BSL-2":"blue","BSL-2**":"blue","BSL-2+":"amber","BSL-2+/BSL-3":"amber","BSL-3":"red","BSL-4":"purple"};return`<span class="pill p-${m[l]||"gray"}">${l}</span>`}
+
+window.persistExamples=function(){
+  BUILTIN_EXAMPLES.forEach(ex=>{
+    if(!localStorage.getItem(`psr:${ex.id}`)){
+      localStorage.setItem(`psr:${ex.id}`,JSON.stringify(ex));
+      const idx=JSON.parse(localStorage.getItem("psr:index")||"[]");
+      if(!idx.includes(ex.id)){idx.push(ex.id);localStorage.setItem("psr:index",JSON.stringify(idx))}
+    }
+  });
+  init();
+};
 
 window.handleImport=function(input){
   const f=input.files[0];if(!f)return;

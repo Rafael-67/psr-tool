@@ -190,6 +190,37 @@ let D={agentName:'',riskGroup:'',isGMO:false,parentalOrg:'',geneticMod:'',replCo
   modFactors:{},justification:'',reviewer:'',reviewDate:'',triggers:'',addControls:''};
 MOD_FACTORS.forEach(f=>D.modFactors[f.id]='neutral');
 
+const EX_S3={agentName:'Third-generation SIN lentiviral vector (pLenti-CRISPR, HIV-1 backbone)',riskGroup:'RG3',isGMO:true,parentalOrg:'HIV-1',geneticMod:'Third-generation self-inactivating lentiviral vector. Split-genome packaging (4-plasmid system). Deletions: gag, pol, env, tat, rev, vif, vpr, vpu, nef. Replication-incompetent. Max recombination risk <10⁻⁸.',replComp:'no',
+  procedures:[
+    {name:'HEK293T transfection (T-175 flasks in BSC-II)',aerosol:'low',volume:'high',concentration:'low'},
+    {name:'Viral supernatant harvest (~120 mL, aspiration in BSC)',aerosol:'low',volume:'high',concentration:'low'},
+    {name:'Filtration 0.45 µm (syringe filter in BSC)',aerosol:'low',volume:'high',concentration:'low'},
+    {name:'Ultracentrifugation (SW32Ti, 25,000 rpm, 90 min, non-sealed rotor)',aerosol:'high',volume:'moderate',concentration:'high'},
+    {name:'Viral pellet resuspension (500 µL, high titer 10⁸ TU/mL in BSC)',aerosol:'moderate',volume:'low',concentration:'high'},
+    {name:'Aliquoting (50 µL, multichannel pipette, 10⁸ TU/mL)',aerosol:'low',volume:'low',concentration:'high'}
+  ],
+  modFactors:{volume:'increase',concentration:'increase',frequency:'increase',aerosol:'increase',stability:'decrease',experience:'decrease',supervision:'decrease',infrastructure:'increase',incidents:'decrease'},
+  justification:'Although the lentiviral vector is classified as RG3* (replication-defective GMO derived from HIV-1 RG3), high-speed ultracentrifugation (25,000 rpm, 90 min) of large volumes without sealed safety cups generates significant aerosol potential. Final titer 10⁸ TU/mL (1000× concentration). Four unfavorable modulating factors (frequency, scale, infrastructure, titer) trigger ≥2 escalation. BSL-2+ with respiratory protection is proportionate; standard BSL-2 insufficient, BSL-3 disproportionate given replication-defective status.',
+  reviewer:'Dr. John Doe (Biosafety Officer)',reviewDate:'2025-01-15',triggers:'Sealed rotor acquisition; new personnel; scale increase >200 mL; incident; annual review.',addControls:'Mandatory BSC-II all steps. N95 during centrifuge ops. Double gloves for centrifugation/resuspension. Sealed buckets to acquire. Tube opening only in BSC-II. Wait 10 min post-centrifugation. 10% bleach 20 min before autoclaving. Negative pressure lab. Training SOP-LV-2025-001.'};
+
+const EX_S4={agentName:'Mycobacterium tuberculosis complex (heat-inactivated specimens and purified DNA)',riskGroup:'RG3',isGMO:false,parentalOrg:'',geneticMod:'',replComp:'',
+  procedures:[
+    {name:'Receipt of heat-inactivated specimens (2–5 mL, sealed tubes)',aerosol:'low',volume:'low',concentration:'low'},
+    {name:'Automated DNA extraction (QIAcube in BSC, 200 µL, closed system)',aerosol:'low',volume:'low',concentration:'low'},
+    {name:'PCR setup (25 µL reaction, template DNA, pipetting in BSC)',aerosol:'low',volume:'low',concentration:'low'},
+    {name:'Thermal cycling (sealed PCR tubes, real-time PCR instrument)',aerosol:'low',volume:'low',concentration:'low'},
+    {name:'Result analysis (in silico, computer workstation)',aerosol:'low',volume:'low',concentration:'low'}
+  ],
+  modFactors:{volume:'decrease',concentration:'decrease',frequency:'increase',aerosol:'decrease',stability:'decrease',experience:'decrease',supervision:'neutral',infrastructure:'decrease',incidents:'decrease'},
+  justification:'Parental organism M. tuberculosis is RG3, but ALL specimens are heat-inactivated (56°C, 30 min) with validated culture-negative confirmation. No viable organisms handled. DNA extraction via closed automated system (QIAcube), small volumes (<5 mL), sealed PCR tubes. Only 1 unfavorable factor (daily frequency) — below ≥2 threshold. Risk: Moderate severity (inactivated RG3) × Rare exposure = LOW. Enhanced BSL-2 justified by proportionality, validated inactivation, and WHO/BMBL precedent.',
+  reviewer:'Dr. Robert Chen (Lab Director & BSO)',reviewDate:'2025-02-01',triggers:'Introduction of viable M. tb cultures (IMMEDIATE BSL-3 upgrade); extraction method change; inactivation failure; exposure incident; regulatory updates.',addControls:'CRITICAL: validated inactivation protocol (56°C, 30 min) with culture-negative confirmation. Annual spot checks. Mandatory BSC for specimen handling. QIAcube closed system. TB screening at hire/annually. Autoclave 121°C 30 min. Incident reporting with root cause analysis.'};
+
+function loadExample(which){
+  const ex=which==='s3'?EX_S3:EX_S4;
+  D={...JSON.parse(JSON.stringify(ex))};
+  step=0;render();
+}
+
 function classifyPSR(a,v,c){
   const s={l:0,m:0,h:0};
   [a,v,c].forEach(x=>{if(x==='low')s.l++;else if(x==='moderate')s.m++;else if(x==='high')s.h++});
@@ -212,6 +243,7 @@ function bslPill(level){const m={'BSL-1':'green','BSL-1*':'green','BSL-2':'blue'
 function render(){
   const subs=[t('step1sub'),t('step2sub'),t('step3sub'),t('step4sub'),t('step5sub'),t('step6sub'),t('step7sub'),t('step8sub')];
   let h=`<h1>${t('title')}</h1><p class="sub">${t('subtitle')}</p>`;
+  h+=`<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap"><button class="btn btn-outline" style="font-size:11px;padding:5px 12px" onclick="loadExample('s3')">Load Example S3: Lentiviral Vector</button><button class="btn btn-outline" style="font-size:11px;padding:5px 12px" onclick="loadExample('s4')">Load Example S4: M. tuberculosis</button></div>`;
   
   // Step bar
   h+=`<div class="steps-bar">`;

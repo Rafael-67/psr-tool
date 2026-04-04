@@ -100,6 +100,100 @@ function compute(d){
   return{erg,pp,mx,ap,u,f,bsl};
 }
 
+// Supplementary Examples S3 & S4
+const EXAMPLES=[
+  {
+    id:"example_s3_lentiviral",
+    agentName:"Third-generation SIN lentiviral vector (pLenti-CRISPR, HIV-1 backbone)",
+    riskGroup:"RG3",
+    isGMO:true,
+    parentalOrg:"HIV-1",
+    geneticMod:"Third-generation self-inactivating lentiviral vector. Split-genome packaging (4-plasmid system). Deletions: gag, pol, env, tat, rev, vif, vpr, vpu, nef. Replication-incompetent. Max recombination risk <10⁻⁸.",
+    replComp:"no",
+    procedures:[
+      {name:"HEK293T transfection (T-175 flasks in BSC-II)",aerosol:"low",volume:"high",concentration:"low"},
+      {name:"Viral supernatant harvest (~120 mL, aspiration in BSC)",aerosol:"low",volume:"high",concentration:"low"},
+      {name:"Filtration 0.45 µm (syringe filter in BSC)",aerosol:"low",volume:"high",concentration:"low"},
+      {name:"Ultracentrifugation (SW32Ti, 25,000 rpm, 90 min, non-sealed rotor)",aerosol:"high",volume:"moderate",concentration:"high"},
+      {name:"Viral pellet resuspension (500 µL, high titer 10⁸ TU/mL in BSC)",aerosol:"moderate",volume:"low",concentration:"high"},
+      {name:"Aliquoting (50 µL, multichannel pipette, 10⁸ TU/mL)",aerosol:"low",volume:"low",concentration:"high"}
+    ],
+    modFactors:{
+      volume:"increase",
+      concentration:"increase",
+      frequency:"increase",
+      aerosol:"increase",
+      stability:"decrease",
+      experience:"decrease",
+      supervision:"decrease",
+      infrastructure:"increase",
+      incidents:"decrease"
+    },
+    justification:"Although the lentiviral vector is classified as Risk Group 2 (RG3* due to replication-defective GMO derived from HIV-1 RG3), the specific procedures employed elevate exposure risk substantially beyond standard BSL-2 practices. The critical risk driver is high-speed ultracentrifugation (25,000 rpm for 90 minutes) of large volumes (4 × 30 mL) without sealed safety cups, generating significant aerosol potential. This is compounded by a final titer of 10⁸ TU/mL representing 1000-fold concentration.\n\nFour unfavorable modulating factors were identified: (1) procedural frequency (2×/week), (2) scale of operation (120–150 mL per run), (3) suboptimal infrastructure (no sealed rotor system), and (4) high titer final product (10⁸ TU/mL). Under the ≥2 factor escalation rule, containment enhancement is warranted.\n\nBSL-2+ assignment with respiratory protection during centrifugation, sealed rotors when available, and negative pressure is proportionate. Standard BSL-2 is insufficient due to aerosol risk; BSL-3 is disproportionate given replication-defective status and low environmental persistence.",
+    reviewer:"Dr. John Doe (Biosafety Officer)",
+    institution:"University Research Institute, Molecular Biology Dept.",
+    reviewDate:"2025-01-15",
+    triggers:"Acquisition of sealed rotor system (reassess BSL); new laboratory personnel; procedure modification (scale increase >200 mL); incident or exposure event; annual review (January 2026).",
+    addCtrl:"Mandatory BSC-II for ALL open manipulations. N95/FFP2 respiratory protection during ultracentrifuge loading/unloading. Double gloves during centrifugation and resuspension steps. Goggles mandatory during centrifuge operations. Sealed ultracentrifuge buckets to be acquired (budget approved). Tube opening ONLY inside BSC-II. Wait 10 min post-centrifugation before opening rotor. Chemical inactivation (10% bleach, 20 min) before autoclaving waste. Dedicated lab area with negative pressure (−0.03\" H₂O). Specific training program for lentiviral vector handling (SOP-LV-2025-001). Direct supervision for first 5 production runs of new operators.",
+    status:"final",
+    createdAt:"2025-01-15T09:00:00.000Z",
+    updatedAt:"2025-01-15T14:30:00.000Z",
+    version:V
+  },
+  {
+    id:"example_s4_mtb_inactivated",
+    agentName:"Mycobacterium tuberculosis complex (heat-inactivated specimens and purified DNA)",
+    riskGroup:"RG3",
+    isGMO:false,
+    parentalOrg:"",
+    geneticMod:"",
+    replComp:"",
+    procedures:[
+      {name:"Receipt of heat-inactivated specimens (2–5 mL, sealed tubes, biohazard bags)",aerosol:"low",volume:"low",concentration:"low"},
+      {name:"Automated DNA extraction (QIAcube in BSC, 200 µL input, closed system)",aerosol:"low",volume:"low",concentration:"low"},
+      {name:"PCR setup (25 µL reaction, template DNA, pipetting in BSC)",aerosol:"low",volume:"low",concentration:"low"},
+      {name:"Thermal cycling (sealed PCR tubes, real-time PCR instrument)",aerosol:"low",volume:"low",concentration:"low"},
+      {name:"Result analysis (in silico, computer workstation)",aerosol:"low",volume:"low",concentration:"low"}
+    ],
+    modFactors:{
+      volume:"decrease",
+      concentration:"decrease",
+      frequency:"increase",
+      aerosol:"decrease",
+      stability:"decrease",
+      experience:"decrease",
+      supervision:"neutral",
+      infrastructure:"decrease",
+      incidents:"decrease"
+    },
+    justification:"The parental organism (Mycobacterium tuberculosis) is classified as Risk Group 3, and viable cultures would ordinarily require BSL-3 containment. However, this assessment applies PSR principles to justify proportionate containment based on actual exposure risk rather than automatic RG-BSL mapping.\n\nCritical risk mitigation: (1) ALL specimens are heat-inactivated (56°C, 30 min) with validated culture-negative confirmation prior to laboratory receipt — no viable organisms handled; (2) DNA extraction uses closed automated systems (QIAcube) with minimal aerosol generation; (3) working volumes are small (<5 mL per sample); (4) PCR amplification in sealed tubes; (5) no cultivation, concentration, or manipulation of viable M. tuberculosis.\n\nPSR assessment: Low classification (minimal aerosol, small volumes, inactivated material). Only 1 unfavorable factor (daily diagnostic frequency) — insufficient for ≥2 escalation rule. Risk matrix: Moderate severity (inactivated RG3 material) × Rare exposure = LOW overall risk.\n\nEnhanced BSL-2 (not BSL-3) is justified by: proportionality principle, validated inactivation with culture-negative confirmation, WHO/BMBL precedent permitting reduced containment for inactivated RG3 materials.",
+    reviewer:"Dr. Robert Chen (Laboratory Director & Biosafety Officer)",
+    institution:"Clinical Diagnostics Laboratory, Infectious Disease Center",
+    reviewDate:"2025-02-01",
+    triggers:"Introduction of viable M. tuberculosis cultures (IMMEDIATE BSL-3 upgrade required); change in extraction method; inactivation validation failure (culture-positive result); incident involving potential exposure; scale increase or change in sample types; new regulatory guidance on inactivated RG3 materials; personnel or facility changes.",
+    addCtrl:"CRITICAL: validated inactivation protocol (56°C, 30 min) with documented culture-negative confirmation and chain of custody for ALL specimens. Annual culture-negative spot checks on 'inactivated' specimens. Mandatory Class II BSC for all specimen handling. Automated closed-system DNA extraction (QIAcube). BSL-2 competency documented for all personnel. Molecular diagnostics certification required. TB screening at hire and annually. Autoclave waste 30 min at 121°C. Incident reporting with root cause analysis.",
+    status:"final",
+    createdAt:"2025-02-01T08:00:00.000Z",
+    updatedAt:"2025-02-01T12:00:00.000Z",
+    version:V
+  }
+];
+
+window.loadExamples=function(){
+  if(!confirm("This will add two example assessments (S3: Lentiviral Vector, S4: M. tuberculosis inactivated) from the Supplementary Material. Continue?"))return;
+  let added=0;
+  EXAMPLES.forEach(ex=>{
+    if(!localStorage.getItem(`psr:${ex.id}`)){
+      LS.save(ex);
+      added++;
+    }
+  });
+  assessments=LS.loadAll();
+  if(added>0)toast(`${added} example assessment(s) loaded`,"success");
+  else toast("Examples already loaded","info");
+  R();
+};
+
 // State
 let view="loading",profile=null,assessments=[],cur=null,stp=0,toastTimer=null;
 function blank(){return{id:null,agentName:"",riskGroup:"",isGMO:false,parentalOrg:"",geneticMod:"",replComp:"",procedures:[{name:"",aerosol:"",volume:"",concentration:""}],modFactors:Object.fromEntries(MF.map(f=>[f.id,"neutral"])),justification:"",reviewer:"",institution:"",reviewDate:new Date().toISOString().slice(0,10),triggers:"",addCtrl:"",status:"draft",createdAt:new Date().toISOString()}}
@@ -141,7 +235,7 @@ function rDash(){
   const dc=assessments.filter(a=>a.status==="draft").length;
   let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:8px">
     <div><h1>PSR assessment platform</h1><p style="font-size:13px;color:var(--text2)">${esc(profile.name)} · ${esc(profile.institution)}</p></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn bp" onclick="startNew()">+ New assessment</button><button class="btn bo" onclick="view='irr';R()">IRR analysis</button><a href="analytics.html" class="btn bo" style="text-decoration:none">Analytics</a><button class="btn bo" onclick="view='onboard';R()">Settings</button></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn bp" onclick="startNew()">+ New assessment</button><button class="btn bo" onclick="loadExamples()" title="Load Supplementary Appendix S3 & S4 examples">Load S3/S4 examples</button><button class="btn bo" onclick="view='irr';R()">IRR analysis</button><a href="analytics.html" class="btn bo" style="text-decoration:none">Analytics</a><button class="btn bo" onclick="view='onboard';R()">Settings</button></div>
   </div>`;
   h+=`<div style="display:flex;gap:12px;margin-bottom:20px">`
   h+=`<div class="metric"><div class="mv">${assessments.length}</div><div class="ml">Total</div></div>`;
