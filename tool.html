@@ -130,6 +130,9 @@ const T={
   assignedBSL:{en:'Assigned biosafety level',es:'Nivel de contención biológica asignado'},
   justification:{en:'Justification narrative',es:'Narrativa de justificación'},
   justPh:{en:'Provide the written rationale for this BSL assignment...',es:'Proporcione la justificación escrita para esta asignación de NCB...'},
+  rgOverrideLabel:{en:'Effective Risk Group classification',es:'Clasificación de Grupo de Riesgo efectivo'},
+  rgOverrideNote:{en:'The system auto-classifies this as RG3* (replication-defective GMO from RG3). If institutional evaluation supports reclassification to RG2 based on documented attenuation, select RG2 below. This requires written justification in Step 8.',
+                  es:'El sistema auto-clasifica como GR3* (OMG defectivo para replicación derivado de GR3). Si la evaluación institucional respalda la reclasificación a GR2 basada en atenuación documentada, seleccione GR2 abajo. Requiere justificación escrita en el Paso 8.'},
   rg3starCond:{en:'BSL-2+ conditions for RG3* agents: (1) documented risk assessment, (2) IBC approval, (3) mandatory Class II BSC + double gloves + eye protection, (4) demonstrated personnel competency. Default to BSL-3 if uncertain.',
                es:'Condiciones de NCB-2+ para agentes GR3*: (1) evaluación de riesgos documentada, (2) aprobación del CBS, (3) CSB Clase II obligatoria + doble guante + protección ocular, (4) competencia del personal demostrada. NCB-3 por defecto si hay incertidumbre.'},
   engControls:{en:'Engineering controls',es:'Controles de ingeniería'},
@@ -153,6 +156,8 @@ const T={
   step2sub:{en:'List all technical procedures; identify aerosol-generating steps; estimate volumes and concentrations.',es:'Liste todos los procedimientos técnicos; identifique pasos generadores de aerosoles; estime volúmenes y concentraciones.'},
   step3sub:{en:'Each procedure is assigned Low, Moderate, or High PSR based on the classification matrix.',es:'Cada procedimiento se clasifica como PSR Bajo, Moderado o Alto según la matriz de clasificación.'},
   step4sub:{en:'Assess procedural modulators. ≥2 unfavorable factors triggers BSL escalation.',es:'Evalúe los moduladores procedimentales. ≥2 factores desfavorables activan escalación de NCB.'},
+  psrLikelihood:{en:'PSR → Likelihood guidance: Low PSR = Rare–Possible; Moderate PSR = Possible–Likely; High PSR = Likely–Very Likely. With ≥2 unfavorable factors, shift one category up.',
+                 es:'PSR → Probabilidad orientativa: PSR Bajo = Raro–Posible; PSR Moderado = Posible–Probable; PSR Alto = Probable–Muy probable. Con ≥2 factores desfavorables, desplace una categoría arriba.'},
   step5sub:{en:'Risk = Hazard (agent) × Likelihood (procedure). Integrate agent RG with adjusted PSR.',es:'Riesgo = Peligrosidad (agente) × Probabilidad (procedimiento). Integre el GR del agente con el PSR ajustado.'},
   step6sub:{en:'Apply the Agent–PSR combination matrix to assign biosafety level.',es:'Aplique la matriz combinada Agente–PSR para asignar el nivel de contención biológica.'},
   step7sub:{en:'Specify engineering controls, PPE, administrative measures, and training.',es:'Especifique controles de ingeniería, EPIs, medidas administrativas y formación.'},
@@ -185,12 +190,12 @@ const CONTROLS={
   'BSL-4':{eng:['Maximum containment','Class III BSC or positive-pressure suit','Chemical shower','Double HEPA exhaust'],ppe:['Positive-pressure suit or Class III BSC','Full personal decontamination'],admin:['National-level authorization','Dedicated team','Continuous monitoring','Emergency protocols']},
 };
 
-let D={agentName:'',riskGroup:'',isGMO:false,parentalOrg:'',geneticMod:'',replComp:'',
+let D={agentName:'',riskGroup:'',isGMO:false,parentalOrg:'',geneticMod:'',replComp:'',rgOverride:'',
   procedures:[{name:'',aerosol:'',volume:'',concentration:''}],
   modFactors:{},justification:'',reviewer:'',reviewDate:'',triggers:'',addControls:''};
 MOD_FACTORS.forEach(f=>D.modFactors[f.id]='neutral');
 
-const EX_S3={agentName:'Third-generation SIN lentiviral vector (pLenti-CRISPR, HIV-1 backbone)',riskGroup:'RG3',isGMO:true,parentalOrg:'HIV-1',geneticMod:'Third-generation self-inactivating lentiviral vector. Split-genome packaging (4-plasmid system). Deletions: gag, pol, env, tat, rev, vif, vpr, vpu, nef. Replication-incompetent. Max recombination risk <10⁻⁸.',replComp:'no',
+const EX_S3={agentName:'Third-generation SIN lentiviral vector (pLenti-CRISPR, HIV-1 backbone)',riskGroup:'RG3',isGMO:true,rgOverride:'',parentalOrg:'HIV-1',geneticMod:'Third-generation self-inactivating lentiviral vector. Split-genome packaging (4-plasmid system). Deletions: gag, pol, env, tat, rev, vif, vpr, vpu, nef. Replication-incompetent. Max recombination risk <10⁻⁸.',replComp:'no',
   procedures:[
     {name:'HEK293T transfection (T-175 flasks in BSC-II)',aerosol:'low',volume:'high',concentration:'low'},
     {name:'Viral supernatant harvest (~120 mL, aspiration in BSC)',aerosol:'low',volume:'high',concentration:'low'},
@@ -203,7 +208,7 @@ const EX_S3={agentName:'Third-generation SIN lentiviral vector (pLenti-CRISPR, H
   justification:'Although the lentiviral vector is classified as RG3* (replication-defective GMO derived from HIV-1 RG3), high-speed ultracentrifugation (25,000 rpm, 90 min) of large volumes without sealed safety cups generates significant aerosol potential. Final titer 10⁸ TU/mL (1000× concentration). Four unfavorable modulating factors (frequency, scale, infrastructure, titer) trigger ≥2 escalation. BSL-2+ with respiratory protection is proportionate; standard BSL-2 insufficient, BSL-3 disproportionate given replication-defective status.',
   reviewer:'Dr. John Doe (Biosafety Officer)',reviewDate:'2025-01-15',triggers:'Sealed rotor acquisition; new personnel; scale increase >200 mL; incident; annual review.',addControls:'Mandatory BSC-II all steps. N95 during centrifuge ops. Double gloves for centrifugation/resuspension. Sealed buckets to acquire. Tube opening only in BSC-II. Wait 10 min post-centrifugation. 10% bleach 20 min before autoclaving. Negative pressure lab. Training SOP-LV-2025-001.'};
 
-const EX_S4={agentName:'Mycobacterium tuberculosis complex (heat-inactivated specimens and purified DNA)',riskGroup:'RG3',isGMO:false,parentalOrg:'',geneticMod:'',replComp:'',
+const EX_S4={agentName:'Mycobacterium tuberculosis complex (heat-inactivated specimens and purified DNA)',riskGroup:'RG3',isGMO:false,rgOverride:'',parentalOrg:'',geneticMod:'',replComp:'',
   procedures:[
     {name:'Receipt of heat-inactivated specimens (2–5 mL, sealed tubes)',aerosol:'low',volume:'low',concentration:'low'},
     {name:'Automated DNA extraction (QIAcube in BSC, 200 µL, closed system)',aerosol:'low',volume:'low',concentration:'low'},
@@ -229,12 +234,12 @@ function classifyPSR(a,v,c){
   return'Low';
 }
 
-function getEffectiveRG(){return D.isGMO&&D.replComp==='no'&&D.riskGroup==='RG3'?'RG3*':D.riskGroup}
+function getEffectiveRG(){if(D.rgOverride)return D.rgOverride;return D.isGMO&&D.replComp==='no'&&D.riskGroup==='RG3'?'RG3*':D.riskGroup}
 function getProcPSRs(){return D.procedures.map(p=>p.aerosol&&p.volume&&p.concentration?classifyPSR(p.aerosol,p.volume,p.concentration):null)}
 function getMaxPSR(){const psrs=getProcPSRs();const ord={Low:0,Moderate:1,High:2};return psrs.reduce((m,p)=>p&&ord[p]>ord[m]?p:m,'Low')}
 function getUnfav(){return Object.values(D.modFactors).filter(v=>v==='increase').length}
 function getFav(){return Object.values(D.modFactors).filter(v=>v==='decrease').length}
-function getAdjustedPSR(){const mx=getMaxPSR(),u=getUnfav(),f=getFav();if(u>=2&&mx==='Low')return'Moderate';if(u>=2&&mx==='Moderate')return'High';if(f>=2&&mx==='High'&&u===0)return'Moderate';return mx}
+function getAdjustedPSR(){const mx=getMaxPSR(),u=getUnfav();if(u>=2&&mx==='Low')return'Moderate';if(u>=2&&mx==='Moderate')return'High';return mx}
 function getBSL(){const rg=getEffectiveRG(),psr=getAdjustedPSR();return rg&&psr?BSL_MATRIX[rg]?.[psr]||'—':'—'}
 
 function psrPill(level){const c=level==='Low'?'green':level==='Moderate'?'amber':'red';return`<span class="pill pill-${c}">${level} PSR</span>`}
@@ -301,7 +306,16 @@ function renderStep1(){
       h+=`<button class="opt ${D.replComp===r.v?'selected':''}" onclick="D.replComp='${r.v}';render()"><div class="opt-label">${t(r.l)}</div></button>`;
     });
     h+=`</div></div>`;
-    if(D.replComp==='no'&&D.riskGroup==='RG3') h+=`<div class="note note-teal">${t('rg3star')}</div>`;
+    if(D.replComp==='no'&&D.riskGroup==='RG3'){
+      h+=`<div class="note note-teal">${t('rg3star')}</div>`;
+      h+=`<div class="field" style="margin-top:12px"><label class="field-label">${t('rgOverrideLabel')}</label>`;
+      h+=`<div style="font-size:12px;color:var(--text2);margin-bottom:8px">${t('rgOverrideNote')}</div>`;
+      h+=`<div class="opt-grid c2">`;
+      [{v:'',l:'RG3* (auto)'},{v:'RG2',l:'RG2 (documented attenuation)'}].forEach(r=>{
+        h+=`<button class="opt ${D.rgOverride===r.v?'selected':''}" onclick="D.rgOverride='${r.v}';render()"><div class="opt-label">${r.l}</div></button>`;
+      });
+      h+=`</div></div>`;
+    }
     h+=`</div>`;
   }
   return h;
@@ -358,7 +372,8 @@ function renderStep4(){
 
 function renderStep5(){
   const erg=getEffectiveRG(),apsr=getAdjustedPSR();
-  let h=`<div style="overflow-x:auto"><table class="matrix"><thead><tr><th style="text-align:left">${t('riskGroup')}</th><th>Low PSR</th><th>Moderate PSR</th><th>High PSR</th></tr></thead><tbody>`;
+  let h=`<div class="note note-purple" style="margin-bottom:14px;font-size:12px;line-height:1.6">${t('psrLikelihood')}</div>`;
+  h+=`<div style="overflow-x:auto"><table class="matrix"><thead><tr><th style="text-align:left">${t('riskGroup')}</th><th>Low PSR</th><th>Moderate PSR</th><th>High PSR</th></tr></thead><tbody>`;
   Object.entries(BSL_MATRIX).forEach(([rg,psrs])=>{
     h+=`<tr><td>${rg}</td>`;
     ['Low','Moderate','High'].forEach(p=>{

@@ -174,7 +174,7 @@ function cohensKappa(ratings1, ratings2){
   pe/=(n*n);
   const kappa=pe===1?1:(po-pe)/(1-pe);
   let interp="";
-  if(kappa<0)interp="Poor";else if(kappa<.21)interp="Slight";else if(kappa<.41)interp="Fair";
+  if(kappa<.21)interp="Poor";else if(kappa<.41)interp="Fair";
   else if(kappa<.61)interp="Moderate";else if(kappa<.81)interp="Substantial";else interp="Almost perfect";
   return{kappa:Math.round(kappa*1000)/1000,po:Math.round(po*1000)/1000,pe:Math.round(pe*1000)/1000,interpretation:interp,categories,matrix,n};
 }
@@ -515,7 +515,7 @@ function rIRR(){
   h+=`<div class="card"><h3>Kappa interpretation</h3>
     <p style="font-size:14px;margin:8px 0"><span class="kappa-interp" style="background:${kappaBg};color:${kappaColor}">${kappa.interpretation} agreement</span></p>
     <table><thead><tr><th>κ range</th><th>Interpretation</th><th>Your data</th></tr></thead><tbody>`;
-  [["< 0","Poor"],["0.00–0.20","Slight"],["0.21–0.40","Fair"],["0.41–0.60","Moderate"],["0.61–0.80","Substantial"],["0.81–1.00","Almost perfect"]].forEach(([range,interp])=>{
+  [["< 0","Poor"],[],["0.21–0.40","Fair"],["0.41–0.60","Moderate"],["0.61–0.80","Substantial"],["0.81–1.00","Almost perfect"]].forEach(([range,interp])=>{
     const active=interp===kappa.interpretation;
     h+=`<tr style="${active?"font-weight:600;background:var(--accent-bg)":""}"><td>${range}</td><td>${interp}</td><td>${active?"← κ = "+kappa.kappa.toFixed(3):""}</td></tr>`;
   });

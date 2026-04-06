@@ -59,7 +59,7 @@ The PSR framework operationalizes a shift from static, agent-based biosafety cla
 | RG3* | BSL-2+ | BSL-2+/BSL-3 | BSL-3 |
 | RG4 | BSL-4 | BSL-4 | BSL-4 |
 
-*RG3\* = RG3 agents with limited airborne transmissibility, low environmental stability, and available treatment (e.g., HIV, HBV, HCV), when replication-defective.*
+*RG3\* = RG3 agents with limited airborne transmissibility, low environmental stability, and available treatment (e.g., HIV, HBV, HCV), when replication-defective. Note: If institutional evaluation supports reclassification to RG2 based on documented attenuation, the tool allows manual override with written justification.*
 
 ### Escalation Rule
 ≥2 unfavorable modulating factors triggers automatic PSR escalation (Low→Moderate or Moderate→High).

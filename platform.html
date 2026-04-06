@@ -89,13 +89,13 @@ const LS={
 // Algorithm
 function cPSR(ae,vo,co){const s={l:0,m:0,h:0};[ae,vo,co].forEach(v=>{if(v==="low")s.l++;else if(v==="moderate")s.m++;else if(v==="high")s.h++});if(s.h>=2||(s.h>=1&&s.m>=1))return"High";if(s.m>=2||(s.h===1&&s.l>=2))return"Moderate";return"Low"}
 function compute(d){
-  const erg=d.isGMO&&d.replComp==="no"&&d.riskGroup==="RG3"?"RG3*":d.riskGroup;
+  const erg=d.rgOverride||((d.isGMO&&d.replComp==="no"&&d.riskGroup==="RG3")?"RG3*":d.riskGroup);
   const pp=(d.procedures||[]).map(p=>p.aerosol&&p.volume&&p.concentration?cPSR(p.aerosol,p.volume,p.concentration):null);
   const O={Low:0,Moderate:1,High:2};
   const mx=pp.reduce((m,p)=>p&&O[p]>O[m]?p:m,"Low");
   const u=Object.values(d.modFactors||{}).filter(v=>v==="increase").length;
   const f=Object.values(d.modFactors||{}).filter(v=>v==="decrease").length;
-  let ap=mx;if(u>=2&&mx==="Low")ap="Moderate";if(u>=2&&mx==="Moderate")ap="High";if(f>=2&&mx==="High"&&u===0)ap="Moderate";
+  let ap=mx;if(u>=2&&mx==="Low")ap="Moderate";if(u>=2&&mx==="Moderate")ap="High";
   const bsl=erg?(BSL[erg]?.[ap]||"—"):"—";
   return{erg,pp,mx,ap,u,f,bsl};
 }
