@@ -2,19 +2,20 @@
 
 Interactive digital implementation of the **Procedure-Specific Risk (PSR) framework** for biosafety level assignment in modern biotechnology laboratories.
 
-**Live site:** [https://rafael-67.github.io/psr-tool/](https://rafael-67.github.io/psr-tool/)
+**Live site:** https://rafael-67.github.io/psr-tool/
 
 ## About
 
 This tool implements the 8-step PSR framework described in:
 
-> [Authors]. *Structured Procedure-Specific Risk (PSR) Framework for Proportionate Biosafety Level Assignment in Modern Biotechnology.* [Manuscript in preparation].
+> [Authors]. *Procedure-Specific Risk (PSR) Framework for Biosafety Level Assignment: An 8-Step Operational Model Derived from International Regulatory Convergence.* Frontiers in Bioengineering and Biotechnology [manuscript submitted].
 
 The PSR framework operationalizes a shift from static, agent-based biosafety classification toward dynamic, procedure-specific risk assessment. It integrates agent hazard (Risk Group) with procedural exposure likelihood to determine proportionate biosafety level assignments.
 
 ## Tools
 
 ### Quick Assessment Tool (`tool.html`)
+
 - Standalone single-page tool for individual PSR assessments
 - Works entirely offline — no server, no account, no data leaves your device
 - Bilingual EN/ES with toggle
@@ -22,13 +23,29 @@ The PSR framework operationalizes a shift from static, agent-based biosafety cla
 - Ideal for laboratory use and biosafety committee consultations
 
 ### Assessment Platform (`platform.html`)
+
 - Full platform with persistent storage (localStorage)
 - User profiles with institution and role
 - Dashboard with assessment management
 - Audit trail (assessor, institution, date, status)
-- Inter-rater reliability (IRR) analysis
+- Inter-rater reliability (IRR) summary view
 - CSV export for statistical analysis
 - Designed for multi-institutional validation studies
+
+### Data Analytics Module (`analytics.html`)
+
+- BSL assignment distributions and escalation driver analysis
+- Modulating factor scoring patterns across assessments
+- **Inter-rater reliability (IRR) analysis:**
+  - **Cohen's κ** (pairwise): computed from all adjacent pairwise comparisons; κ = (P₀ − Pₑ) / (1 − Pₑ)
+  - **Fleiss' κ** (multi-rater, primary metric): recommended for ≥3 raters assessing identical scenarios simultaneously; κ = (P̄ − Pₑ) / (1 − Pₑ), where P̄ is the mean observed agreement and Pₑ = Σpⱼ²
+  - Landis & Koch (1977) interpretation benchmarks for both statistics
+  - Confusion matrix (pairwise), discrepancy table, agreement by Risk Group
+- Temporal trends and cumulative assessments by institution
+- CSV export of full dataset
+- Built-in example assessments (Case Studies 1–6 from the manuscript)
+
+> Fleiss' κ is the primary statistic for the prospective multi-institutional validation study described in Section 5.4 of the manuscript. Cohen's κ is additionally reported for exploratory pairwise comparisons between specific institutions.
 
 ## The 8-Step PSR Framework
 
@@ -44,29 +61,44 @@ The PSR framework operationalizes a shift from static, agent-based biosafety cla
 ## Algorithm Details
 
 ### PSR Classification (Table 6)
+
 | PSR Level | Aerosol | Volume | Concentration |
-|-----------|---------|--------|---------------|
+| --- | --- | --- | --- |
 | Low | Minimal (controlled) | <10 mL | <10⁶ CFU/PFU/mL |
 | Moderate | Moderate (contained) | 10–100 mL | 10⁶–10⁸ CFU/PFU/mL |
 | High | High (uncontained) | >100 mL | >10⁸ CFU/PFU/mL |
 
 ### BSL Assignment Matrix (Table 8)
+
 | Risk Group | Low PSR | Moderate PSR | High PSR |
-|-----------|---------|-------------|---------|
-| RG1 | BSL-1 | BSL-1* | BSL-2** |
+| --- | --- | --- | --- |
+| RG1 | BSL-1 | BSL-1\* | BSL-2\*\* |
 | RG2 | BSL-2 | BSL-2 | BSL-2+ |
 | RG3 | BSL-2+ | BSL-3 | BSL-3 |
-| RG3* | BSL-2+ | BSL-2+/BSL-3 | BSL-3 |
+| RG3\* | BSL-2+ | BSL-2+/BSL-3 | BSL-3 |
 | RG4 | BSL-4 | BSL-4 | BSL-4 |
 
-*RG3\* = RG3 agents with limited airborne transmissibility, low environmental stability, and available treatment (e.g., HIV, HBV, HCV), when replication-defective. Note: If institutional evaluation supports reclassification to RG2 based on documented attenuation, the tool allows manual override with written justification.*
+*RG3\* = RG3-derived replication-defective agents (e.g., 3rd-generation SIN lentiviral vectors, HIV-1 pseudovirus). BSL-2+ for RG3\* requires documented risk assessment, IBC approval, and enhanced procedural controls.*
 
 ### Escalation Rule
+
 ≥2 unfavorable modulating factors triggers automatic PSR escalation (Low→Moderate or Moderate→High).
+
+### IRR Statistics
+
+| Statistic | Use case | Formula |
+| --- | --- | --- |
+| Cohen's κ | Pairwise (2 raters) | κ = (P₀ − Pₑ) / (1 − Pₑ) |
+| Fleiss' κ | Multi-rater (≥3 raters, primary) | κ = (P̄ − Pₑ) / (1 − Pₑ) |
+
+Interpretation benchmarks (Landis & Koch, 1977): <0.20 poor · 0.21–0.40 fair · 0.41–0.60 moderate · 0.61–0.80 substantial · 0.81–1.00 almost perfect.
+
+Target for multi-institutional validation: κ ≥ 0.60 (substantial agreement) for BSL assignment decisions.
 
 ## Regulatory Basis
 
 Based on analysis of 10 international and national regulatory frameworks:
+
 - WHO Laboratory Biosafety Manual, 4th ed. (2020)
 - BMBL, 6th ed. (CDC/NIH, 2020)
 - CDC Biological Risk Assessment Process (2024)
@@ -96,8 +128,9 @@ MIT License. Free for research and institutional biosafety use.
 If you use this tool in your research, please cite:
 
 ```
-[Authors]. Structured Procedure-Specific Risk (PSR) Framework for Proportionate
-Biosafety Level Assignment in Modern Biotechnology. [Manuscript in preparation].
+[Authors]. Procedure-Specific Risk (PSR) Framework for Biosafety Level Assignment:
+An 8-Step Operational Model Derived from International Regulatory Convergence.
+Frontiers in Bioengineering and Biotechnology [manuscript submitted].
 
 Digital tool available at: https://rafael-67.github.io/psr-tool/
 ```

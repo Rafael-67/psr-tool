@@ -47,11 +47,10 @@ th{font-weight:600;font-size:12px;color:var(--text2);text-transform:uppercase;le
 <body>
 <div class="wrap" id="app"></div>
 <script>
-// ── Core algorithm (same as platform.html) ──
+// ── Core algorithm ──
 const BSL_M={RG1:{Low:"BSL-1",Moderate:"BSL-1*",High:"BSL-2**"},RG2:{Low:"BSL-2",Moderate:"BSL-2",High:"BSL-2+"},RG3:{Low:"BSL-2+",Moderate:"BSL-3",High:"BSL-3"},"RG3*":{Low:"BSL-2+",Moderate:"BSL-2+/BSL-3",High:"BSL-3"},RG4:{Low:"BSL-4",Moderate:"BSL-4",High:"BSL-4"}};
 const MF_IDS=["volume","concentration","frequency","aerosol","stability","experience","supervision","infrastructure","incidents"];
 const MF_LABELS=["Volume","Concentration","Frequency","Aerosol","Env. stability","Operator exp.","Supervision","Infrastructure","Incidents"];
-
 function cPSR(a,v,c){const s={l:0,m:0,h:0};[a,v,c].forEach(x=>{if(x==="low")s.l++;else if(x==="moderate")s.m++;else if(x==="high")s.h++});if(s.h>=2||(s.h>=1&&s.m>=1))return"High";if(s.m>=2||(s.h===1&&s.l>=2))return"Moderate";return"Low"}
 function compute(d){
   const erg=d.isGMO&&d.replComp==="no"&&d.riskGroup==="RG3"?"RG3*":d.riskGroup;
@@ -63,88 +62,85 @@ function compute(d){
   return{erg,pp,mx,ap,u,f,bsl};
 }
 
-// ── Built-in example assessments (Supplementary Appendices S3 & S4) ──
+// ── Built-in example assessments ──
 const BUILTIN_EXAMPLES=[
-  {id:"example_s3_lentiviral",agentName:"Third-generation SIN lentiviral vector (pLenti-CRISPR, HIV-1 backbone)",riskGroup:"RG3",isGMO:true,parentalOrg:"HIV-1",
-   geneticMod:"3rd-gen SIN lentiviral. 4-plasmid split-genome. Deletions: gag,pol,env,tat,rev,vif,vpr,vpu,nef. Replication-incompetent.",replComp:"no",
-   procedures:[
-     {name:"HEK293T transfection (T-175 flasks in BSC-II)",aerosol:"low",volume:"high",concentration:"low"},
-     {name:"Viral supernatant harvest (~120 mL)",aerosol:"low",volume:"high",concentration:"low"},
-     {name:"Filtration 0.45 µm (syringe filter in BSC)",aerosol:"low",volume:"high",concentration:"low"},
-     {name:"Ultracentrifugation (SW32Ti, 25,000 rpm, 90 min, non-sealed)",aerosol:"high",volume:"moderate",concentration:"high"},
-     {name:"Viral pellet resuspension (500 µL, 10⁸ TU/mL)",aerosol:"moderate",volume:"low",concentration:"high"},
-     {name:"Aliquoting (50 µL, 10⁸ TU/mL)",aerosol:"low",volume:"low",concentration:"high"}
-   ],
-   modFactors:{volume:"increase",concentration:"increase",frequency:"increase",aerosol:"increase",stability:"decrease",experience:"decrease",supervision:"decrease",infrastructure:"increase",incidents:"decrease"},
-   justification:"RG3* (replication-defective HIV-1 GMO). High-speed ultracentrifugation without sealed cups + 10⁸ TU/mL titer + 4 unfavorable factors → BSL-2+ with respiratory protection.",
-   reviewer:"Dr. John Doe",institution:"University Research Institute",reviewDate:"2025-01-15",status:"final",createdAt:"2025-01-15T09:00:00Z",updatedAt:"2025-01-15T14:30:00Z",version:"1.0.0"},
-  {id:"example_s4_mtb_inactivated",agentName:"Mycobacterium tuberculosis complex (heat-inactivated specimens & purified DNA)",riskGroup:"RG3",isGMO:false,parentalOrg:"",geneticMod:"",replComp:"",
-   procedures:[
-     {name:"Receipt of heat-inactivated specimens (2–5 mL, sealed tubes)",aerosol:"low",volume:"low",concentration:"low"},
-     {name:"Automated DNA extraction (QIAcube in BSC, 200 µL, closed)",aerosol:"low",volume:"low",concentration:"low"},
-     {name:"PCR setup (25 µL reaction, pipetting in BSC)",aerosol:"low",volume:"low",concentration:"low"},
-     {name:"Thermal cycling (sealed PCR tubes)",aerosol:"low",volume:"low",concentration:"low"},
-     {name:"Result analysis (in silico)",aerosol:"low",volume:"low",concentration:"low"}
-   ],
-   modFactors:{volume:"decrease",concentration:"decrease",frequency:"increase",aerosol:"decrease",stability:"decrease",experience:"decrease",supervision:"neutral",infrastructure:"decrease",incidents:"decrease"},
-   justification:"RG3 parental organism but ALL specimens heat-inactivated (56°C/30min) with culture-negative validation. Low PSR, 1 unfavorable factor. Enhanced BSL-2 proportionate; BSL-3 disproportionate.",
-   reviewer:"Dr. Robert Chen",institution:"Clinical Diagnostics Laboratory",reviewDate:"2025-02-01",status:"final",createdAt:"2025-02-01T08:00:00Z",updatedAt:"2025-02-01T12:00:00Z",version:"1.0.0"},
-  // Additional synthetic examples for richer analytics demonstration
-  {id:"example_ecoli_sonication",agentName:"E. coli BL21(DE3) recombinant protein expression",riskGroup:"RG1",isGMO:true,parentalOrg:"E. coli K-12",geneticMod:"BL21(DE3) with pET expression vector, human recombinant protein",replComp:"yes",
-   procedures:[
-     {name:"Bacterial culture (500 mL LB, shaker incubator)",aerosol:"low",volume:"high",concentration:"low"},
-     {name:"IPTG induction",aerosol:"low",volume:"high",concentration:"low"},
-     {name:"Centrifugation (sealed rotor, 4000 rpm)",aerosol:"low",volume:"high",concentration:"moderate"},
-     {name:"Pellet resuspension in lysis buffer (50 mL)",aerosol:"low",volume:"moderate",concentration:"high"},
-     {name:"Sonication (6 × 30 sec cycles, ice bath, open vessel)",aerosol:"high",volume:"moderate",concentration:"high"},
-     {name:"Clarification centrifugation",aerosol:"low",volume:"moderate",concentration:"moderate"},
-     {name:"Protein purification (FPLC chromatography)",aerosol:"low",volume:"low",concentration:"low"}
-   ],
-   modFactors:{volume:"neutral",concentration:"increase",frequency:"increase",aerosol:"increase",stability:"decrease",experience:"decrease",supervision:"neutral",infrastructure:"neutral",incidents:"decrease"},
-   justification:"RG1 agent but sonication generates extreme aerosols at 10⁹–10¹⁰ CFU/mL. BSL-2 practices for sonication step despite RG1. Demonstrates PSR principle that even low-hazard agents warrant enhanced containment for high-aerosol procedures.",
-   reviewer:"Dr. Ana López",institution:"University of Valladolid",reviewDate:"2025-03-10",status:"final",createdAt:"2025-03-10T10:00:00Z",updatedAt:"2025-03-10T15:00:00Z",version:"1.0.0"},
-  {id:"example_hiv_pseudovirus",agentName:"HIV-1 pseudovirus (VSV-G, single-round, replication-defective)",riskGroup:"RG3",isGMO:true,parentalOrg:"HIV-1",geneticMod:"env-deleted, VSV-G pseudotyped, single-round infection, replication-defective",replComp:"no",
-   procedures:[
-     {name:"TZM-bl cell culture and maintenance",aerosol:"low",volume:"low",concentration:"low"},
-     {name:"Infection with pseudovirus (MOI 0.1–1, 24-well plates in BSC-II)",aerosol:"moderate",volume:"low",concentration:"moderate"},
-     {name:"Incubation 48–72h (sealed plates)",aerosol:"low",volume:"low",concentration:"low"},
-     {name:"Cell lysis and luciferase assay",aerosol:"low",volume:"low",concentration:"low"}
-   ],
-   modFactors:{volume:"decrease",concentration:"neutral",frequency:"increase",aerosol:"decrease",stability:"decrease",experience:"decrease",supervision:"neutral",infrastructure:"decrease",incidents:"decrease"},
-   justification:"Single-round replication defect, cannot spread between cells. Small volumes (5–10 mL), BSC-contained. RG3* + Moderate PSR → BSL-2. Standard BSL-2 proportionate.",
-   reviewer:"Dr. Maria García",institution:"University of Valladolid",reviewDate:"2025-03-15",status:"final",createdAt:"2025-03-15T09:00:00Z",updatedAt:"2025-03-15T13:00:00Z",version:"1.0.0"},
-  {id:"example_aav_production",agentName:"Recombinant AAV serotype 2 (dystrophin gene therapy vector)",riskGroup:"RG2",isGMO:true,parentalOrg:"AAV2 (wild-type)",geneticMod:"Recombinant AAV2, rep/cap deleted, dystrophin transgene, produced via triple transfection",replComp:"no",
-   procedures:[
-     {name:"Triple transfection of HEK293T cells",aerosol:"moderate",volume:"high",concentration:"low"},
-     {name:"Cell lysis (freeze-thaw or detergent)",aerosol:"moderate",volume:"high",concentration:"moderate"},
-     {name:"Clarification centrifugation (4000 rpm)",aerosol:"low",volume:"high",concentration:"moderate"},
-     {name:"Iodixanol gradient ultracentrifugation",aerosol:"high",volume:"moderate",concentration:"high"},
-     {name:"Concentration/diafiltration (Amicon, 500 mL → 2 mL)",aerosol:"moderate",volume:"high",concentration:"high"}
-   ],
-   modFactors:{volume:"increase",concentration:"increase",frequency:"neutral",aerosol:"increase",stability:"increase",experience:"decrease",supervision:"decrease",infrastructure:"neutral",incidents:"decrease"},
-   justification:"Nominally RG2 but AAV extreme environmental stability (resistant to temp, pH, detergents) + 25 nm particle remains aerosolized + 10¹² particles/mL + 500 mL volume. 4 unfavorable factors → escalation. BSL-2+ with some protocols recommending BSL-3 for large-scale AAV.",
-   reviewer:"Dr. John Doe",institution:"University Research Institute",reviewDate:"2025-04-20",status:"final",createdAt:"2025-04-20T08:00:00Z",updatedAt:"2025-04-20T16:00:00Z",version:"1.0.0"},
-  {id:"example_crispr_rnp",agentName:"CRISPR-Cas9 RNP electroporation (non-viral delivery)",riskGroup:"RG1",isGMO:false,parentalOrg:"",geneticMod:"",replComp:"",
-   procedures:[
-     {name:"Cas9–gRNA ribonucleoprotein complex preparation",aerosol:"low",volume:"low",concentration:"low"},
-     {name:"Electroporation (closed cuvette system, <5 mL)",aerosol:"low",volume:"low",concentration:"low"},
-     {name:"Post-electroporation cell recovery",aerosol:"low",volume:"low",concentration:"low"}
-   ],
-   modFactors:{volume:"decrease",concentration:"decrease",frequency:"neutral",aerosol:"decrease",stability:"decrease",experience:"decrease",supervision:"neutral",infrastructure:"decrease",incidents:"decrease"},
-   justification:"Non-replicative protein–RNA complex. Transient intracellular activity, rapid degradation. No infectious capability. Closed electroporation. RG1 + Low PSR → BSL-1 with enhanced practices.",
-   reviewer:"Dr. Ana López",institution:"University of Valladolid",reviewDate:"2025-05-05",status:"final",createdAt:"2025-05-05T09:00:00Z",updatedAt:"2025-05-05T11:00:00Z",version:"1.0.0"}
+{id:"example_s3_lentiviral",agentName:"Third-generation SIN lentiviral vector (pLenti-CRISPR, HIV-1 backbone)",riskGroup:"RG3",isGMO:true,parentalOrg:"HIV-1",
+geneticMod:"3rd-gen SIN lentiviral. 4-plasmid split-genome. Deletions: gag,pol,env,tat,rev,vif,vpr,vpu,nef. Replication-incompetent.",replComp:"no",
+procedures:[
+{name:"HEK293T transfection (T-175 flasks in BSC-II)",aerosol:"low",volume:"high",concentration:"low"},
+{name:"Viral supernatant harvest (~120 mL)",aerosol:"low",volume:"high",concentration:"low"},
+{name:"Filtration 0.45 µm (syringe filter in BSC)",aerosol:"low",volume:"high",concentration:"low"},
+{name:"Ultracentrifugation (SW32Ti, 25,000 rpm, 90 min, non-sealed)",aerosol:"high",volume:"moderate",concentration:"high"},
+{name:"Viral pellet resuspension (500 µL, 10⁸ TU/mL)",aerosol:"moderate",volume:"low",concentration:"high"},
+{name:"Aliquoting (50 µL, 10⁸ TU/mL)",aerosol:"low",volume:"low",concentration:"high"}
+],
+modFactors:{volume:"increase",concentration:"increase",frequency:"increase",aerosol:"increase",stability:"decrease",experience:"decrease",supervision:"decrease",infrastructure:"increase",incidents:"decrease"},
+justification:"RG3* (replication-defective HIV-1 GMO). High-speed ultracentrifugation without sealed cups + 10⁸ TU/mL titer + 4 unfavorable factors → BSL-2+ with respiratory protection.",
+reviewer:"Dr. John Doe",institution:"University Research Institute",reviewDate:"2025-01-15",status:"final",createdAt:"2025-01-15T09:00:00Z",updatedAt:"2025-01-15T14:30:00Z",version:"1.0.0"},
+{id:"example_s4_mtb_inactivated",agentName:"Mycobacterium tuberculosis complex (heat-inactivated specimens & purified DNA)",riskGroup:"RG3",isGMO:false,parentalOrg:"",geneticMod:"",replComp:"",
+procedures:[
+{name:"Receipt of heat-inactivated specimens (2–5 mL, sealed tubes)",aerosol:"low",volume:"low",concentration:"low"},
+{name:"Automated DNA extraction (QIAcube in BSC, 200 µL, closed)",aerosol:"low",volume:"low",concentration:"low"},
+{name:"PCR setup (25 µL reaction, pipetting in BSC)",aerosol:"low",volume:"low",concentration:"low"},
+{name:"Thermal cycling (sealed PCR tubes)",aerosol:"low",volume:"low",concentration:"low"},
+{name:"Result analysis (in silico)",aerosol:"low",volume:"low",concentration:"low"}
+],
+modFactors:{volume:"decrease",concentration:"decrease",frequency:"increase",aerosol:"decrease",stability:"decrease",experience:"decrease",supervision:"neutral",infrastructure:"decrease",incidents:"decrease"},
+justification:"RG3 parental organism but ALL specimens heat-inactivated (56°C/30min) with culture-negative validation. Low PSR, 1 unfavorable factor. Enhanced BSL-2 proportionate; BSL-3 disproportionate.",
+reviewer:"Dr. Robert Chen",institution:"Clinical Diagnostics Laboratory",reviewDate:"2025-02-01",status:"final",createdAt:"2025-02-01T08:00:00Z",updatedAt:"2025-02-01T12:00:00Z",version:"1.0.0"},
+{id:"example_ecoli_sonication",agentName:"E. coli BL21(DE3) recombinant protein expression",riskGroup:"RG1",isGMO:true,parentalOrg:"E. coli K-12",geneticMod:"BL21(DE3) with pET expression vector, human recombinant protein",replComp:"yes",
+procedures:[
+{name:"Bacterial culture (500 mL LB, shaker incubator)",aerosol:"low",volume:"high",concentration:"low"},
+{name:"IPTG induction",aerosol:"low",volume:"high",concentration:"low"},
+{name:"Centrifugation (sealed rotor, 4000 rpm)",aerosol:"low",volume:"high",concentration:"moderate"},
+{name:"Pellet resuspension in lysis buffer (50 mL)",aerosol:"low",volume:"moderate",concentration:"high"},
+{name:"Sonication (6 × 30 sec cycles, ice bath, open vessel)",aerosol:"high",volume:"moderate",concentration:"high"},
+{name:"Clarification centrifugation",aerosol:"low",volume:"moderate",concentration:"moderate"},
+{name:"Protein purification (FPLC chromatography)",aerosol:"low",volume:"low",concentration:"low"}
+],
+modFactors:{volume:"neutral",concentration:"increase",frequency:"increase",aerosol:"increase",stability:"decrease",experience:"decrease",supervision:"neutral",infrastructure:"neutral",incidents:"decrease"},
+justification:"RG1 agent but sonication generates extreme aerosols at 10⁹–10¹⁰ CFU/mL. BSL-2 practices for sonication step despite RG1.",
+reviewer:"Dr. Ana López",institution:"University of Valladolid",reviewDate:"2025-03-10",status:"final",createdAt:"2025-03-10T10:00:00Z",updatedAt:"2025-03-10T15:00:00Z",version:"1.0.0"},
+{id:"example_hiv_pseudovirus",agentName:"HIV-1 pseudovirus (VSV-G, single-round, replication-defective)",riskGroup:"RG3",isGMO:true,parentalOrg:"HIV-1",geneticMod:"env-deleted, VSV-G pseudotyped, single-round infection, replication-defective",replComp:"no",
+procedures:[
+{name:"TZM-bl cell culture and maintenance",aerosol:"low",volume:"low",concentration:"low"},
+{name:"Infection with pseudovirus (MOI 0.1–1, 24-well plates in BSC-II)",aerosol:"moderate",volume:"low",concentration:"moderate"},
+{name:"Incubation 48–72h (sealed plates)",aerosol:"low",volume:"low",concentration:"low"},
+{name:"Cell lysis and luciferase assay",aerosol:"low",volume:"low",concentration:"low"}
+],
+modFactors:{volume:"decrease",concentration:"neutral",frequency:"increase",aerosol:"decrease",stability:"decrease",experience:"decrease",supervision:"neutral",infrastructure:"decrease",incidents:"decrease"},
+justification:"Single-round replication defect, cannot spread between cells. Small volumes (5–10 mL), BSC-contained. RG3* + Moderate PSR → BSL-2.",
+reviewer:"Dr. Maria García",institution:"University of Valladolid",reviewDate:"2025-03-15",status:"final",createdAt:"2025-03-15T09:00:00Z",updatedAt:"2025-03-15T13:00:00Z",version:"1.0.0"},
+{id:"example_aav_production",agentName:"Recombinant AAV serotype 2 (dystrophin gene therapy vector)",riskGroup:"RG2",isGMO:true,parentalOrg:"AAV2 (wild-type)",geneticMod:"Recombinant AAV2, rep/cap deleted, dystrophin transgene, produced via triple transfection",replComp:"no",
+procedures:[
+{name:"Triple transfection of HEK293T cells",aerosol:"moderate",volume:"high",concentration:"low"},
+{name:"Cell lysis (freeze-thaw or detergent)",aerosol:"moderate",volume:"high",concentration:"moderate"},
+{name:"Clarification centrifugation (4000 rpm)",aerosol:"low",volume:"high",concentration:"moderate"},
+{name:"Iodixanol gradient ultracentrifugation",aerosol:"high",volume:"moderate",concentration:"high"},
+{name:"Concentration/diafiltration (Amicon, 500 mL → 2 mL)",aerosol:"moderate",volume:"high",concentration:"high"}
+],
+modFactors:{volume:"increase",concentration:"increase",frequency:"neutral",aerosol:"increase",stability:"increase",experience:"decrease",supervision:"decrease",infrastructure:"neutral",incidents:"decrease"},
+justification:"Nominally RG2 but AAV extreme environmental stability + 10¹² particles/mL + 500 mL volume. 4 unfavorable factors → escalation. BSL-2+.",
+reviewer:"Dr. John Doe",institution:"University Research Institute",reviewDate:"2025-04-20",status:"final",createdAt:"2025-04-20T08:00:00Z",updatedAt:"2025-04-20T16:00:00Z",version:"1.0.0"},
+{id:"example_crispr_rnp",agentName:"CRISPR-Cas9 RNP electroporation (non-viral delivery)",riskGroup:"RG1",isGMO:false,parentalOrg:"",geneticMod:"",replComp:"",
+procedures:[
+{name:"Cas9–gRNA ribonucleoprotein complex preparation",aerosol:"low",volume:"low",concentration:"low"},
+{name:"Electroporation (closed cuvette system, <5 mL)",aerosol:"low",volume:"low",concentration:"low"},
+{name:"Post-electroporation cell recovery",aerosol:"low",volume:"low",concentration:"low"}
+],
+modFactors:{volume:"decrease",concentration:"decrease",frequency:"neutral",aerosol:"decrease",stability:"decrease",experience:"decrease",supervision:"neutral",infrastructure:"decrease",incidents:"decrease"},
+justification:"Non-replicative protein–RNA complex. Rapid degradation. No infectious capability. RG1 + Low PSR → BSL-1.",
+reviewer:"Dr. Ana López",institution:"University of Valladolid",reviewDate:"2025-05-05",status:"final",createdAt:"2025-05-05T09:00:00Z",updatedAt:"2025-05-05T11:00:00Z",version:"1.0.0"}
 ];
 
-// ── Load data from localStorage (shared with platform.html) ──
+// ── Load data ──
 function loadAll(){
   const idx=JSON.parse(localStorage.getItem("psr:index")||"[]");
   const stored=idx.map(id=>{try{return JSON.parse(localStorage.getItem(`psr:${id}`))}catch{return null}}).filter(Boolean);
-  // If no stored data, use built-in examples
   if(stored.length===0) return BUILTIN_EXAMPLES;
   return stored;
 }
 
-// ── Import from CSV/JSON ──
 function importCSV(text){
   const lines=text.trim().split("\n");if(lines.length<2)return[];
   const headers=lines[0].split(",").map(h=>h.replace(/"/g,"").trim());
@@ -156,6 +152,8 @@ function importCSV(text){
 }
 
 // ── Statistics ──
+
+// Cohen's κ — pairwise (two raters)
 function cohensKappa(ratings1, ratings2){
   const n=ratings1.length;if(n===0)return{kappa:0,interpretation:"N/A"};
   const categories=[...new Set([...ratings1,...ratings2])];
@@ -173,19 +171,77 @@ function cohensKappa(ratings1, ratings2){
   }
   pe/=(n*n);
   const kappa=pe===1?1:(po-pe)/(1-pe);
-  let interp="";
-  if(kappa<.21)interp="Poor";else if(kappa<.41)interp="Fair";
-  else if(kappa<.61)interp="Moderate";else if(kappa<.81)interp="Substantial";else interp="Almost perfect";
-  return{kappa:Math.round(kappa*1000)/1000,po:Math.round(po*1000)/1000,pe:Math.round(pe*1000)/1000,interpretation:interp,categories,matrix,n};
+  return{kappa:Math.round(kappa*1000)/1000,po:Math.round(po*1000)/1000,pe:Math.round(pe*1000)/1000,
+    interpretation:interpKappa(kappa),categories,matrix,n};
+}
+
+// Fleiss' κ — multi-rater (≥3 raters, same N subjects)
+// Input: ratingsMatrix[i][j] = number of raters who assigned category j to subject i
+// categories: array of category labels (parallel to matrix columns)
+function fleissKappa(ratingsMatrix, categories){
+  const N=ratingsMatrix.length; // number of subjects
+  if(N===0)return{kappa:null,interpretation:"N/A",n:0};
+  const k=categories.length;
+  const n=ratingsMatrix[0].reduce((s,v)=>s+v,0); // raters per subject (assumed constant)
+  if(n<2)return{kappa:null,interpretation:"N/A",n};
+
+  // P_j: proportion of all assignments in category j
+  const Pj=categories.map((_,j)=>{
+    const total=ratingsMatrix.reduce((s,row)=>s+row[j],0);
+    return total/(N*n);
+  });
+
+  // P_i: extent of agreement for subject i
+  const Pi=ratingsMatrix.map(row=>{
+    const sum=row.reduce((s,nij)=>s+nij*(nij-1),0);
+    return sum/(n*(n-1));
+  });
+
+  const Pbar=Pi.reduce((s,p)=>s+p,0)/N; // mean subject agreement
+  const Pe=Pj.reduce((s,p)=>s+p*p,0);   // expected agreement by chance
+
+  const kappa=Pe===1?1:(Pbar-Pe)/(1-Pe);
+  return{
+    kappa:isNaN(kappa)?null:Math.round(kappa*1000)/1000,
+    Pbar:Math.round(Pbar*1000)/1000,
+    Pe:Math.round(Pe*1000)/1000,
+    interpretation:isNaN(kappa)||kappa===null?"N/A":interpKappa(kappa),
+    n, N, categories
+  };
+}
+
+// Shared interpretation scale (Landis & Koch 1977)
+function interpKappa(k){
+  if(k<0.00) return"Poor (< 0 — worse than chance)";
+  if(k<0.21) return"Poor";
+  if(k<0.41) return"Fair";
+  if(k<0.61) return"Moderate";
+  if(k<0.81) return"Substantial";
+  return"Almost perfect";
+}
+
+// Build Fleiss matrix from grouped assessments
+// groups: {agentKey: [assessments...]}
+// Returns {matrix, categories, agentKeys}
+function buildFleissMatrix(groups, categories){
+  const agentKeys=Object.keys(groups).filter(k=>groups[k].length>=2);
+  if(agentKeys.length===0)return null;
+  // Use subjects = agent scenarios, raters = assessments per subject
+  // Pad shorter groups to match the max rater count
+  const maxRaters=Math.max(...agentKeys.map(k=>groups[k].length));
+  const matrix=agentKeys.map(key=>{
+    const bsls=groups[key].map(a=>a.bsl);
+    return categories.map(cat=>bsls.filter(b=>b===cat).length);
+  });
+  return{matrix, agentKeys, n:maxRaters};
 }
 
 function countBy(arr,fn){const m={};arr.forEach(x=>{const k=fn(x);m[k]=(m[k]||0)+1});return m}
 function pct(n,total){return total>0?Math.round(n/total*100):0}
 
-// ── Charts: use Chart.js if available, SVG fallback otherwise ──
+// ── Charts ──
 const charts={};
 const hasChart=()=>typeof Chart!=="undefined"&&!window._noChart;
-
 function makeChart(id,cfg){
   if(hasChart()){
     if(charts[id])charts[id].destroy();
@@ -199,7 +255,6 @@ function makeChart(id,cfg){
   }
 }
 
-// SVG bar chart generator (fallback)
 function svgBar(data,options={}){
   const w=options.width||520,h=options.height||220,pad=50,barGap=8;
   const labels=data.labels||[];const datasets=data.datasets||[];
@@ -207,9 +262,7 @@ function svgBar(data,options={}){
   const stacked=options.stacked;const horizontal=options.horizontal;
   const nGroups=labels.length;const nSets=datasets.length;
   const chartW=w-pad*2,chartH=h-pad-30;
-
   let svg=`<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:${h}px;font-family:-apple-system,sans-serif">`;
-
   if(horizontal){
     const barH=Math.min(28,chartH/nGroups-barGap);
     labels.forEach((label,i)=>{
@@ -224,7 +277,6 @@ function svgBar(data,options={}){
         if(stacked)xOff+=bw;
       });
     });
-    // Legend
     let lx=pad;datasets.forEach((ds,di)=>{
       svg+=`<rect x="${lx}" y="${h-18}" width="10" height="10" rx="2" fill="${typeof ds.backgroundColor==='string'?ds.backgroundColor:'#999'}"/>`;
       svg+=`<text x="${lx+14}" y="${h-9}" font-size="10" fill="var(--text2)">${ds.label||''}</text>`;
@@ -232,7 +284,6 @@ function svgBar(data,options={}){
     });
   } else {
     const groupW=chartW/nGroups;const barW=stacked?groupW*0.6:Math.min(groupW*0.6/nSets,40);
-    // Y axis
     for(let i=0;i<=4;i++){
       const y=pad+chartH-chartH*i/4;const v=Math.round(maxV*i/4);
       svg+=`<line x1="${pad}" y1="${y}" x2="${w-10}" y2="${y}" stroke="var(--border)" stroke-width="0.5"/>`;
@@ -251,7 +302,6 @@ function svgBar(data,options={}){
         if(val>0&&bh>14)svg+=`<text x="${bx+barW/2-1}" y="${by+12}" text-anchor="middle" font-size="9" fill="#fff" font-weight="500">${val}</text>`;
       });
     });
-    // Legend
     if(datasets.length>1){let lx=pad;datasets.forEach(ds=>{
       svg+=`<rect x="${lx}" y="${pad-16}" width="10" height="10" rx="2" fill="${typeof ds.backgroundColor==='string'?ds.backgroundColor:'#999'}"/>`;
       svg+=`<text x="${lx+14}" y="${pad-7}" font-size="10" fill="var(--text2)">${ds.label||''}</text>`;
@@ -277,7 +327,6 @@ function svgDonut(data,options={}){
     svg+=`<path d="M${x1},${y1} A${r},${r} 0 ${large} 1 ${x2},${y2} L${ix1},${iy1} A${r2},${r2} 0 ${large} 0 ${ix2},${iy2} Z" fill="${colors[i]||'#999'}" opacity="0.85"/>`;
     angle+=sweep;
   });
-  // Legend on right
   labels.forEach((l,i)=>{
     const ly=30+i*20;
     svg+=`<rect x="${cx+r+16}" y="${ly}" width="10" height="10" rx="2" fill="${colors[i]||'#999'}"/>`;
@@ -291,11 +340,8 @@ function svgLine(data,options={}){
   const allVals=ds.flatMap(d=>d.data);const maxV=Math.max(...allVals,1);
   const chartW=w-pad*2,chartH=h-pad-20;
   let svg=`<svg viewBox="0 0 ${w} ${h}" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-height:${h}px;font-family:-apple-system,sans-serif">`;
-  // Grid
   for(let i=0;i<=4;i++){const y=pad+chartH-chartH*i/4;svg+=`<line x1="${pad}" y1="${y}" x2="${w-10}" y2="${y}" stroke="var(--border)" stroke-width="0.5"/>`;svg+=`<text x="${pad-6}" y="${y+4}" text-anchor="end" font-size="9" fill="var(--text3)">${Math.round(maxV*i/4)}</text>`}
-  // X labels
   labels.forEach((l,i)=>{const x=pad+i*chartW/(labels.length-1||1);svg+=`<text x="${x}" y="${h-4}" text-anchor="middle" font-size="9" fill="var(--text2)">${l}</text>`});
-  // Lines
   ds.forEach(d=>{
     const pts=d.data.map((v,i)=>{const x=pad+i*chartW/(labels.length-1||1);const y=pad+chartH-(v/maxV)*chartH;return`${x},${y}`});
     svg+=`<polyline points="${pts.join(' ')}" fill="none" stroke="${d.borderColor||d.backgroundColor||'#534ab7'}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>`;
@@ -305,10 +351,8 @@ function svgLine(data,options={}){
   svg+=`</svg>`;return svg;
 }
 
-// Wrapper: if Chart.js is available, use canvas; otherwise inject SVG
 function chartOrSVG(id,cfg){
   if(hasChart()){return`<div style="position:relative;height:260px"><canvas id="${id}"></canvas></div>`}
-  // Generate SVG immediately
   const type=cfg.type;
   if(type==="doughnut"||type==="pie")return svgDonut(cfg.data,cfg.options||{});
   if(type==="line")return svgLine(cfg.data,cfg.options||{});
@@ -328,7 +372,6 @@ const COLORS={
 
 // ── State ──
 let tab="overview",assessments=[],computed_all=[];
-
 function init(){
   assessments=loadAll();
   computed_all=assessments.map(a=>({...a,...compute(a)}));
@@ -336,34 +379,29 @@ function init(){
 }
 
 function render(){
-  const isBuiltin=assessments===BUILTIN_EXAMPLES||assessments.some(a=>a.id&&a.id.startsWith("example_"));
   const storedCount=JSON.parse(localStorage.getItem("psr:index")||"[]").length;
   const usingBuiltin=storedCount===0;
-
   let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px">
-    <div><h1>PSR analytics</h1><p style="font-size:13px;color:var(--text2)">Data exploitation module · ${assessments.length} assessments loaded${usingBuiltin?" (built-in examples)":""}</p></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><a href="platform.html" class="btn bo">← Platform</a>
-    <button class="btn bo" onclick="document.getElementById('csvInput').click()">Import CSV/JSON</button>
-    <button class="btn bs" onclick="exportFullCSV()">Export dataset</button>
-    <input type="file" id="csvInput" accept=".csv,.json" style="display:none" onchange="handleImport(this)">
-    </div></div>`;
-
+<div><h1>PSR analytics</h1><p style="font-size:13px;color:var(--text2)">${assessments.length} assessments loaded${usingBuiltin?" (built-in examples)":""}</p></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><a href="platform.html" class="btn bo">← Platform</a>
+<button class="btn bo" onclick="document.getElementById('csvInput').click()">Import CSV/JSON</button>
+<button class="btn bs" onclick="exportFullCSV()">Export dataset</button>
+<input type="file" id="csvInput" accept=".csv,.json" style="display:none" onchange="handleImport(this)">
+</div></div>`;
   if(usingBuiltin){
     h+=`<div class="note" style="background:var(--accent-bg);color:var(--purple-t);margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
-      <span>Showing built-in examples from the manuscript (Case Studies 1–6). Create assessments in the Platform or import your own data to replace these.</span>
-      <button class="btn bp" style="font-size:12px;padding:6px 14px" onclick="persistExamples()">Save examples to browser</button>
-    </div>`;
+<span>Showing built-in examples from the manuscript (Case Studies 1–6). Create assessments in the Platform or import your own data.</span>
+<button class="btn bp" style="font-size:12px;padding:6px 14px" onclick="persistExamples()">Save examples to browser</button>
+</div>`;
   }
-
   h+=`<div class="tab-row">`;
   ["overview","distributions","modulating_factors","irr_extended","risk_patterns","temporal"].forEach(t=>{
     const labels={overview:"Overview",distributions:"Distributions",modulating_factors:"Modulating factors",irr_extended:"IRR analysis",risk_patterns:"Risk patterns",temporal:"Temporal"};
     h+=`<button class="tab ${tab===t?"on":""}" onclick="tab='${t}';render()">${labels[t]}</button>`;
   });
   h+=`</div>`;
-
   if(assessments.length===0){
-    h+=`<div class="empty"><p>No assessment data found.</p><p style="margin-top:8px">Create assessments in the <a href="platform.html">PSR Platform</a>, or import a CSV/JSON dataset.</p></div>`;
+    h+=`<div class="empty"><p>No assessment data found.</p></div>`;
   } else {
     if(tab==="overview") h+=rOverview();
     else if(tab==="distributions") h+=rDistributions();
@@ -372,10 +410,7 @@ function render(){
     else if(tab==="risk_patterns") h+=rRiskPatterns();
     else if(tab==="temporal") h+=rTemporal();
   }
-
   document.getElementById("app").innerHTML=h;
-
-  // Render charts after DOM update
   requestAnimationFrame(()=>{
     if(tab==="overview") renderOverviewCharts();
     else if(tab==="distributions") renderDistCharts();
@@ -386,30 +421,25 @@ function render(){
   });
 }
 
-// ══════════════════════════════════════════════
-// OVERVIEW TAB
-// ══════════════════════════════════════════════
+// ── Overview tab ──
 function rOverview(){
   const final=computed_all.filter(a=>a.status==="final");
   const esc_rate=computed_all.filter(a=>a.ap!==a.mx).length;
   const gmo_count=computed_all.filter(a=>a.isGMO).length;
   const institutions=[...new Set(computed_all.map(a=>a.institution).filter(Boolean))];
   const agents=[...new Set(computed_all.map(a=>(a.agentName||"").toLowerCase().trim()).filter(Boolean))];
-
   let h=`<div class="metric-grid">
-    <div class="metric"><div class="mv">${assessments.length}</div><div class="ml">Total assessments</div></div>
-    <div class="metric"><div class="mv">${final.length}</div><div class="ml">Finalized</div></div>
-    <div class="metric"><div class="mv">${agents.length}</div><div class="ml">Unique agents</div></div>
-    <div class="metric"><div class="mv">${institutions.length}</div><div class="ml">Institutions</div></div>
-    <div class="metric"><div class="mv">${gmo_count}</div><div class="ml">GMO assessments</div></div>
-    <div class="metric ${esc_rate>0?"alert":""}"><div class="mv">${pct(esc_rate,assessments.length)}%</div><div class="ml">Escalation rate</div></div>
-  </div>`;
-
+<div class="metric"><div class="mv">${assessments.length}</div><div class="ml">Total assessments</div></div>
+<div class="metric"><div class="mv">${final.length}</div><div class="ml">Finalized</div></div>
+<div class="metric"><div class="mv">${agents.length}</div><div class="ml">Unique agents</div></div>
+<div class="metric"><div class="mv">${institutions.length}</div><div class="ml">Institutions</div></div>
+<div class="metric"><div class="mv">${gmo_count}</div><div class="ml">GMO assessments</div></div>
+<div class="metric ${esc_rate>0?"alert":""}"><div class="mv">${pct(esc_rate,assessments.length)}%</div><div class="ml">Escalation rate</div></div>
+</div>`;
   h+=`<div class="grid2">
-    <div class="card"><h3>BSL assignment distribution</h3>${chartOrSVG("ch-bsl",{type:"doughnut",data:{labels:Object.keys(countBy(computed_all,a=>a.bsl)),datasets:[{data:Object.values(countBy(computed_all,a=>a.bsl)),backgroundColor:Object.keys(countBy(computed_all,a=>a.bsl)).map(b=>COLORS.bsl[b]||"#999")}]}})}</div>
-    <div class="card"><h3>Risk Group distribution</h3>${chartOrSVG("ch-rg",{type:"doughnut",data:{labels:Object.keys(countBy(computed_all,a=>a.erg||a.riskGroup)),datasets:[{data:Object.values(countBy(computed_all,a=>a.erg||a.riskGroup)),backgroundColor:Object.keys(countBy(computed_all,a=>a.erg||a.riskGroup)).map(r=>COLORS.rg[r]||"#999")}]}})}</div>
-  </div>`;
-
+<div class="card"><h3>BSL assignment distribution</h3>${chartOrSVG("ch-bsl",{type:"doughnut",data:{labels:Object.keys(countBy(computed_all,a=>a.bsl)),datasets:[{data:Object.values(countBy(computed_all,a=>a.bsl)),backgroundColor:Object.keys(countBy(computed_all,a=>a.bsl)).map(b=>COLORS.bsl[b]||"#999")}]}})}</div>
+<div class="card"><h3>Risk Group distribution</h3>${chartOrSVG("ch-rg",{type:"doughnut",data:{labels:Object.keys(countBy(computed_all,a=>a.erg||a.riskGroup)),datasets:[{data:Object.values(countBy(computed_all,a=>a.erg||a.riskGroup)),backgroundColor:Object.keys(countBy(computed_all,a=>a.erg||a.riskGroup)).map(r=>COLORS.rg[r]||"#999")}]}})}</div>
+</div>`;
   h+=`<div class="card"><h3>Most assessed agents</h3>`;
   const agentCounts=countBy(computed_all,a=>(a.agentName||"Unknown"));
   const sorted=Object.entries(agentCounts).sort((a,b)=>b[1]-a[1]).slice(0,10);
@@ -421,7 +451,6 @@ function rOverview(){
   h+=`</tbody></table></div>`;
   return h;
 }
-
 function renderOverviewCharts(){
   if(!hasChart())return;
   const bslDist=countBy(computed_all,a=>a.bsl);
@@ -430,48 +459,38 @@ function renderOverviewCharts(){
   makeChart("ch-rg",{type:"doughnut",data:{labels:Object.keys(rgDist),datasets:[{data:Object.values(rgDist),backgroundColor:Object.keys(rgDist).map(r=>COLORS.rg[r]||"#999")}]},options:{plugins:{legend:{position:"right"}}}});
 }
 
-// ══════════════════════════════════════════════
-// DISTRIBUTIONS TAB
-// ══════════════════════════════════════════════
+// ── Distributions tab ──
 function rDistributions(){
   const psrDist=countBy(computed_all,a=>a.ap);
   const before=countBy(computed_all,a=>a.mx);const after=countBy(computed_all,a=>a.ap);
   const allProcs=[];computed_all.forEach(a=>{(a.procedures||[]).forEach((p,j)=>{if(a.pp&&a.pp[j])allProcs.push({psr:a.pp[j]})})});
   const procPSR=countBy(allProcs,p=>p.psr);
-
   let h=`<div class="grid2">
-    <div class="card"><h3>PSR level distribution</h3>${chartOrSVG("ch-psr",{type:"bar",data:{labels:["Low","Moderate","High"],datasets:[{label:"Assessments",data:["Low","Moderate","High"].map(l=>psrDist[l]||0),backgroundColor:["Low","Moderate","High"].map(l=>COLORS.psr[l])}]},options:{scales:{y:{beginAtZero:true}}}})}</div>
-    <div class="card"><h3>PSR before vs after modulation</h3>${chartOrSVG("ch-esc",{type:"bar",data:{labels:["Low","Moderate","High"],datasets:[{label:"Before modulation",data:["Low","Moderate","High"].map(l=>before[l]||0),backgroundColor:"rgba(133,183,235,0.7)"},{label:"After modulation",data:["Low","Moderate","High"].map(l=>after[l]||0),backgroundColor:"rgba(239,159,39,0.8)"}]},options:{scales:{y:{beginAtZero:true}}}})}</div>
-  </div>`;
+<div class="card"><h3>PSR level distribution</h3>${chartOrSVG("ch-psr",{type:"bar",data:{labels:["Low","Moderate","High"],datasets:[{label:"Assessments",data:["Low","Moderate","High"].map(l=>psrDist[l]||0),backgroundColor:["Low","Moderate","High"].map(l=>COLORS.psr[l])}]},options:{scales:{y:{beginAtZero:true}}}})}</div>
+<div class="card"><h3>PSR before vs after modulation</h3>${chartOrSVG("ch-esc",{type:"bar",data:{labels:["Low","Moderate","High"],datasets:[{label:"Before modulation",data:["Low","Moderate","High"].map(l=>before[l]||0),backgroundColor:"rgba(133,183,235,0.7)"},{label:"After modulation",data:["Low","Moderate","High"].map(l=>after[l]||0),backgroundColor:"rgba(239,159,39,0.8)"}]},options:{scales:{y:{beginAtZero:true}}}})}</div>
+</div>`;
   h+=`<div class="card"><h3>All procedures by PSR level</h3>${chartOrSVG("ch-allproc",{type:"bar",data:{labels:["Low","Moderate","High"],datasets:[{label:"Procedures",data:["Low","Moderate","High"].map(l=>procPSR[l]||0),backgroundColor:["Low","Moderate","High"].map(l=>COLORS.psr[l])}]},options:{scales:{y:{beginAtZero:true}}}})}</div>`;
   return h;
 }
+function renderDistCharts(){}
 
-function renderDistCharts(){if(!hasChart())return;}
-
-// ══════════════════════════════════════════════
-// MODULATING FACTORS TAB
-// ══════════════════════════════════════════════
+// ── Modulating factors tab ──
 function rModFactors(){
   const fav=[],neu=[],unfav=[];
   MF_IDS.forEach(id=>{let f=0,n=0,u=0;computed_all.forEach(a=>{const v=(a.modFactors||{})[id];if(v==="decrease")f++;else if(v==="increase")u++;else n++});fav.push(f);neu.push(n);unfav.push(u)});
-
-  let h=`<div class="card"><h3>Modulating factor scoring pattern</h3><p class="sub">How often each factor is scored across all assessments.</p>
-    ${chartOrSVG("ch-mf",{type:"bar",data:{labels:MF_LABELS,datasets:[{label:"Favorable",data:fav,backgroundColor:"rgba(151,196,89,0.7)"},{label:"Neutral",data:neu,backgroundColor:"rgba(180,178,169,0.5)"},{label:"Unfavorable",data:unfav,backgroundColor:"rgba(226,75,74,0.7)"}]},options:{indexAxis:"y",scales:{x:{beginAtZero:true,stacked:true}}}})}</div>`;
-  
-  h+=`<div class="card"><h3>Escalation drivers</h3><p class="sub">Among assessments where ≥2 unfavorable factors triggered BSL escalation, which factors are most commonly unfavorable?</p>`;
+  let h=`<div class="card"><h3>Modulating factor scoring pattern</h3>
+${chartOrSVG("ch-mf",{type:"bar",data:{labels:MF_LABELS,datasets:[{label:"Favorable",data:fav,backgroundColor:"rgba(151,196,89,0.7)"},{label:"Neutral",data:neu,backgroundColor:"rgba(180,178,169,0.5)"},{label:"Unfavorable",data:unfav,backgroundColor:"rgba(226,75,74,0.7)"}]},options:{indexAxis:"y",scales:{x:{beginAtZero:true,stacked:true}}}})}</div>`;
+  h+=`<div class="card"><h3>Escalation drivers</h3>`;
   const escalated=computed_all.filter(a=>a.ap!==a.mx);
-  if(escalated.length===0)h+=`<p style="color:var(--text3);padding:8px">No escalations detected in current dataset.</p>`;
+  if(escalated.length===0)h+=`<p style="color:var(--text3);padding:8px">No escalations detected.</p>`;
   else{
     const drivers={};MF_IDS.forEach((id,i)=>{drivers[MF_LABELS[i]]=escalated.filter(a=>(a.modFactors||{})[id]==="increase").length});
     const sorted=Object.entries(drivers).sort((a,b)=>b[1]-a[1]);
     h+=`<table><thead><tr><th>Factor</th><th>Unfavorable in escalated</th><th>Rate</th></tr></thead><tbody>`;
-    sorted.forEach(([f,n])=>{h+=`<tr><td>${f}</td><td>${n} / ${escalated.length}</td><td><div style="display:flex;align-items:center;gap:8px"><div style="width:${pct(n,escalated.length)*2}px;height:12px;background:var(--red-t);border-radius:3px;opacity:.6"></div>${pct(n,escalated.length)}%</div></td></tr>`});
+    sorted.forEach(([f,n])=>{h+=`<tr><td>${f}</td><td>${n} / ${escalated.length}</td><td>${pct(n,escalated.length)}%</td></tr>`});
     h+=`</tbody></table>`;
   }
   h+=`</div>`;
-
-  h+=`<div class="card"><h3>Factor correlation with BSL elevation</h3><p class="sub">Unfavorable rate comparison: standard vs elevated BSL.</p>`;
   const elevated2=computed_all.filter(a=>["BSL-2+","BSL-2+/BSL-3","BSL-3","BSL-4"].includes(a.bsl));
   const standard2=computed_all.filter(a=>["BSL-1","BSL-1*","BSL-2","BSL-2**"].includes(a.bsl));
   const elevRate2=[],stdRate2=[];
@@ -479,62 +498,99 @@ function rModFactors(){
     elevRate2.push(elevated2.length>0?Math.round(elevated2.filter(a=>(a.modFactors||{})[id]==="increase").length/elevated2.length*100):0);
     stdRate2.push(standard2.length>0?Math.round(standard2.filter(a=>(a.modFactors||{})[id]==="increase").length/standard2.length*100):0);
   });
-  h+=chartOrSVG("ch-mfcorr",{type:"bar",data:{labels:MF_LABELS,datasets:[{label:"Standard BSL",data:stdRate2,backgroundColor:"rgba(133,183,235,0.6)"},{label:"Elevated BSL",data:elevRate2,backgroundColor:"rgba(226,75,74,0.7)"}]},options:{indexAxis:"y",scales:{x:{beginAtZero:true}}}});
-  h+=`</div>`;
+  h+=`<div class="card"><h3>Factor correlation with BSL elevation</h3>
+${chartOrSVG("ch-mfcorr",{type:"bar",data:{labels:MF_LABELS,datasets:[{label:"Standard BSL",data:stdRate2,backgroundColor:"rgba(133,183,235,0.6)"},{label:"Elevated BSL",data:elevRate2,backgroundColor:"rgba(226,75,74,0.7)"}]},options:{indexAxis:"y",scales:{x:{beginAtZero:true}}}})}</div>`;
   return h;
 }
+function renderMFCharts(){}
 
-function renderMFCharts(){if(!hasChart())return;}
-
-// ══════════════════════════════════════════════
-// IRR EXTENDED TAB
-// ══════════════════════════════════════════════
+// ── IRR tab — Cohen's κ (pairwise) + Fleiss' κ (multi-rater) ──
 function rIRR(){
   const final=computed_all.filter(a=>a.status==="final");
   const grouped={};
   final.forEach(a=>{const k=(a.agentName||"").toLowerCase().trim();if(k){if(!grouped[k])grouped[k]=[];grouped[k].push(a)}});
   const pairs=Object.entries(grouped).filter(([_,v])=>v.length>=2);
-
   if(pairs.length===0) return`<div class="card"><div class="empty"><p>No agents with ≥2 finalized assessments found.</p><p style="margin-top:8px">For IRR analysis, multiple evaluators must finalize assessments for the same agent.</p></div></div>`;
 
-  // Collect pairwise ratings for Cohen's kappa
+  // ── Cohen's κ (pairwise) ──
   const allR1=[],allR2=[];
   pairs.forEach(([_,g])=>{for(let i=0;i<g.length-1;i++){allR1.push(g[i].bsl);allR2.push(g[i+1].bsl)}});
-  const kappa=cohensKappa(allR1,allR2);
+  const ck=cohensKappa(allR1,allR2);
+  const ckColor=ck.kappa>=.61?"var(--green-t)":ck.kappa>=.41?"var(--amber-t)":"var(--red-t)";
+  const ckBg=ck.kappa>=.61?"var(--green-bg)":ck.kappa>=.41?"var(--amber-bg)":"var(--red-bg)";
 
-  const kappaColor=kappa.kappa>=.61?"var(--green-t)":kappa.kappa>=.41?"var(--amber-t)":"var(--red-t)";
-  const kappaBg=kappa.kappa>=.61?"var(--green-bg)":kappa.kappa>=.41?"var(--amber-bg)":"var(--red-bg)";
+  // ── Fleiss' κ (multi-rater) ──
+  const allBSLCats=[...new Set(final.map(a=>a.bsl))].sort();
+  const fmResult=buildFleissMatrix(grouped,allBSLCats);
+  let fk=null;
+  if(fmResult&&fmResult.matrix.length>=2){
+    fk=fleissKappa(fmResult.matrix,allBSLCats);
+  }
+  const fkColor=fk&&fk.kappa>=.61?"var(--green-t)":fk&&fk.kappa>=.41?"var(--amber-t)":"var(--red-t)";
+  const fkBg=fk&&fk.kappa>=.61?"var(--green-bg)":fk&&fk.kappa>=.41?"var(--amber-bg)":"var(--red-bg)";
 
-  let h=`<div class="metric-grid">
-    <div class="metric ${kappa.kappa>=.61?"good":kappa.kappa<.41?"alert":""}"><div class="mv">${kappa.kappa.toFixed(3)}</div><div class="ml">Cohen's kappa (κ)</div></div>
-    <div class="metric"><div class="mv">${Math.round(kappa.po*100)}%</div><div class="ml">Observed agreement (Pₒ)</div></div>
-    <div class="metric"><div class="mv">${Math.round(kappa.pe*100)}%</div><div class="ml">Expected agreement (Pₑ)</div></div>
-    <div class="metric"><div class="mv">${kappa.n}</div><div class="ml">Pairwise comparisons</div></div>
-  </div>`;
+  let h=``;
 
-  h+=`<div class="card"><h3>Kappa interpretation</h3>
-    <p style="font-size:14px;margin:8px 0"><span class="kappa-interp" style="background:${kappaBg};color:${kappaColor}">${kappa.interpretation} agreement</span></p>
-    <table><thead><tr><th>κ range</th><th>Interpretation</th><th>Your data</th></tr></thead><tbody>`;
-  [["< 0","Poor"],[],["0.21–0.40","Fair"],["0.41–0.60","Moderate"],["0.61–0.80","Substantial"],["0.81–1.00","Almost perfect"]].forEach(([range,interp])=>{
-    const active=interp===kappa.interpretation;
-    h+=`<tr style="${active?"font-weight:600;background:var(--accent-bg)":""}"><td>${range}</td><td>${interp}</td><td>${active?"← κ = "+kappa.kappa.toFixed(3):""}</td></tr>`;
+  // Summary metrics row
+  h+=`<div class="metric-grid">
+<div class="metric ${ck.kappa>=.61?"good":ck.kappa<.41?"alert":""}"><div class="mv">${ck.kappa.toFixed(3)}</div><div class="ml">Cohen's κ (pairwise)</div></div>
+<div class="metric"><div class="mv">${Math.round(ck.po*100)}%</div><div class="ml">Observed agreement (P₀)</div></div>
+<div class="metric"><div class="mv">${Math.round(ck.pe*100)}%</div><div class="ml">Expected agreement (Pₑ)</div></div>
+${fk&&fk.kappa!==null?`<div class="metric ${fk.kappa>=.61?"good":fk.kappa<.41?"alert":""}"><div class="mv">${fk.kappa.toFixed(3)}</div><div class="ml">Fleiss' κ (multi-rater)</div></div>`:`<div class="metric"><div class="mv">—</div><div class="ml">Fleiss' κ (≥3 raters needed)</div></div>`}
+<div class="metric"><div class="mv">${ck.n}</div><div class="ml">Pairwise comparisons</div></div>
+<div class="metric"><div class="mv">${pairs.length}</div><div class="ml">Agent scenarios</div></div>
+</div>`;
+
+  // Cohen's kappa detail card
+  h+=`<div class="grid2">
+<div class="card"><h3>Cohen's κ — pairwise agreement</h3>
+<p style="font-size:14px;margin:8px 0"><span class="kappa-interp" style="background:${ckBg};color:${ckColor}">${ck.interpretation}</span></p>
+<p class="sub" style="margin-top:8px">Computed from ${ck.n} adjacent pairwise comparisons. Formula: κ = (P₀ − Pₑ) / (1 − Pₑ), where P₀ is observed agreement and Pₑ is agreement expected by chance.</p>
+<table><thead><tr><th>κ range</th><th>Interpretation</th><th></th></tr></thead><tbody>`;
+  [["< 0.00","Poor (worse than chance)"],["0.01–0.20","Poor"],["0.21–0.40","Fair"],["0.41–0.60","Moderate"],["0.61–0.80","Substantial"],["0.81–1.00","Almost perfect"]].forEach(([range,interp])=>{
+    const active=ck.interpretation.startsWith(interp.split(" ")[0]);
+    h+=`<tr style="${active?"font-weight:600;background:var(--accent-bg)":""}"><td>${range}</td><td>${interp}</td><td>${active?"← κ = "+ck.kappa.toFixed(3):""}</td></tr>`;
   });
   h+=`</tbody></table></div>`;
 
-  // Agreement by RG
+  // Fleiss' kappa detail card
+  h+=`<div class="card"><h3>Fleiss' κ — multi-rater agreement</h3>`;
+  if(fk&&fk.kappa!==null){
+    h+=`<p style="font-size:14px;margin:8px 0"><span class="kappa-interp" style="background:${fkBg};color:${fkColor}">${fk.interpretation}</span></p>
+<p class="sub" style="margin-top:8px">Computed across ${fk.N} agent scenarios. Formula: κ = (P̄ − Pₑ) / (1 − Pₑ), where P̄ is mean observed agreement across subjects and Pₑ = Σpⱼ² is expected agreement. Recommended for ≥3 raters assessing identical scenarios (Landis & Koch, 1977).</p>
+<table><thead><tr><th>Metric</th><th>Value</th></tr></thead><tbody>
+<tr><td>P̄ (mean observed agreement)</td><td>${fk.Pbar.toFixed(3)}</td></tr>
+<tr><td>Pₑ (expected by chance)</td><td>${fk.Pe.toFixed(3)}</td></tr>
+<tr><td>κ</td><td><strong>${fk.kappa.toFixed(3)}</strong></td></tr>
+<tr><td>Interpretation</td><td>${fk.interpretation}</td></tr>
+</tbody></table>`;
+  } else {
+    h+=`<div class="empty" style="padding:20px"><p>Fleiss' κ requires ≥2 agent scenarios, each assessed by ≥2 raters.</p><p style="margin-top:8px;font-size:12px">Add more assessments via the Platform, then return to this tab.</p></div>`;
+  }
+  h+=`</div></div>`;
+
+  // Confusion matrix
+  h+=`<div class="card"><h3>Confusion matrix — pairwise BSL assignments</h3><p class="sub">Rater 1 (rows) vs Rater 2 (columns).</p>`;
+  if(ck.categories&&ck.matrix){
+    h+=`<table><thead><tr><th></th>${ck.categories.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>`;
+    ck.categories.forEach((r,i)=>{h+=`<tr><td style="font-weight:600">${r}</td>${ck.categories.map((_,j)=>{const v=ck.matrix[i][j];return`<td style="text-align:center;${i===j&&v>0?"background:var(--green-bg);font-weight:600":""}">${v}</td>`}).join("")}</tr>`});
+    h+=`</tbody></table>`;
+  }
+  h+=`</div>`;
+
+  // Agreement by RG + discrepancies
   h+=`<div class="grid2">`;
   h+=`<div class="card"><h3>Agreement by Risk Group</h3>`;
   const rgGroups={};pairs.forEach(([_,g])=>{const rg=g[0].erg||g[0].riskGroup;if(!rgGroups[rg])rgGroups[rg]={agree:0,total:0};
-    for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++){rgGroups[rg].total++;if(g[i].bsl===g[j].bsl)rgGroups[rg].agree++}});
+  for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++){rgGroups[rg].total++;if(g[i].bsl===g[j].bsl)rgGroups[rg].agree++}});
   h+=`<table><thead><tr><th>RG</th><th>Pairs</th><th>Agreement</th></tr></thead><tbody>`;
   Object.entries(rgGroups).forEach(([rg,{agree,total}])=>{h+=`<tr><td>${rg}</td><td>${total}</td><td>${pct(agree,total)}%</td></tr>`});
   h+=`</tbody></table></div>`;
 
-  // Discrepancy detail
   h+=`<div class="card"><h3>Discrepancies</h3>`;
   let discrepancies=[];
   pairs.forEach(([_,g])=>{const bsls=[...new Set(g.map(a=>a.bsl))];if(bsls.length>1)discrepancies.push({agent:g[0].agentName,bsls,assessors:g.map(a=>a.reviewer||a.institution)})});
-  if(discrepancies.length===0)h+=`<p style="color:var(--green-t);padding:8px">No discrepancies — full agreement across all paired assessments.</p>`;
+  if(discrepancies.length===0)h+=`<p style="color:var(--green-t);padding:8px">✓ No discrepancies — full agreement across all paired assessments.</p>`;
   else{
     h+=`<table><thead><tr><th>Agent</th><th>BSL assignments</th><th>Assessors</th></tr></thead><tbody>`;
     discrepancies.forEach(d=>{h+=`<tr><td>${d.agent}</td><td>${d.bsls.map(b=>bslPill(b)).join(" vs ")}</td><td style="font-size:11px">${d.assessors.join(", ")}</td></tr>`});
@@ -542,30 +598,21 @@ function rIRR(){
   }
   h+=`</div></div>`;
 
-  h+=`<div class="card"><h3>Confusion matrix (BSL assignments)</h3><p class="sub">Rater 1 (rows) vs Rater 2 (columns) for pairwise comparisons.</p>`;
-  if(kappa.categories&&kappa.matrix){
-    h+=`<table><thead><tr><th></th>${kappa.categories.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>`;
-    kappa.categories.forEach((r,i)=>{h+=`<tr><td style="font-weight:600">${r}</td>${kappa.categories.map((_,j)=>{const v=kappa.matrix[i][j];return`<td style="text-align:center;${i===j&&v>0?"background:var(--green-bg);font-weight:600":""}">${v}</td>`}).join("")}</tr>`});
-    h+=`</tbody></table>`;
-  }
-  h+=`</div>`;
+  // Reference
+  h+=`<div class="note" style="background:var(--bg2);margin-top:4px;font-size:12px;color:var(--text2)">Reference: Landis JR, Koch GG. The measurement of observer agreement for categorical data. <em>Biometrics.</em> 1977;33(1):159–174.</div>`;
+
   return h;
 }
-
 function renderIRRCharts(){}
 
-// ══════════════════════════════════════════════
-// RISK PATTERNS TAB
-// ══════════════════════════════════════════════
+// ── Risk patterns tab ──
 function rRiskPatterns(){
   const rgs=["RG1","RG2","RG3","RG3*","RG4"];
   const bsls=[...new Set(computed_all.map(a=>a.bsl))].sort();
   const datasets=bsls.map(bsl=>({label:bsl,data:rgs.map(rg=>computed_all.filter(a=>(a.erg||a.riskGroup)===rg&&a.bsl===bsl).length),backgroundColor:COLORS.bsl[bsl]||"#999"}));
-
-  let h=`<div class="card"><h3>Agent–BSL heatmap</h3><p class="sub">BSL assignments by effective Risk Group.</p>
-    ${chartOrSVG("ch-heatmap",{type:"bar",data:{labels:rgs,datasets},options:{scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}})}</div>`;
-  
-  h+=`<div class="card"><h3>Procedure type by PSR level</h3><p class="sub">Most common procedure names grouped by their PSR classification.</p>`;
+  let h=`<div class="card"><h3>Agent–BSL heatmap</h3>
+${chartOrSVG("ch-heatmap",{type:"bar",data:{labels:rgs,datasets},options:{scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}})}</div>`;
+  h+=`<div class="card"><h3>Procedure type by PSR level</h3>`;
   const procByPSR={Low:[],Moderate:[],High:[]};
   computed_all.forEach(a=>{(a.procedures||[]).forEach((p,i)=>{if(p.name&&a.pp[i])procByPSR[a.pp[i]].push(p.name.toLowerCase().trim())})});
   ["High","Moderate","Low"].forEach(level=>{
@@ -578,25 +625,19 @@ function rRiskPatterns(){
     }
   });
   h+=`</div>`;
-
-  h+=`<div class="card"><h3>GMO vs non-GMO risk profile</h3>`;
   const gmo2=computed_all.filter(a=>a.isGMO);const ngmo2=computed_all.filter(a=>!a.isGMO);
   const psrLevels2=["Low","Moderate","High"];
-  h+=chartOrSVG("ch-gmo",{type:"bar",data:{labels:psrLevels2,datasets:[{label:"GMO",data:psrLevels2.map(l=>gmo2.filter(a=>a.ap===l).length),backgroundColor:"rgba(127,119,221,0.7)"},{label:"Non-GMO",data:psrLevels2.map(l=>ngmo2.filter(a=>a.ap===l).length),backgroundColor:"rgba(93,202,165,0.7)"}]},options:{scales:{y:{beginAtZero:true}}}});
-  h+=`</div>`;
+  h+=`<div class="card"><h3>GMO vs non-GMO risk profile</h3>
+${chartOrSVG("ch-gmo",{type:"bar",data:{labels:psrLevels2,datasets:[{label:"GMO",data:psrLevels2.map(l=>gmo2.filter(a=>a.ap===l).length),backgroundColor:"rgba(127,119,221,0.7)"},{label:"Non-GMO",data:psrLevels2.map(l=>ngmo2.filter(a=>a.ap===l).length),backgroundColor:"rgba(93,202,165,0.7)"}]},options:{scales:{y:{beginAtZero:true}}}})}</div>`;
   return h;
 }
+function renderRPCharts(){}
 
-function renderRPCharts(){if(!hasChart())return;}
-
-// ══════════════════════════════════════════════
-// TEMPORAL TAB
-// ══════════════════════════════════════════════
+// ── Temporal tab ──
 function rTemporal(){
   const byMonth={};
   computed_all.forEach(a=>{const d=(a.reviewDate||a.createdAt||"").slice(0,7);if(d)byMonth[d]=(byMonth[d]||0)+1});
   const months=Object.keys(byMonth).sort();
-
   const insts=[...new Set(computed_all.map(a=>a.institution).filter(Boolean))];
   const colors=["#534ab7","#1d9e75","#ef9f27","#e24b4a","#85b7eb","#7f77dd"];
   const instData=insts.map((inst,i)=>{
@@ -604,13 +645,11 @@ function rTemporal(){
     let cum=0;const data=months.map(m=>{cum+=(byM[m]||0);return cum});
     return{label:inst,data,borderColor:colors[i%colors.length],fill:false};
   });
-
   let h=`<div class="card"><h3>Assessments over time</h3>${chartOrSVG("ch-temporal",{type:"line",data:{labels:months,datasets:[{label:"Assessments",data:months.map(m=>byMonth[m]),borderColor:"#534ab7",backgroundColor:"rgba(83,74,183,0.1)",fill:true}]}})}</div>`;
   h+=`<div class="card"><h3>Cumulative assessments by institution</h3>${chartOrSVG("ch-inst",{type:"line",data:{labels:months,datasets:instData}})}</div>`;
   return h;
 }
-
-function renderTemporalCharts(){if(!hasChart())return;}
+function renderTemporalCharts(){}
 
 // ── Helpers ──
 function bslPill(l){const m={"BSL-1":"green","BSL-1*":"green","BSL-2":"blue","BSL-2**":"blue","BSL-2+":"amber","BSL-2+/BSL-3":"amber","BSL-3":"red","BSL-4":"purple"};return`<span class="pill p-${m[l]||"gray"}">${l}</span>`}
@@ -638,10 +677,10 @@ window.handleImport=function(input){
         data.forEach(d=>{
           if(d.agentName||d.Agent){
             const a={id:`imp_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,agentName:d.agentName||d.Agent||"",riskGroup:d.riskGroup||d.RiskGroup||d.EffectiveRG||"",isGMO:d.isGMO==="true"||d.isGMO===true,parentalOrg:d.parentalOrg||"",geneticMod:d.geneticMod||"",replComp:d.replComp||"",
-              procedures:d.procedures||[{name:d.KeyProcedures||"Imported",aerosol:d.aerosol||"moderate",volume:d.volume||"moderate",concentration:d.concentration||"moderate"}],
-              modFactors:d.modFactors||Object.fromEntries(MF_IDS.map(id=>[id,"neutral"])),
-              justification:d.justification||d.Justification||"",reviewer:d.reviewer||d.Reviewer||d.Assessor||"",institution:d.institution||d.Institution||"",
-              reviewDate:d.reviewDate||d.Date||new Date().toISOString().slice(0,10),status:d.status||d.Status||"final",createdAt:d.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString(),version:"1.0.0"};
+            procedures:d.procedures||[{name:d.KeyProcedures||"Imported",aerosol:d.aerosol||"moderate",volume:d.volume||"moderate",concentration:d.concentration||"moderate"}],
+            modFactors:d.modFactors||Object.fromEntries(MF_IDS.map(id=>[id,"neutral"])),
+            justification:d.justification||d.Justification||"",reviewer:d.reviewer||d.Reviewer||d.Assessor||"",institution:d.institution||d.Institution||"",
+            reviewDate:d.reviewDate||d.Date||new Date().toISOString().slice(0,10),status:d.status||d.Status||"final",createdAt:d.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString(),version:"1.0.0"};
             localStorage.setItem(`psr:${a.id}`,JSON.stringify(a));
             const idx=JSON.parse(localStorage.getItem("psr:index")||"[]");idx.push(a.id);localStorage.setItem("psr:index",JSON.stringify(idx));
           }

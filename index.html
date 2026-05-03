@@ -49,107 +49,111 @@ footer{text-align:center;padding:32px 0;font-size:12px;color:var(--text3);border
 <body>
 <button class="lang" onclick="toggleLang()" id="langBtn">ES</button>
 <div class="wrap" id="content"></div>
-
 <script>
 let lang='en';
+
 const T={
-  title:{en:'PSR biosafety assessment tool',es:'Herramienta de evaluación de bioseguridad PSR'},
-  subtitle:{en:'Interactive digital implementation of the 8-step Procedure-Specific Risk framework for biosafety level assignment in modern biotechnology laboratories.',
-            es:'Implementación digital interactiva del framework de Riesgo Específico del Procedimiento (REP) en 8 pasos para la asignación de nivel de bioseguridad en laboratorios de biotecnología moderna.'},
-  quickTool:{en:'Quick assessment tool',es:'Herramienta de evaluación rápida'},
-  quickDesc:{en:'Standalone single-page tool for individual PSR assessments. Works offline, no account needed. Ideal for laboratory use and biosafety committee consultations.',
-             es:'Herramienta autónoma de una sola página para evaluaciones PSR individuales. Funciona sin conexión, sin necesidad de cuenta. Ideal para uso en laboratorio y consultas de comités de bioseguridad.'},
-  platform:{en:'Assessment platform',es:'Plataforma de evaluación'},
-  platformDesc:{en:'Full platform with persistent storage, multi-user profiles, institutional dashboard, audit trail, and inter-rater reliability (IRR) analysis for multi-institutional validation studies.',
-                es:'Plataforma completa con almacenamiento persistente, perfiles multiusuario, panel institucional, trazabilidad de auditoría y análisis de fiabilidad inter-evaluador (IRR) para estudios de validación multi-institucional.'},
-  openTool:{en:'Open tool',es:'Abrir herramienta'},
-  openPlatform:{en:'Open platform',es:'Abrir plataforma'},
-  framework:{en:'The PSR framework',es:'El framework PSR'},
-  frameworkDesc:{en:'The Procedure-Specific Risk (PSR) framework operationalizes a fundamental reconceptualization of laboratory biological risk: from a static property of the agent to a dynamic parameter of the agent–procedure combination. The 8-step framework integrates:',
-                 es:'El framework de Riesgo Específico del Procedimiento (PSR/REP) operacionaliza una reconceptualización fundamental del riesgo biológico de laboratorio: de una propiedad estática del agente a un parámetro dinámico de la combinación agente–procedimiento. El framework de 8 pasos integra:'},
-  s1:{en:'Agent identification (RG1–4, GMO evaluation)',es:'Identificación del agente (GR1–4, evaluación de OMG)'},
-  s2:{en:'Procedure characterization (aerosol, volume, concentration)',es:'Caracterización del procedimiento (aerosol, volumen, concentración)'},
-  s3:{en:'PSR classification (Low / Moderate / High)',es:'Clasificación PSR (Bajo / Moderado / Alto)'},
-  s4:{en:'Modulating factors evaluation (9 procedural modulators)',es:'Evaluación de factores moduladores (9 moduladores procedimentales)'},
-  s5:{en:'Likelihood × Severity integration',es:'Integración Probabilidad × Severidad'},
-  s6:{en:'BSL assignment via Agent–PSR matrix',es:'Asignación NCB mediante matriz Agente–PSR'},
-  s7:{en:'Control selection (engineering, PPE, administrative)',es:'Selección de controles (ingeniería, EPI, administrativos)'},
-  s8:{en:'Documentation and review triggers',es:'Documentación y desencadenantes de revisión'},
-  features:{en:'Key features',es:'Características principales'},
-  f1t:{en:'Algorithm fidelity',es:'Fidelidad algorítmica'},
-  f1d:{en:'Tables 6, 7, and 8 from the manuscript encoded. ≥2 unfavorable factors rule. RG3* classification for replication-defective GMOs.',es:'Tablas 6, 7 y 8 del manuscrito codificadas. Regla de ≥2 factores desfavorables. Clasificación GR3* para OMGs defectivos para replicación.'},
-  f2t:{en:'Bilingual EN/ES',es:'Bilingüe EN/ES'},
-  f2d:{en:'Toggle between English and Spanish. Adapted terminology (PSR/REP, BSL/NCB).',es:'Alterne entre inglés y español. Terminología adaptada (PSR/REP, BSL/NCB).'},
-  f3t:{en:'Export & audit',es:'Exportación y auditoría'},
-  f3d:{en:'Generate structured assessment reports. Print to PDF. Full audit trail with assessor, institution, and date.',es:'Genere informes estructurados. Imprima a PDF. Trazabilidad completa con evaluador, institución y fecha.'},
-  f4t:{en:'Offline capable',es:'Funciona sin conexión'},
-  f4d:{en:'The quick tool works entirely offline. No server, no account, no data leaves your device.',es:'La herramienta rápida funciona completamente sin conexión. Sin servidor, sin cuenta, los datos no salen de su dispositivo.'},
-  f5t:{en:'IRR analysis',es:'Análisis IRR'},
-  f5d:{en:'The platform compares BSL assignments across assessors for inter-rater reliability validation.',es:'La plataforma compara asignaciones NCB entre evaluadores para validación de fiabilidad inter-evaluador.'},
-  f6t:{en:'Open source',es:'Código abierto'},
-  f6d:{en:'MIT license. Adapt, extend, integrate with your institutional systems.',es:'Licencia MIT. Adapte, extienda, integre con sus sistemas institucionales.'},
-  ref:{en:'Reference',es:'Referencia'},
-  refText:{en:'This tool implements the Procedure-Specific Risk (PSR) framework described in: [Authors]. <em>Structured Procedure-Specific Risk (PSR) Framework for Proportionate Biosafety Level Assignment in Modern Biotechnology.</em> [Manuscript in preparation].',
-           es:'Esta herramienta implementa el framework de Riesgo Específico del Procedimiento (PSR/REP) descrito en: [Autores]. <em>Structured Procedure-Specific Risk (PSR) Framework for Proportionate Biosafety Level Assignment in Modern Biotechnology.</em> [Manuscrito en preparación].'},
-  license:{en:'Open source under MIT License. For research and institutional biosafety use.',es:'Código abierto bajo licencia MIT. Para uso en investigación y bioseguridad institucional.'},
-  based:{en:'Based on WHO (2020), BMBL (2020), CDC (2024), and INSST (2024) guidelines.',es:'Basado en las directrices de OMS (2020), BMBL (2020), CDC (2024) e INSST (2024).'},
+title:{en:'PSR biosafety assessment tool',es:'Herramienta de evaluación de bioseguridad PSR'},
+subtitle:{en:'Interactive digital implementation of the 8-step Procedure-Specific Risk framework for biosafety level assignment in modern biotechnology laboratories.',
+es:'Implementación digital interactiva del framework de Riesgo Específico del Procedimiento (REP) en 8 pasos para la asignación de nivel de bioseguridad en laboratorios de biotecnología moderna.'},
+quickTool:{en:'Quick assessment tool',es:'Herramienta de evaluación rápida'},
+quickDesc:{en:'Standalone single-page tool for individual PSR assessments. Works offline, no account needed. Ideal for laboratory use and biosafety committee consultations.',
+es:'Herramienta autónoma de una sola página para evaluaciones PSR individuales. Funciona sin conexión, sin necesidad de cuenta. Ideal para uso en laboratorio y consultas de comités de bioseguridad.'},
+platform:{en:'Assessment platform',es:'Plataforma de evaluación'},
+platformDesc:{en:'Full platform with persistent storage, multi-user profiles, institutional dashboard, audit trail, and inter-rater reliability analysis for multi-institutional validation studies.',
+es:'Plataforma completa con almacenamiento persistente, perfiles multiusuario, panel institucional, trazabilidad de auditoría y análisis de fiabilidad inter-evaluador para estudios de validación multi-institucional.'},
+openTool:{en:'Open tool',es:'Abrir herramienta'},
+openPlatform:{en:'Open platform',es:'Abrir plataforma'},
+framework:{en:'The PSR framework',es:'El framework PSR'},
+frameworkDesc:{en:'The Procedure-Specific Risk (PSR) framework operationalizes a fundamental reconceptualization of laboratory biological risk: from a static property of the agent to a dynamic parameter of the agent–procedure combination. The 8-step framework integrates:',
+es:'El framework de Riesgo Específico del Procedimiento (PSR/REP) operacionaliza una reconceptualización fundamental del riesgo biológico de laboratorio: de una propiedad estática del agente a un parámetro dinámico de la combinación agente–procedimiento. El framework de 8 pasos integra:'},
+s1:{en:'Agent identification (RG1–4, GMO evaluation)',es:'Identificación del agente (GR1–4, evaluación de OMG)'},
+s2:{en:'Procedure characterization (aerosol, volume, concentration)',es:'Caracterización del procedimiento (aerosol, volumen, concentración)'},
+s3:{en:'PSR classification (Low / Moderate / High)',es:'Clasificación PSR (Bajo / Moderado / Alto)'},
+s4:{en:'Modulating factors evaluation (9 procedural modulators)',es:'Evaluación de factores moduladores (9 moduladores procedimentales)'},
+s5:{en:'Likelihood × Severity integration',es:'Integración Probabilidad × Severidad'},
+s6:{en:'BSL assignment via Agent–PSR matrix',es:'Asignación NCB mediante matriz Agente–PSR'},
+s7:{en:'Control selection (engineering, PPE, administrative)',es:'Selección de controles (ingeniería, EPI, administrativos)'},
+s8:{en:'Documentation and review triggers',es:'Documentación y desencadenantes de revisión'},
+features:{en:'Key features',es:'Características principales'},
+f1t:{en:'Algorithm fidelity',es:'Fidelidad algorítmica'},
+f1d:{en:'Tables 6, 7, and 8 from the manuscript encoded. ≥2 unfavorable factors rule. RG3* classification for replication-defective GMOs.',es:'Tablas 6, 7 y 8 del manuscrito codificadas. Regla de ≥2 factores desfavorables. Clasificación GR3* para OMGs defectivos para replicación.'},
+f2t:{en:'Bilingual EN/ES',es:'Bilingüe EN/ES'},
+f2d:{en:'Toggle between English and Spanish. Adapted terminology (PSR/REP, BSL/NCB).',es:'Alterne entre inglés y español. Terminología adaptada (PSR/REP, NCB).'},
+f3t:{en:'Export & audit',es:'Exportación y auditoría'},
+f3d:{en:'Generate structured assessment reports. Print to PDF. Full audit trail with assessor, institution, and date.',es:'Genere informes estructurados. Imprima a PDF. Trazabilidad completa con evaluador, institución y fecha.'},
+f4t:{en:'Offline capable',es:'Funciona sin conexión'},
+f4d:{en:'The quick tool works entirely offline. No server, no account, no data leaves your device.',es:'La herramienta rápida funciona completamente sin conexión. Sin servidor, sin cuenta, los datos no salen de su dispositivo.'},
+f5t:{en:'IRR analysis',es:'Análisis IRR'},
+f5d:{en:'Cohen\'s κ (pairwise) and Fleiss\' κ (multi-rater, primary) for inter-rater reliability. Fleiss\' κ is the recommended statistic for ≥3 raters assessing identical scenarios, as required for multi-institutional validation studies.',
+es:'κ de Cohen (por pares) y κ de Fleiss (multi-evaluador, métrica principal) para fiabilidad inter-evaluador. La κ de Fleiss es el estadístico recomendado para ≥3 evaluadores que evalúan los mismos escenarios, tal como se requiere en estudios de validación multi-institucional.'},
+f6t:{en:'Open source',es:'Código abierto'},
+f6d:{en:'MIT license. Adapt, extend, integrate with your institutional systems.',es:'Licencia MIT. Adapte, extienda, integre con sus sistemas institucionales.'},
+ref:{en:'Reference',es:'Referencia'},
+refText:{en:'This tool implements the Procedure-Specific Risk (PSR) framework described in: [Authors]. <em>Procedure-Specific Risk (PSR) Framework for Biosafety Level Assignment: An 8-Step Operational Model Derived from International Regulatory Convergence.</em> Frontiers in Bioengineering and Biotechnology [manuscript submitted].',
+es:'Esta herramienta implementa el framework de Riesgo Específico del Procedimiento (PSR/REP) descrito en: [Autores]. <em>Procedure-Specific Risk (PSR) Framework for Biosafety Level Assignment: An 8-Step Operational Model Derived from International Regulatory Convergence.</em> Frontiers in Bioengineering and Biotechnology [manuscrito enviado].'},
+license:{en:'Open source under MIT License. For research and institutional biosafety use.',es:'Código abierto bajo licencia MIT. Para uso en investigación y bioseguridad institucional.'},
+based:{en:'Based on WHO (2020), BMBL (2020), CDC (2024), and INSST (2024) guidelines.',es:'Basado en las directrices de OMS (2020), BMBL (2020), CDC (2024) e INSST (2024).'},
 };
+
 const t=k=>T[k]?.[lang]||k;
 
 function render(){
-  document.getElementById('content').innerHTML=`
-    <h1>${t('title')}</h1>
-    <p class="sub">${t('subtitle')}</p>
+document.getElementById('content').innerHTML=`
+<h1>${t('title')}</h1>
+<p class="sub">${t('subtitle')}</p>
 
-    <div class="card-grid">
-      <div class="card">
-        <span class="pill pill-green">Standalone</span>
-        <h2 style="margin-top:12px">${t('quickTool')}</h2>
-        <p style="font-size:13px;color:var(--text2);margin:8px 0 20px;line-height:1.6">${t('quickDesc')}</p>
-        <div style="margin-bottom:16px">
-          <span class="badge">Offline</span><span class="badge">EN/ES</span><span class="badge">PDF export</span>
-        </div>
-        <a href="tool.html" class="btn btn-primary" style="display:block">${t('openTool')}</a>
-      </div>
-      <div class="card">
-        <span class="pill pill-purple">Multi-institutional</span>
-        <h2 style="margin-top:12px">${t('platform')}</h2>
-        <p style="font-size:13px;color:var(--text2);margin:8px 0 20px;line-height:1.6">${t('platformDesc')}</p>
-        <div style="margin-bottom:16px">
-          <span class="badge">Persistent data</span><span class="badge">IRR analysis</span><span class="badge">Audit trail</span>
-        </div>
-        <a href="platform.html" class="btn btn-success" style="display:block">${t('openPlatform')}</a>
-        <a href="analytics.html" class="btn" style="display:block;margin-top:8px;border:1px solid var(--border);color:var(--text2);text-decoration:none;padding:10px 28px;border-radius:10px;text-align:center;font-size:14px">Data analytics module</a>
-      </div>
-    </div>
+<div class="card-grid">
+<div class="card">
+<span class="pill pill-green">Standalone</span>
+<h2 style="margin-top:12px">${t('quickTool')}</h2>
+<p style="font-size:13px;color:var(--text2);margin:8px 0 20px;line-height:1.6">${t('quickDesc')}</p>
+<div style="margin-bottom:16px">
+<span class="badge">Offline</span><span class="badge">EN/ES</span><span class="badge">PDF export</span>
+</div>
+<a href="tool.html" class="btn btn-primary" style="display:block">${t('openTool')}</a>
+</div>
 
-    <div class="card">
-      <h2>${t('framework')}</h2>
-      <p style="font-size:14px;color:var(--text2);margin-bottom:16px;line-height:1.7">${t('frameworkDesc')}</p>
-      <div class="steps">
-        ${[1,2,3,4,5,6,7,8].map((n,i)=>`<div class="step-num">${n}</div>${i<7?'<div class="step-line"></div>':''}`).join('')}
-      </div>
-      <ol style="font-size:13px;color:var(--text2);line-height:2;padding-left:20px;margin-top:12px">
-        ${[t('s1'),t('s2'),t('s3'),t('s4'),t('s5'),t('s6'),t('s7'),t('s8')].map(s=>`<li>${s}</li>`).join('')}
-      </ol>
-    </div>
+<div class="card">
+<span class="pill pill-purple">Multi-institutional</span>
+<h2 style="margin-top:12px">${t('platform')}</h2>
+<p style="font-size:13px;color:var(--text2);margin:8px 0 20px;line-height:1.6">${t('platformDesc')}</p>
+<div style="margin-bottom:16px">
+<span class="badge">Persistent data</span><span class="badge">IRR analysis</span><span class="badge">Audit trail</span>
+</div>
+<a href="platform.html" class="btn btn-success" style="display:block">${t('openPlatform')}</a>
+<a href="analytics.html" class="btn" style="display:block;margin-top:8px;border:1px solid var(--border);color:var(--text2);text-decoration:none;padding:10px 28px;border-radius:10px;text-align:center;font-size:14px">Data analytics &amp; IRR module</a>
+</div>
+</div>
 
-    <h2 style="margin-bottom:16px">${t('features')}</h2>
-    <div class="features">
-      ${[['f1t','f1d','🔬'],['f2t','f2d','🌐'],['f3t','f3d','📋'],['f4t','f4d','📡'],['f5t','f5d','📊'],['f6t','f6d','💻']].map(([tk,dk,icon])=>`
-        <div class="feature"><div class="feature-icon">${icon}</div><h3>${t(tk)}</h3><p>${t(dk)}</p></div>`).join('')}
-    </div>
+<div class="card">
+<h2>${t('framework')}</h2>
+<p style="font-size:14px;color:var(--text2);margin-bottom:16px;line-height:1.7">${t('frameworkDesc')}</p>
+<div class="steps">
+${[1,2,3,4,5,6,7,8].map((n,i)=>`<div class="step-num">${n}</div>${i<7?'<div class="step-line"></div>':''}`).join('')}
+</div>
+<ol style="font-size:13px;color:var(--text2);line-height:2;padding-left:20px;margin-top:12px">
+${[t('s1'),t('s2'),t('s3'),t('s4'),t('s5'),t('s6'),t('s7'),t('s8')].map(s=>`<li>${s}</li>`).join('')}
+</ol>
+</div>
 
-    <div class="ref"><strong>${t('ref')}:</strong> ${t('refText')}</div>
+<h2 style="margin-bottom:16px">${t('features')}</h2>
+<div class="features">
+${[['f1t','f1d','🔬'],['f2t','f2d','🌐'],['f3t','f3d','📋'],['f4t','f4d','📡'],['f5t','f5d','📊'],['f6t','f6d','💻']].map(([tk,dk,icon])=>`
+<div class="feature"><div class="feature-icon">${icon}</div><h3>${t(tk)}</h3><p>${t(dk)}</p></div>`).join('')}
+</div>
 
-    <footer>
-      <p>${t('based')}</p>
-      <p style="margin-top:4px">${t('license')}</p>
-      <p style="margin-top:8px">PSR Biosafety Assessment Tool v1.1.0 — April 2026</p>
-    </footer>`;
+<div class="ref"><strong>${t('ref')}:</strong> ${t('refText')}</div>
+
+<footer>
+<p>${t('based')}</p>
+<p style="margin-top:4px">${t('license')}</p>
+<p style="margin-top:8px">PSR Biosafety Assessment Tool v1.2.0 — May 2026</p>
+</footer>`;
 }
 
 function toggleLang(){lang=lang==='en'?'es':'en';document.getElementById('langBtn').textContent=lang==='en'?'ES':'EN';render()}
+
 render();
 </script>
 </body>
