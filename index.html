@@ -50,7 +50,7 @@ footer{text-align:center;padding:32px 0;font-size:12px;color:var(--text3);border
 <button class="lang" onclick="toggleLang()" id="langBtn">ES</button>
 <div class="wrap" id="content"></div>
 <script>
-let lang='en';
+let lang=(localStorage.getItem('psr:lang')||'en');
 
 const T={
 title:{en:'PSR biosafety assessment tool',es:'Herramienta de evaluación de bioseguridad PSR'},
@@ -73,7 +73,7 @@ s3:{en:'PSR classification (Low / Moderate / High)',es:'Clasificación PSR (Bajo
 s4:{en:'Modulating factors evaluation (9 procedural modulators)',es:'Evaluación de factores moduladores (9 moduladores procedimentales)'},
 s5:{en:'Likelihood × Severity integration',es:'Integración Probabilidad × Severidad'},
 s6:{en:'BSL assignment via Agent–PSR matrix',es:'Asignación NCB mediante matriz Agente–PSR'},
-s7:{en:'Control selection (engineering, PPE, administrative)',es:'Selección de controles (ingeniería, EPI, administrativos)'},
+s7:{en:'Control selection (engineering, PPE, decontamination, regional respiratory standards)',es:'Selección de controles (ingeniería, EPI, descontaminación, estándares respiratorios regionales)'},
 s8:{en:'Documentation and review triggers',es:'Documentación y desencadenantes de revisión'},
 features:{en:'Key features',es:'Características principales'},
 f1t:{en:'Algorithm fidelity',es:'Fidelidad algorítmica'},
@@ -90,10 +90,18 @@ es:'κ de Cohen (por pares) y κ de Fleiss (multi-evaluador, métrica principal)
 f6t:{en:'Open source',es:'Código abierto'},
 f6d:{en:'MIT license. Adapt, extend, integrate with your institutional systems.',es:'Licencia MIT. Adapte, extienda, integre con sus sistemas institucionales.'},
 ref:{en:'Reference',es:'Referencia'},
-refText:{en:'This tool implements the Procedure-Specific Risk (PSR) framework described in: [Authors]. <em>Procedure-Specific Risk (PSR) Framework for Biosafety Level Assignment: An 8-Step Operational Model Derived from International Regulatory Convergence.</em> Frontiers in Bioengineering and Biotechnology [manuscript submitted].',
-es:'Esta herramienta implementa el framework de Riesgo Específico del Procedimiento (PSR/REP) descrito en: [Autores]. <em>Procedure-Specific Risk (PSR) Framework for Biosafety Level Assignment: An 8-Step Operational Model Derived from International Regulatory Convergence.</em> Frontiers in Bioengineering and Biotechnology [manuscrito enviado].'},
+refText:{en:'This tool implements the Procedure-Specific Risk (PSR) framework described in: Cena-Diez R. <em>An 8-Step Procedure-Specific Risk Framework Enables Reproducible Biosafety Level Assignment Beyond Agent-Based Classification.</em> Frontiers in Bioengineering and Biotechnology [manuscript submitted].',
+es:'Esta herramienta implementa el framework de Riesgo Específico del Procedimiento (PSR/REP) descrito en: Cena-Diez R. <em>An 8-Step Procedure-Specific Risk Framework Enables Reproducible Biosafety Level Assignment Beyond Agent-Based Classification.</em> Frontiers in Bioengineering and Biotechnology [manuscrito enviado].'},
 license:{en:'Open source under MIT License. For research and institutional biosafety use.',es:'Código abierto bajo licencia MIT. Para uso en investigación y bioseguridad institucional.'},
 based:{en:'Based on WHO (2020), BMBL (2020), CDC (2024), and INSST (2024) guidelines.',es:'Basado en las directrices de OMS (2020), BMBL (2020), CDC (2024) e INSST (2024).'},
+pillStandalone:{en:'Standalone',es:'Autónoma'},
+pillMulti:{en:'Multi-institutional',es:'Multi-institucional'},
+bOffline:{en:'Offline',es:'Sin conexión'},
+bPDF:{en:'PDF export',es:'Exportar PDF'},
+bPersist:{en:'Persistent data',es:'Datos persistentes'},
+bIRR:{en:'IRR analysis',es:'Análisis IRR'},
+bAudit:{en:'Audit trail',es:'Trazabilidad'},
+analyticsBtn:{en:'Data analytics & IRR module',es:'Módulo de analítica de datos e IRR'},
 };
 
 const t=k=>T[k]?.[lang]||k;
@@ -105,24 +113,24 @@ document.getElementById('content').innerHTML=`
 
 <div class="card-grid">
 <div class="card">
-<span class="pill pill-green">Standalone</span>
+<span class="pill pill-green">${t('pillStandalone')}</span>
 <h2 style="margin-top:12px">${t('quickTool')}</h2>
 <p style="font-size:13px;color:var(--text2);margin:8px 0 20px;line-height:1.6">${t('quickDesc')}</p>
 <div style="margin-bottom:16px">
-<span class="badge">Offline</span><span class="badge">EN/ES</span><span class="badge">PDF export</span>
+<span class="badge">${t('bOffline')}</span><span class="badge">EN/ES</span><span class="badge">${t('bPDF')}</span>
 </div>
 <a href="tool.html" class="btn btn-primary" style="display:block">${t('openTool')}</a>
 </div>
 
 <div class="card">
-<span class="pill pill-purple">Multi-institutional</span>
+<span class="pill pill-purple">${t('pillMulti')}</span>
 <h2 style="margin-top:12px">${t('platform')}</h2>
 <p style="font-size:13px;color:var(--text2);margin:8px 0 20px;line-height:1.6">${t('platformDesc')}</p>
 <div style="margin-bottom:16px">
-<span class="badge">Persistent data</span><span class="badge">IRR analysis</span><span class="badge">Audit trail</span>
+<span class="badge">${t('bPersist')}</span><span class="badge">${t('bIRR')}</span><span class="badge">${t('bAudit')}</span>
 </div>
 <a href="platform.html" class="btn btn-success" style="display:block">${t('openPlatform')}</a>
-<a href="analytics.html" class="btn" style="display:block;margin-top:8px;border:1px solid var(--border);color:var(--text2);text-decoration:none;padding:10px 28px;border-radius:10px;text-align:center;font-size:14px">Data analytics &amp; IRR module</a>
+<a href="analytics.html" class="btn" style="display:block;margin-top:8px;border:1px solid var(--border);color:var(--text2);text-decoration:none;padding:10px 28px;border-radius:10px;text-align:center;font-size:14px">${t('analyticsBtn')}</a>
 </div>
 </div>
 
@@ -148,12 +156,13 @@ ${[['f1t','f1d','🔬'],['f2t','f2d','🌐'],['f3t','f3d','📋'],['f4t','f4d','
 <footer>
 <p>${t('based')}</p>
 <p style="margin-top:4px">${t('license')}</p>
-<p style="margin-top:8px">PSR Biosafety Assessment Tool v1.2.0 — May 2026</p>
+<p style="margin-top:8px">PSR Biosafety Assessment Tool v1.3.0 — June 2026</p>
 </footer>`;
 }
 
-function toggleLang(){lang=lang==='en'?'es':'en';document.getElementById('langBtn').textContent=lang==='en'?'ES':'EN';render()}
+function toggleLang(){lang=lang==='en'?'es':'en';localStorage.setItem('psr:lang',lang);document.getElementById('langBtn').textContent=lang==='en'?'ES':'EN';render()}
 
+document.getElementById('langBtn').textContent=lang==='en'?'ES':'EN';
 render();
 </script>
 </body>

@@ -8,9 +8,11 @@ Interactive digital implementation of the **Procedure-Specific Risk (PSR) framew
 
 This tool implements the 8-step PSR framework described in:
 
-> [Authors]. *Procedure-Specific Risk (PSR) Framework for Biosafety Level Assignment: An 8-Step Operational Model Derived from International Regulatory Convergence.* Frontiers in Bioengineering and Biotechnology [manuscript submitted].
+> Cena-Diez R. *An 8-Step Procedure-Specific Risk Framework Enables Reproducible Biosafety Level Assignment Beyond Agent-Based Classification.* Frontiers in Bioengineering and Biotechnology [manuscript submitted].
 
 The PSR framework operationalizes a shift from static, agent-based biosafety classification toward dynamic, procedure-specific risk assessment. It integrates agent hazard (Risk Group) with procedural exposure likelihood to determine proportionate biosafety level assignments.
+
+The full suite is **bilingual (English / Spanish)**. The language toggle (top-left on every page) is shared and persistent across the three modules, so a choice made on one page carries over to the others.
 
 ## Tools
 
@@ -19,21 +21,25 @@ The PSR framework operationalizes a shift from static, agent-based biosafety cla
 - Standalone single-page tool for individual PSR assessments
 - Works entirely offline — no server, no account, no data leaves your device
 - Bilingual EN/ES with toggle
+- Region-appropriate respiratory protection (NIOSH N95/N99/N100 ↔ EN 149 FFP2/FFP3) and agent-aware decontamination / waste-inactivation guidance
 - Export to TXT or print to PDF
 - Ideal for laboratory use and biosafety committee consultations
 
 ### Assessment Platform (`platform.html`)
 
 - Full platform with persistent storage (localStorage)
+- Bilingual EN/ES interface (shared toggle across the suite)
 - User profiles with institution and role
 - Dashboard with assessment management
 - Audit trail (assessor, institution, date, status)
 - Inter-rater reliability (IRR) summary view
+- Decontamination / waste-inactivation and regional respiratory-protection guidance in the control-selection step
 - CSV export for statistical analysis
 - Designed for multi-institutional validation studies
 
 ### Data Analytics Module (`analytics.html`)
 
+- Bilingual EN/ES interface
 - BSL assignment distributions and escalation driver analysis
 - Modulating factor scoring patterns across assessments
 - **Inter-rater reliability (IRR) analysis:**
@@ -47,6 +53,8 @@ The PSR framework operationalizes a shift from static, agent-based biosafety cla
 
 > Fleiss' κ is the primary statistic for the prospective multi-institutional validation study described in Section 5.4 of the manuscript. Cohen's κ is additionally reported for exploratory pairwise comparisons between specific institutions.
 
+> Note on internationalization: the user interface, assessment steps, controls, modulating factors, chart labels, and κ interpretation labels are fully translated. Exported reports (TXT/CSV), the Landis & Koch bibliographic citation, and the scientific names/justifications of the built-in case studies are intentionally kept in English, and the statistical logic (internal Low/Moderate/High keys, κ matching) is language-independent.
+
 ## The 8-Step PSR Framework
 
 1. **Agent identification** — Determine Risk Group (RG1–4); evaluate GMO modifications
@@ -55,7 +63,7 @@ The PSR framework operationalizes a shift from static, agent-based biosafety cla
 4. **Modulating factors** — Evaluate 9 procedural modulators; ≥2 unfavorable triggers escalation
 5. **Likelihood × Severity integration** — Calculate Risk = Hazard × Likelihood
 6. **BSL assignment** — Apply the Agent–PSR combination matrix
-7. **Control selection** — Specify engineering, PPE, and administrative controls
+7. **Control selection** — Specify engineering, PPE, and administrative controls, including region-appropriate respiratory protection and agent-aware decontamination / waste inactivation
 8. **Documentation and review** — Record assessment; establish review triggers
 
 ## Algorithm Details
@@ -84,6 +92,14 @@ The PSR framework operationalizes a shift from static, agent-based biosafety cla
 
 ≥2 unfavorable modulating factors triggers automatic PSR escalation (Low→Moderate or Moderate→High).
 
+### Respiratory protection (regional standards)
+
+Respiratory protection is specified as a *protection level*; the certified device follows the applicable regional standard — NIOSH N95/N99/N100 (US/Canada) or EN 149 FFP2/FFP3 (EU). N95 ≈ FFP2 (both ≥94–95% filtration of non-oily particles); FFP3 (≥99%, comparable to N99/N100) is recommended for the highest-risk aerosol-generating procedures.
+
+### Decontamination & waste inactivation
+
+Disinfectant selection is agent-aware. Non-enveloped viruses (e.g., AAV) and bacterial/fungal spores require a validated sporicidal/virucidal agent (≥0.5–1% sodium hypochlorite, freshly prepared); 70% ethanol alone is insufficient. Enveloped agents are adequately inactivated by 70% ethanol or quaternary ammonium compounds, verified against the agent safety data sheet. All biological waste is autoclaved or chemically inactivated before disposal; at BSL-3/4, all waste is inactivated before leaving containment.
+
 ### IRR Statistics
 
 | Statistic | Use case | Formula |
@@ -109,6 +125,8 @@ Based on analysis of 10 international and national regulatory frameworks:
 - Spanish RD 664/1997
 - EU Directives 2000/54/EC and 2009/41/EC
 
+Respiratory-protection equivalences additionally reference NIOSH 42 CFR Part 84 (N-series) and EN 149:2001+A1:2009 (FFP-series).
+
 ## Deployment
 
 This is a static site — no server required. To deploy:
@@ -128,8 +146,8 @@ MIT License. Free for research and institutional biosafety use.
 If you use this tool in your research, please cite:
 
 ```
-[Authors]. Procedure-Specific Risk (PSR) Framework for Biosafety Level Assignment:
-An 8-Step Operational Model Derived from International Regulatory Convergence.
+Cena-Diez R. An 8-Step Procedure-Specific Risk Framework Enables Reproducible
+Biosafety Level Assignment Beyond Agent-Based Classification.
 Frontiers in Bioengineering and Biotechnology [manuscript submitted].
 
 Digital tool available at: https://rafael-67.github.io/psr-tool/
