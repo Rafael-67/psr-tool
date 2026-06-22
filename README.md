@@ -22,7 +22,7 @@ The full suite is **bilingual (English / Spanish)**. The language toggle (top-le
 - Works entirely offline — no server, no account, no data leaves your device
 - Bilingual EN/ES with toggle
 - Region-appropriate respiratory protection (NIOSH N95/N99/N100 ↔ EN 149 FFP2/FFP3) and agent-aware decontamination / waste-inactivation guidance
-- Export to TXT or print to PDF
+- Bilingual (EN/ES) structured assessment report, exportable as an enriched TXT file or a formatted PDF (via the browser print dialog; no external libraries, so the Quick Tool stays fully offline). The report includes agent classification, a procedure table, PSR determination with the escalation rule applied, the BSL matrix cell, full recommended controls, justification, documentation, and an assessor / biosafety-officer sign-off block
 - Ideal for laboratory use and biosafety committee consultations
 
 ### Assessment Platform (`platform.html`)
@@ -34,6 +34,7 @@ The full suite is **bilingual (English / Spanish)**. The language toggle (top-le
 - Audit trail (assessor, institution, date, status)
 - Inter-rater reliability (IRR) summary view
 - Decontamination / waste-inactivation and regional respiratory-protection guidance in the control-selection step
+- Same bilingual (EN/ES) structured assessment report as the Quick Tool (enriched TXT + formatted PDF), additionally capturing institution and assessment status
 - CSV export for statistical analysis
 - Designed for multi-institutional validation studies
 

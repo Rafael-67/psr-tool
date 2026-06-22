@@ -528,7 +528,7 @@ function rS8(c){
   h+=`<div style="display:flex;gap:8px;margin-top:14px">
     <button class="btn bs" style="flex:1" onclick="saveFinal()">${t("finalizeBtn")}</button>
     <button class="btn bo" style="flex:1" onclick="exportTXT()">${t("exportReport")}</button>
-    <button class="btn bo" style="flex:1" onclick="window.print()">${t("printPDF")}</button>
+    <button class="btn bo" style="flex:1" onclick="printReport()">${t("printPDF")}</button>
   </div>`;
   return h;
 }
@@ -572,27 +572,152 @@ function rIRR(){
 window.saveDraft=function(){cur.reviewer=cur.reviewer||profile.name;cur.institution=cur.institution||profile.institution;cur=LS.save({...cur,status:"draft"});assessments=LS.loadAll();toast(t("draftSaved"),"success");R()};
 window.saveFinal=function(){cur.reviewer=cur.reviewer||profile.name;cur.institution=cur.institution||profile.institution;cur=LS.save({...cur,status:"final"});assessments=LS.loadAll();toast(t("finalizedT"),"success");R()};
 
-window.exportTXT=function(){
+// ── Bilingual assessment report (enriched TXT + printable PDF) ──
+const REPORT_VERSION="1.4.0";
+const LVL=(x)=>({low:p("Low","Bajo"),moderate:p("Moderate","Moderado"),high:p("High","Alto")}[x]||p(x||"—",x||"—"));
+const PSRW=(x)=>({Low:p("Low","Bajo"),Moderate:p("Moderate","Moderado"),High:p("High","Alto")}[x]||p(x||"—",x||"—"));
+const FSTAT=(v)=>v==="increase"?p("Unfavorable","Desfavorable"):v==="decrease"?p("Favorable","Favorable"):p("Neutral","Neutro");
+const RG3STAR=p("RG3* (RG3-derived replication-defective agent). BSL-2+ requires documented risk assessment, IBC approval, Class II BSC + double gloves + eye protection, and demonstrated personnel competency; default to BSL-3 if uncertain.","GR3* (agente defectivo en replicación derivado de GR3). NCB-2+ requiere evaluación de riesgos documentada, aprobación del CBS, CSB Clase II + doble guante + protección ocular y competencia demostrada del personal; NCB-3 por defecto si hay incertidumbre.");
+const CIT="Cena-Diez R. An 8-Step Procedure-Specific Risk Framework Enables Reproducible Biosafety Level Assignment Beyond Agent-Based Classification. Frontiers in Bioengineering and Biotechnology [manuscript submitted].";
+const REGBASIS="WHO Laboratory Biosafety Manual 4th ed. (2020); BMBL 6th ed. (2020); CDC Biological Risk Assessment (2024); INSST (2024); EU Directives 2000/54/EC & 2009/41/EC; EN 149:2001+A1:2009; NIOSH 42 CFR Part 84.";
+const DISC=p("This report supports but does not replace the judgement of the institutional biosafety committee.","Este informe apoya pero no sustituye el criterio del comité de bioseguridad institucional.");
+
+function deconBil(bsl){
+  const base=(CTRL[bsl]||CTRL["BSL-2"]).d||[];
+  const resistant=(cur.modFactors&&cur.modFactors.stability==="increase")||RESISTANT_AGENTS.test(cur.agentName||"")||RESISTANT_AGENTS.test(cur.parentalOrg||"");
+  return [resistant?T.deconWarn:T.deconEnv,...base];
+}
+
+function reportModel(){
   const c=compute(cur);
-  let r=`PSR BIOSAFETY ASSESSMENT REPORT\n${"=".repeat(50)}\nVersion: ${V} | Generated: ${new Date().toISOString()}\n\n`;
-  r+=`AGENT: ${cur.agentName}\nRisk Group: ${c.erg}\n`;
-  if(cur.isGMO)r+=`GMO: Yes | Parental: ${cur.parentalOrg} | Mod: ${cur.geneticMod} | Replication: ${cur.replComp}\n`;
-  r+=`\nPROCEDURES:\n`;
-  cur.procedures.filter(p=>p.name).forEach((p,i)=>{r+=`  ${i+1}. ${p.name} → ${c.pp[i]||"N/A"} PSR (Aer:${p.aerosol} Vol:${p.volume} Conc:${p.concentration})\n`});
-  r+=`\nPSR: Max=${c.mx} | Adjusted=${c.ap} | Unfav=${c.u} | Fav=${c.f}\nBSL: ${c.bsl}\n`;
-  r+=`\nMODULATING FACTORS:\n`;MF.forEach(f=>{r+=`  ${f.l}: ${cur.modFactors[f.id]}\n`});
-  const ctrl=CTRL[c.bsl]||CTRL["BSL-2"];
-  r+=`\nRECOMMENDED CONTROLS (${c.bsl}):\n`;
-  r+=`  Engineering: ${(ctrl.e||[]).join("; ")}\n`;
-  r+=`  PPE: ${(ctrl.p||[]).join("; ")}\n`;
-  r+=`    [Respiratory protection follows regional standard: NIOSH N95/N99/N100 (US/Canada) or EN 149 FFP2/FFP3 (EU); N95 ≈ FFP2; FFP3 for highest-risk aerosol procedures]\n`;
-  r+=`  Administrative: ${(ctrl.a||[]).join("; ")}\n`;
-  r+=`  Decontamination & waste: ${getDeconP(c.bsl).join("; ")}\n`;
-  if(cur.addCtrl)r+=`  Additional: ${cur.addCtrl}\n`;
-  r+=`\nJUSTIFICATION: ${cur.justification||"(not provided)"}\n`;
-  r+=`\nASSESSOR: ${cur.reviewer} | INSTITUTION: ${cur.institution} | DATE: ${cur.reviewDate} | STATUS: ${cur.status}\nTRIGGERS: ${cur.triggers||"(not set)"}\n`;
-  r+=`\n${"=".repeat(50)}\nPSR Biosafety Assessment Platform\nhttps://rafael-67.github.io/psr-tool/\n`;
-  const b=new Blob([r],{type:"text/plain"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`PSR_${(cur.agentName||"report").replace(/\s+/g,"_")}_${cur.reviewDate||"undated"}.txt`;a.click()
+  const erg=c.erg,bsl=c.bsl,mx=c.mx,adj=c.ap,u=c.u,f=c.f,psrs=c.pp;
+  const ctrl=CTRL[bsl]||CTRL["BSL-2"];
+  const now=new Date();
+  const rid="PSR-"+(cur.reviewDate||now.toISOString().slice(0,10))+"-"+Math.random().toString(36).slice(2,6).toUpperCase();
+  const S=[];
+
+  const b1=[{type:"kv",k:p("Biological agent","Agente biológico"),v:cur.agentName||"—"},
+            {type:"kv",k:p("Risk Group","Grupo de Riesgo"),v:cur.riskGroup||"—"},
+            {type:"kv",k:p("Effective RG","GR efectivo"),v:erg||"—"}];
+  if(cur.isGMO){
+    b1.push({type:"kv",k:p("GMO","OMG"),v:"Yes / Sí"});
+    b1.push({type:"kv",k:p("Parental organism","Organismo parental"),v:cur.parentalOrg||"—"});
+    b1.push({type:"kv",k:p("Genetic modification","Modificación genética"),v:cur.geneticMod||"—"});
+    b1.push({type:"kv",k:p("Replication competent","Competente para replicación"),v:cur.replComp==="no"?"No":(cur.replComp==="yes"?"Yes / Sí":"—")});
+  } else b1.push({type:"kv",k:p("GMO","OMG"),v:"No"});
+  if(erg==="RG3*")b1.push({type:"note",en:RG3STAR.en,es:RG3STAR.es});
+  S.push({title:p("1. Agent & classification","1. Agente y clasificación"),body:b1});
+
+  const procs=[];
+  cur.procedures.forEach((pr,idx)=>{if(pr.name)procs.push({n:procs.length+1,name:pr.name,psr:psrs[idx]||"—",aer:LVL(pr.aerosol),vol:LVL(pr.volume),conc:LVL(pr.concentration)});});
+  S.push({title:p("2. Procedures","2. Procedimientos"),body:[{type:"procs",items:procs.length?procs:null}]});
+
+  const factors=MF.map(fc=>{const v=cur.modFactors[fc.id];const d=v==="increase"?fc.inc:v==="decrease"?fc.dec:fc.neu;return{label:fc.l,status:FSTAT(v),desc:d};});
+  const escalated=adj!==mx;
+  const escNote=escalated
+    ? p("Escalation rule applied: ≥2 unfavorable factors → PSR escalated from "+mx+" to "+adj+".","Regla de escalación aplicada: ≥2 factores desfavorables → PSR escalado de "+PSRW(mx).es+" a "+PSRW(adj).es+".")
+    : p("No escalation: fewer than 2 unfavorable factors (or maximum PSR already High).","Sin escalación: menos de 2 factores desfavorables (o PSR máximo ya Alto).");
+  S.push({title:p("3. PSR determination","3. Determinación del PSR"),body:[
+    {type:"kv",k:p("Maximum PSR","PSR máximo"),v:PSRW(mx).en+" / "+PSRW(mx).es},
+    {type:"factors",items:factors},
+    {type:"kv",k:p("Unfavorable factors","Factores desfavorables"),v:String(u)},
+    {type:"kv",k:p("Favorable factors","Factores favorables"),v:String(f)},
+    {type:"note",en:escNote.en,es:escNote.es},
+    {type:"kv",k:p("Adjusted PSR","PSR ajustado"),v:PSRW(adj).en+" / "+PSRW(adj).es},
+  ]});
+
+  const b4=[{type:"kv",k:p("Matrix cell","Celda de la matriz"),v:(erg||"—")+" × "+PSRW(adj).en+"/"+PSRW(adj).es+" PSR"},
+            {type:"kv",k:p("Assigned BSL","NCB asignado"),v:bsl}];
+  if(erg==="RG3*"&&bsl.indexOf("BSL-2+")>-1)b4.push({type:"note",en:RG3STAR.en,es:RG3STAR.es});
+  S.push({title:p("4. BSL assignment","4. Asignación de NCB"),body:b4});
+
+  S.push({title:p("5. Recommended controls","5. Controles recomendados"),body:[
+    {type:"sub",k:p("Engineering controls","Controles de ingeniería")},{type:"list",items:(ctrl.e||[])},
+    {type:"sub",k:p("Personal protective equipment (PPE)","Equipo de protección individual (EPI)")},{type:"list",items:(ctrl.p||[])},
+    {type:"note",en:T.respNote.en,es:T.respNote.es},
+    {type:"sub",k:p("Administrative controls","Controles administrativos")},{type:"list",items:(ctrl.a||[])},
+    {type:"sub",k:p("Decontamination & waste inactivation","Descontaminación e inactivación de residuos")},{type:"list",items:deconBil(bsl)},
+    ...(cur.addCtrl?[{type:"sub",k:p("Additional controls","Controles adicionales")},{type:"text",v:cur.addCtrl}]:[]),
+  ]});
+
+  S.push({title:p("6. Justification","6. Justificación"),body:[{type:"text",v:cur.justification||"—"}]});
+
+  S.push({title:p("7. Documentation & review","7. Documentación y revisión"),body:[
+    {type:"kv",k:p("Assessor","Evaluador"),v:cur.reviewer||"—"},
+    {type:"kv",k:p("Institution","Institución"),v:cur.institution||"—"},
+    {type:"kv",k:p("Date","Fecha"),v:cur.reviewDate||"—"},
+    {type:"kv",k:p("Status","Estado"),v:cur.status==="final"?"Final / Final":"Draft / Borrador"},
+    {type:"kv",k:p("Review triggers","Desencadenantes de revisión"),v:cur.triggers||"—"},
+  ]});
+
+  return {meta:{version:REPORT_VERSION,generated:now.toISOString().slice(0,19).replace("T"," "),rid},sections:S};
+}
+
+function rwrap(s,ind){s=String(s);const max=72-ind.length;const words=s.split(/\s+/);let line="",out=[];words.forEach(w=>{if((line+" "+w).trim().length>max){out.push(ind+line.trim());line=w;}else line+=" "+w;});if(line.trim())out.push(ind+line.trim());return out.join("\n");}
+
+function reportTXT(M){
+  let r="PSR BIOSAFETY ASSESSMENT REPORT  /  INFORME DE EVALUACIÓN DE BIOSEGURIDAD PSR\n"+"=".repeat(76)+"\n";
+  r+="Tool / Herramienta: PSR v"+M.meta.version+"    Report ID: "+M.meta.rid+"\n";
+  r+="Generated / Generado: "+M.meta.generated+" UTC\n";
+  M.sections.forEach(sec=>{
+    r+="\n"+sec.title.en.toUpperCase()+"  /  "+sec.title.es.toUpperCase()+"\n"+"-".repeat(76)+"\n";
+    sec.body.forEach(b=>{
+      if(b.type==="kv") r+="  "+b.k.en+" / "+b.k.es+": "+b.v+"\n";
+      else if(b.type==="sub") r+="  "+b.k.en+" / "+b.k.es+":\n";
+      else if(b.type==="text") r+=rwrap(b.v||"—","  ")+"\n";
+      else if(b.type==="note") r+=rwrap("⚠ "+b.en,"  ")+"\n"+rwrap(b.es,"     ")+"\n";
+      else if(b.type==="list"){ if(b.items) b.items.forEach(it=>{r+="  • "+LE(it)+"\n"+rwrap((it.es||it.en||""),"      ")+"\n"}); }
+      else if(b.type==="factors") b.items.forEach(it=>{r+="  • "+it.label.en+" / "+it.label.es+" → "+it.status.en+" / "+it.status.es+"  ("+it.desc.en+" / "+it.desc.es+")\n"});
+      else if(b.type==="procs"){ if(!b.items){r+="  —\n";} else b.items.forEach(it=>{r+="  "+it.n+". "+it.name+"\n      → "+it.psr+" PSR  ·  Aerosol "+it.aer.en+"/"+it.aer.es+"  ·  Vol "+it.vol.en+"/"+it.vol.es+"  ·  Conc "+it.conc.en+"/"+it.conc.es+"\n"}); }
+    });
+  });
+  r+="\nSIGN-OFF / FIRMAS\n"+"-".repeat(76)+"\n";
+  r+="  Assessor / Evaluador: ____________________________   Date / Fecha: ____________\n\n";
+  r+="  Biosafety Officer / Responsable de Bioseguridad: ____________________   Date / Fecha: ____________\n";
+  r+="\n"+"=".repeat(76)+"\n";
+  r+="Framework reference / Referencia del marco:\n  "+CIT+"\n";
+  r+="Regulatory basis / Base regulatoria:\n  "+REGBASIS+"\n";
+  r+="\n"+DISC.en+"\n"+DISC.es+"\n";
+  r+="https://rafael-67.github.io/psr-tool/\n";
+  return r;
+}
+
+function s_(x){return String(x==null?"":x).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+function reportHTML(M){
+  const sec=M.sections.map(s=>{
+    let inner="";
+    s.body.forEach(b=>{
+      if(b.type==="kv") inner+='<div class="row"><div class="k">'+s_(b.k.en)+' <i>/ '+s_(b.k.es)+'</i></div><div class="v">'+esc(b.v)+'</div></div>';
+      else if(b.type==="sub") inner+="<h3>"+s_(b.k.en)+" <i>/ "+s_(b.k.es)+"</i></h3>";
+      else if(b.type==="text") inner+='<p class="free">'+esc(b.v||"—").replace(/\n/g,"<br>")+"</p>";
+      else if(b.type==="note") inner+='<div class="note">'+s_(b.en)+"<br><i>"+s_(b.es)+"</i></div>";
+      else if(b.type==="list"){ inner+="<ul>"+((b.items||[]).map(it=>"<li>"+s_(LE(it))+"<br><i>"+s_(it.es||it.en||"")+"</i></li>").join(""))+"</ul>"; }
+      else if(b.type==="factors"){ inner+='<table class="fct"><thead><tr><th>Factor</th><th>Status / Estado</th><th>Detail / Detalle</th></tr></thead><tbody>'+b.items.map(it=>"<tr><td>"+s_(it.label.en)+" <i>/ "+s_(it.label.es)+'</i></td><td class="st-'+it.status.en.toLowerCase()+'">'+s_(it.status.en)+" / "+s_(it.status.es)+"</td><td>"+s_(it.desc.en)+" / "+s_(it.desc.es)+"</td></tr>").join("")+"</tbody></table>"; }
+      else if(b.type==="procs"){ inner+=b.items?('<table class="prc"><thead><tr><th>#</th><th>Procedure / Procedimiento</th><th>PSR</th><th>Aerosol</th><th>Vol</th><th>Conc</th></tr></thead><tbody>'+b.items.map(it=>"<tr><td>"+it.n+"</td><td>"+esc(it.name)+"</td><td><b>"+it.psr+"</b></td><td>"+s_(it.aer.en)+"/"+s_(it.aer.es)+"</td><td>"+s_(it.vol.en)+"/"+s_(it.vol.es)+"</td><td>"+s_(it.conc.en)+"/"+s_(it.conc.es)+"</td></tr>").join("")+"</tbody></table>"):'<p class="free">—</p>'; }
+    });
+    return "<section><h2>"+s_(s.title.en)+" <i>/ "+s_(s.title.es)+"</i></h2>"+inner+"</section>";
+  }).join("");
+  const css="@page{size:A4;margin:18mm 16mm}*{box-sizing:border-box}body{font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:#1a1a1a;font-size:11px;line-height:1.5;margin:0}h1{font-size:17px;margin:0 0 2px}h2{font-size:12.5px;color:#534ab7;border-bottom:1.5px solid #534ab7;padding-bottom:2px;margin:14px 0 6px}h3{font-size:11px;margin:8px 0 3px;color:#333}h2 i,h3 i,.k i{font-weight:400;color:#777;font-style:italic}.meta{font-size:10px;color:#666;border-bottom:1px solid #ccc;padding-bottom:6px;margin-bottom:4px}.row{display:flex;gap:8px;padding:1.5px 0}.k{flex:0 0 38%;color:#444}.v{flex:1;font-weight:500}.free{white-space:pre-wrap;background:#f6f6f3;border-left:2px solid #ccc;padding:6px 8px;margin:3px 0}ul{margin:2px 0 6px 16px;padding:0}li{margin:1px 0}li i,.note i,.v i{color:#777;font-style:italic}.note{background:#faf4e8;border-left:2px solid #d8a73a;padding:5px 8px;margin:4px 0}table{width:100%;border-collapse:collapse;margin:4px 0;font-size:10px}th,td{border:1px solid #ddd;padding:3px 5px;text-align:left;vertical-align:top}th{background:#eeedfe;color:#444;font-weight:600}.st-unfavorable{color:#a32d2d;font-weight:600}.st-favorable{color:#3b6d11}.signoff{margin-top:16px;border-top:1px solid #ccc;padding-top:10px}.sigline{margin:14px 0 2px}.sigbox{display:inline-block;border-bottom:1px solid #333;min-width:230px}.footer{margin-top:14px;border-top:2px solid #534ab7;padding-top:6px;font-size:9px;color:#555}.footer b{color:#333}.disc{font-style:italic;margin-top:4px}";
+  return '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>'+M.meta.rid+"</title><style>"+css+'</style></head><body onload="window.print()">'
+    +'<h1>PSR Biosafety Assessment Report <i style="font-weight:400;color:#777;font-size:12px">/ Informe de evaluación de bioseguridad PSR</i></h1>'
+    +'<div class="meta">PSR v'+M.meta.version+" &nbsp;·&nbsp; Report ID: "+M.meta.rid+" &nbsp;·&nbsp; Generated / Generado: "+M.meta.generated+" UTC</div>"
+    +sec
+    +'<div class="signoff"><div class="sigline">Assessor / Evaluador: <span class="sigbox"></span> &nbsp;&nbsp; Date / Fecha: <span class="sigbox" style="min-width:120px"></span></div>'
+    +'<div class="sigline">Biosafety Officer / Responsable de Bioseguridad: <span class="sigbox"></span> &nbsp;&nbsp; Date / Fecha: <span class="sigbox" style="min-width:120px"></span></div></div>'
+    +'<div class="footer"><b>Framework reference / Referencia del marco:</b> '+s_(CIT)+"<br><b>Regulatory basis / Base regulatoria:</b> "+s_(REGBASIS)
+    +'<div class="disc">'+s_(DISC.en)+"<br>"+s_(DISC.es)+"</div>https://rafael-67.github.io/psr-tool/</div></body></html>";
+}
+
+window.exportTXT=function(){
+  const r=reportTXT(reportModel());
+  const b=new Blob([r],{type:"text/plain;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(b);
+  a.download=`PSR_${(cur.agentName||"report").replace(/\s+/g,"_").slice(0,40)}_${cur.reviewDate||"undated"}.txt`;a.click();URL.revokeObjectURL(a.href)
+};
+window.printReport=function(){
+  const html=reportHTML(reportModel());
+  const w=window.open("","_blank");
+  if(!w){toast(lang==="es"?"Permita las ventanas emergentes para el PDF":"Allow pop-ups to generate the PDF","error");return;}
+  w.document.open();w.document.write(html);w.document.close();
 };
 
 window.exportCSV=function(){
