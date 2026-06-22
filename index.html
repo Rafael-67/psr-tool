@@ -44,8 +44,6 @@ h3{font-size:16px;font-weight:600;margin-bottom:4px}
 footer{text-align:center;padding:32px 0;font-size:12px;color:var(--text3);border-top:1px solid var(--border);margin-top:40px}
 .lang{position:fixed;top:12px;right:12px;padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;font-size:12px;font-weight:500;z-index:10}
 .badge{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:8px;font-size:12px;background:var(--bg);color:var(--text2);margin-right:8px;margin-bottom:8px}
-.pause-badge{display:inline-block;font-size:11px;padding:1px 8px;border-radius:8px;background:#faeeda;color:#854f0b;margin-left:6px;font-weight:500;white-space:nowrap}
-.pause-legend{font-size:12px;color:var(--text2);margin-top:10px;line-height:1.5}
 </style>
 </head>
 <body>
@@ -104,9 +102,6 @@ bPersist:{en:'Persistent data',es:'Datos persistentes'},
 bIRR:{en:'IRR analysis',es:'Análisis IRR'},
 bAudit:{en:'Audit trail',es:'Trazabilidad'},
 analyticsBtn:{en:'Data analytics & IRR module',es:'Módulo de analítica de datos e IRR'},
-pauseTag:{en:'pause point',es:'punto de pausa'},
-pauseTip:{en:'Mandatory pause point — institutional consultation required',es:'Punto de pausa obligatorio — se requiere consulta institucional'},
-pauseLegend:{en:'Mandatory pause points (Steps 1, 2, 6) require institutional (IBC) consultation before proceeding.',es:'Los puntos de pausa obligatorios (pasos 1, 2 y 6) requieren consulta institucional (IBC/CBS) antes de continuar.'},
 };
 
 const t=k=>T[k]?.[lang]||k;
@@ -146,9 +141,8 @@ document.getElementById('content').innerHTML=`
 ${[1,2,3,4,5,6,7,8].map((n,i)=>`<div class="step-num">${n}</div>${i<7?'<div class="step-line"></div>':''}`).join('')}
 </div>
 <ol style="font-size:13px;color:var(--text2);line-height:2;padding-left:20px;margin-top:12px">
-${['s1','s2','s3','s4','s5','s6','s7','s8'].map((k,i)=>`<li>${t(k)}${[0,1,5].includes(i)?` <span class="pause-badge" title="${t('pauseTip')}">⏸ ${t('pauseTag')}</span>`:''}</li>`).join('')}
+${[t('s1'),t('s2'),t('s3'),t('s4'),t('s5'),t('s6'),t('s7'),t('s8')].map(s=>`<li>${s}</li>`).join('')}
 </ol>
-<div class="pause-legend">⏸ ${t('pauseLegend')}</div>
 </div>
 
 <h2 style="margin-bottom:16px">${t('features')}</h2>
@@ -162,7 +156,7 @@ ${[['f1t','f1d','🔬'],['f2t','f2d','🌐'],['f3t','f3d','📋'],['f4t','f4d','
 <footer>
 <p>${t('based')}</p>
 <p style="margin-top:4px">${t('license')}</p>
-<p style="margin-top:8px">PSR Biosafety Assessment Tool v1.5.0 — June 2026</p>
+<p style="margin-top:8px">PSR Biosafety Assessment Tool v1.4.0 — June 2026</p>
 </footer>`;
 }
 

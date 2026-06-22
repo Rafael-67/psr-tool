@@ -125,15 +125,6 @@ const T={
   incomplete:{en:'Incomplete data',es:'Datos incompletos'},
   favorable:{en:'Favorable',es:'Favorable'},neutral:{en:'Neutral',es:'Neutro'},unfavorable:{en:'Unfavorable',es:'Desfavorable'},
   unfavCount:{en:'Unfavorable',es:'Desfavorables'},favCount:{en:'Favorable',es:'Favorables'},
-  rgUnknown:{en:'Not established',es:'No establecido'},
-  rgUnknownD:{en:'Novel / unclassified agent',es:'Agente nuevo / sin clasificar'},
-  aeroUnchar:{en:'Uncharacterizable',es:'No caracterizable'},
-  ppHeading:{en:'Pause point — institutional consultation required',es:'Punto de pausa — se requiere consulta institucional'},
-  pp1:{en:'This agent has no established Risk Group classification (e.g., a novel engineered organism or gain-of-function variant). Do not proceed: consult the Institutional Biosafety Committee (IBC) for agent-specific guidance before continuing.',es:'Este agente no tiene una clasificación de Grupo de Riesgo establecida (p. ej., un organismo modificado nuevo o una variante de ganancia de función). No continúe: consulte al Comité Institucional de Bioseguridad (IBC/CBS) para obtener orientación específica del agente antes de seguir.'},
-  pp2:{en:'One or more procedures have an aerosol-generating potential that cannot be characterized (e.g., novel microfluidic systems at scale). Flag for expert consultation before PSR classification.',es:'Uno o más procedimientos tienen un potencial de generación de aerosoles que no puede caracterizarse (p. ej., sistemas microfluídicos nuevos a escala). Solicite consulta a un experto antes de la clasificación PSR.'},
-  pp6:{en:'The assigned containment is BSL-3 or BSL-4. Do not proceed without full IBC review and, where applicable, regulatory notification.',es:'La contención asignada es NCB-3 o NCB-4. No continúe sin una revisión completa del IBC/CBS y, cuando corresponda, notificación a la autoridad reguladora.'},
-  ppAck:{en:'I confirm that the required IBC consultation / authorization has been obtained.',es:'Confirmo que se ha obtenido la consulta / autorización requerida del IBC/CBS.'},
-  ppBlocked:{en:'Confirm the consultation above to continue.',es:'Confirme la consulta anterior para continuar.'},
   escalation:{en:'≥2 unfavorable factors: BSL escalation triggered',es:'≥2 factores desfavorables: escalación de NCB activada'},
   integResult:{en:'Integration result',es:'Resultado de la integración'},
   assignedBSL:{en:'Assigned biosafety level',es:'Nivel de contención biológica asignado'},
@@ -255,18 +246,12 @@ function classifyPSR(a,v,c){
 }
 
 function getEffectiveRG(){if(D.rgOverride)return D.rgOverride;return D.isGMO&&D.replComp==='no'&&D.riskGroup==='RG3'?'RG3*':D.riskGroup}
-function getProcPSRs(){return D.procedures.map(p=>p.aerosol&&p.aerosol!=='unknown'&&p.volume&&p.concentration?classifyPSR(p.aerosol,p.volume,p.concentration):null)}
+function getProcPSRs(){return D.procedures.map(p=>p.aerosol&&p.volume&&p.concentration?classifyPSR(p.aerosol,p.volume,p.concentration):null)}
 function getMaxPSR(){const psrs=getProcPSRs();const ord={Low:0,Moderate:1,High:2};return psrs.reduce((m,p)=>p&&ord[p]>ord[m]?p:m,'Low')}
 function getUnfav(){return Object.values(D.modFactors).filter(v=>v==='increase').length}
 function getFav(){return Object.values(D.modFactors).filter(v=>v==='decrease').length}
 function getAdjustedPSR(){const mx=getMaxPSR(),u=getUnfav();if(u>=2&&mx==='Low')return'Moderate';if(u>=2&&mx==='Moderate')return'High';return mx}
 function getBSL(){const rg=getEffectiveRG(),psr=getAdjustedPSR();return rg&&psr?BSL_MATRIX[rg]?.[psr]||'—':'—'}
-function pausePoint(){
-  if(step===0&&D.riskGroup==='unknown')return{msg:t('pp1'),ack:'ackP1'};
-  if(step===1&&D.procedures.some(p=>p.aerosol==='unknown'))return{msg:t('pp2'),ack:'ackP2'};
-  if(step===5){const b=getBSL();if(b.indexOf('BSL-3')>-1||b.indexOf('BSL-4')>-1)return{msg:t('pp6'),ack:'ackP6'};}
-  return null;
-}
 
 function psrPill(level){const c=level==='Low'?'green':level==='Moderate'?'amber':'red';return`<span class="pill pill-${c}">${level} PSR</span>`}
 function bslPill(level){const m={'BSL-1':'green','BSL-1*':'green','BSL-2':'blue','BSL-2**':'blue','BSL-2+':'amber','BSL-2+/BSL-3':'amber','BSL-3':'red','BSL-4':'purple'};return`<span class="pill pill-${m[level]||'gray'}">${level}</span>`}
@@ -302,23 +287,12 @@ function render(){
   else if(step===6) h+=renderStep7();
   else if(step===7) h+=renderStep8();
 
-  // Pause point (hard stop requiring institutional consultation)
-  const pp=pausePoint();
-  if(pp){
-    h+=`<div class="note note-red" style="margin-top:16px;border:1px solid var(--red-text)">
-      <div style="font-weight:600;margin-bottom:6px">⚠ ${t('ppHeading')}</div>
-      <div style="font-size:13px;margin-bottom:10px;line-height:1.5">${pp.msg}</div>
-      <label class="check-label" style="font-weight:500"><input type="checkbox" ${D[pp.ack]?'checked':''} onchange="D.${pp.ack}=this.checked;render()"> ${t('ppAck')}</label>
-    </div>`;
-  }
-
   h+=`</div>`;
 
   // Nav
-  const blockNext=pp&&!D[pp.ack];
   h+=`<div class="nav">`;
   h+=`<button class="btn btn-outline" onclick="step=Math.max(0,step-1);render()" ${step===0?'disabled':''}>${t('prev')}</button>`;
-  h+=`<button class="btn btn-primary" onclick="${blockNext?'':'step=Math.min(7,step+1);render()'}" ${(step===7||blockNext)?'disabled':''} title="${blockNext?t('ppBlocked'):''}">${step===7?t('complete'):t('next')}</button>`;
+  h+=`<button class="btn btn-primary" onclick="step=Math.min(7,step+1);render()" ${step===7?'disabled':''}>${step===7?t('complete'):t('next')}</button>`;
   h+=`</div>`;
 
   document.getElementById('app').innerHTML=h;
@@ -328,9 +302,9 @@ function renderStep1(){
   let h=`<div class="field"><label class="field-label">${t('agentName')}</label>
     <input type="text" value="${esc(D.agentName)}" onchange="D.agentName=this.value" placeholder="${t('agentPh')}"></div>`;
   h+=`<div class="field"><label class="field-label">${t('rgLabel')}</label><div class="opt-grid c2">`;
-  [{v:'RG1',l:'RG1',d:'rg1d'},{v:'RG2',l:'RG2',d:'rg2d'},{v:'RG3',l:'RG3',d:'rg3d'},{v:'RG4',l:'RG4',d:'rg4d'},{v:'unknown',l:t('rgUnknown'),d:'rgUnknownD'}].forEach(r=>{
+  [{v:'RG1',d:'rg1d'},{v:'RG2',d:'rg2d'},{v:'RG3',d:'rg3d'},{v:'RG4',d:'rg4d'}].forEach(r=>{
     h+=`<button class="opt ${D.riskGroup===r.v?'selected':''}" onclick="D.riskGroup='${r.v}';render()">
-      <div class="opt-label">${r.l}</div><div class="opt-desc">${t(r.d)}</div></button>`;
+      <div class="opt-label">${r.v}</div><div class="opt-desc">${t(r.d)}</div></button>`;
   });
   h+=`</div></div>`;
   h+=`<div class="field"><label class="check-label"><input type="checkbox" ${D.isGMO?'checked':''} onchange="D.isGMO=this.checked;render()"> ${t('isGMO')}</label></div>`;
@@ -366,7 +340,7 @@ function renderStep2(){
     if(D.procedures.length>1)h+=`<button style="font-size:12px;color:var(--red-text);background:none;border:none;cursor:pointer" onclick="D.procedures.splice(${i},1);render()">${t('remove')}</button>`;
     h+=`</div>`;
     h+=`<div class="field"><label class="field-label">${t('procName')}</label><input type="text" value="${esc(p.name)}" onchange="D.procedures[${i}].name=this.value" placeholder="${t('procPh')}"></div>`;
-    h+=radioGroup(t('aerosol'),[{v:'low',l:t('aeroLow')},{v:'moderate',l:t('aeroMod')},{v:'high',l:t('aeroHigh')},{v:'unknown',l:t('aeroUnchar')}],p.aerosol,`D.procedures[${i}].aerosol`,2);
+    h+=radioGroup(t('aerosol'),[{v:'low',l:t('aeroLow')},{v:'moderate',l:t('aeroMod')},{v:'high',l:t('aeroHigh')}],p.aerosol,`D.procedures[${i}].aerosol`,3);
     h+=radioGroup(t('volume'),[{v:'low',l:'<10 mL'},{v:'moderate',l:'10–100 mL'},{v:'high',l:'>100 mL'}],p.volume,`D.procedures[${i}].volume`,3);
     h+=radioGroup(t('conc'),[{v:'low',l:'<10⁶'},{v:'moderate',l:'10⁶–10⁸'},{v:'high',l:'>10⁸'}],p.concentration,`D.procedures[${i}].concentration`,3);
     h+=`</div>`;
@@ -501,7 +475,7 @@ function radioGroup(label,options,val,path,cols){
 }
 
 // ── Bilingual assessment report (enriched TXT + printable PDF) ──
-const REPORT_VERSION='1.5.0';
+const REPORT_VERSION='1.4.0';
 const LVL=(x)=>({low:p('Low','Bajo'),moderate:p('Moderate','Moderado'),high:p('High','Alto')}[x]||p(x||'—',x||'—'));
 const PSRW=(x)=>({Low:p('Low','Bajo'),Moderate:p('Moderate','Moderado'),High:p('High','Alto')}[x]||p(x||'—',x||'—'));
 const FSTAT=(v)=>v==='increase'?p('Unfavorable','Desfavorable'):v==='decrease'?p('Favorable','Favorable'):p('Neutral','Neutro');
@@ -515,10 +489,9 @@ function reportModel(){
   const S=[];
 
   // 1 — Agent & classification
-  const RGD=(x)=>x==='unknown'?'Not established / No establecido':(x||'—');
   const b1=[{type:'kv',k:p('Biological agent','Agente biológico'),v:D.agentName||'—'},
-            {type:'kv',k:p('Risk Group','Grupo de Riesgo'),v:RGD(D.riskGroup)},
-            {type:'kv',k:p('Effective RG','GR efectivo'),v:RGD(erg)}];
+            {type:'kv',k:p('Risk Group','Grupo de Riesgo'),v:D.riskGroup||'—'},
+            {type:'kv',k:p('Effective RG','GR efectivo'),v:erg||'—'}];
   if(D.isGMO){
     b1.push({type:'kv',k:p('GMO','OMG'),v:'Yes / Sí'});
     b1.push({type:'kv',k:p('Parental organism','Organismo parental'),v:D.parentalOrg||'—'});
@@ -549,7 +522,7 @@ function reportModel(){
   ]});
 
   // 4 — BSL assignment
-  const b4=[{type:'kv',k:p('Matrix cell','Celda de la matriz'),v:RGD(erg)+' × '+PSRW(adj).en+'/'+PSRW(adj).es+' PSR'},
+  const b4=[{type:'kv',k:p('Matrix cell','Celda de la matriz'),v:(erg||'—')+' × '+PSRW(adj).en+'/'+PSRW(adj).es+' PSR'},
             {type:'kv',k:p('Assigned BSL','NCB asignado'),v:bsl}];
   if(erg==='RG3*'&&bsl.indexOf('BSL-2+')>-1)b4.push({type:'note',en:T.rg3starCond.en,es:T.rg3starCond.es});
   S.push({title:p('4. BSL assignment','4. Asignación de NCB'),body:b4});
