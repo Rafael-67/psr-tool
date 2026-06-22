@@ -126,6 +126,14 @@ const T={
   stFinal:p("final","final"),stDraft:p("draft","borrador"),anon:p("Anon","Anón."),
   loading:p("Loading...","Cargando..."),
   rgAbbr:p("RG","GR"),psrLow:p("Low","Bajo"),psrMod:p("Moderate","Moderado"),psrHigh:p("High","Alto"),
+  rgUnknown:p("Not established","No establecido"),rgUnknownD:p("Novel / unclassified agent","Agente nuevo / sin clasificar"),
+  aeroUnchar:p("Uncharacterizable","No caracterizable"),
+  ppHeading:p("Pause point — institutional consultation required","Punto de pausa — se requiere consulta institucional"),
+  pp1:p("This agent has no established Risk Group classification (e.g., a novel engineered organism or gain-of-function variant). Do not proceed: consult the Institutional Biosafety Committee (IBC) for agent-specific guidance before continuing.","Este agente no tiene una clasificación de Grupo de Riesgo establecida (p. ej., un organismo modificado nuevo o una variante de ganancia de función). No continúe: consulte al Comité Institucional de Bioseguridad (IBC/CBS) para obtener orientación específica del agente antes de seguir."),
+  pp2:p("One or more procedures have an aerosol-generating potential that cannot be characterized (e.g., novel microfluidic systems at scale). Flag for expert consultation before PSR classification.","Uno o más procedimientos tienen un potencial de generación de aerosoles que no puede caracterizarse (p. ej., sistemas microfluídicos nuevos a escala). Solicite consulta a un experto antes de la clasificación PSR."),
+  pp6:p("The assigned containment is BSL-3 or BSL-4. Do not proceed without full IBC review and, where applicable, regulatory notification.","La contención asignada es NCB-3 o NCB-4. No continúe sin una revisión completa del IBC/CBS y, cuando corresponda, notificación a la autoridad reguladora."),
+  ppAck:p("I confirm that the required IBC consultation / authorization has been obtained.","Confirmo que se ha obtenido la consulta / autorización requerida del IBC/CBS."),
+  ppBlocked:p("Confirm the consultation above to continue.","Confirme la consulta anterior para continuar."),
   deconWarn:p("⚠ Environmentally stable / non-enveloped agent detected: use a validated sporicidal/virucidal disinfectant (≥0.5–1% sodium hypochlorite); plain ethanol is INSUFFICIENT.","⚠ Agente ambientalmente estable / no envuelto detectado: utilice un desinfectante esporicida/virucida validado (hipoclorito sódico ≥0,5–1%); el etanol por sí solo es INSUFICIENTE."),
   deconEnv:p("Enveloped agent: 70% ethanol or quaternary ammonium adequate; verify against agent safety data sheet.","Agente envuelto: etanol al 70% o amonio cuaternario adecuados; verifique con la ficha de seguridad del agente."),
   respNote:p("Respiratory protection is specified as a protection level; the certified device follows the applicable regional standard — NIOSH N95/N99/N100 (US/Canada) and EN 149 FFP2/FFP3 (EU). N95 ≈ FFP2; FFP3 (≥99%) is recommended for the highest-risk aerosol-generating procedures.","La protección respiratoria se indica como nivel de protección; el dispositivo certificado sigue el estándar regional aplicable — NIOSH N95/N99/N100 (EE.UU./Canadá) y EN 149 FFP2/FFP3 (UE). N95 ≈ FFP2; FFP3 (≥99%) se recomienda para los procedimientos generadores de aerosoles de mayor riesgo."),
@@ -177,7 +185,7 @@ const LS={
 function cPSR(ae,vo,co){const s={l:0,m:0,h:0};[ae,vo,co].forEach(v=>{if(v==="low")s.l++;else if(v==="moderate")s.m++;else if(v==="high")s.h++});if(s.h>=2||(s.h>=1&&s.m>=1))return"High";if(s.m>=2||(s.h===1&&s.l>=2))return"Moderate";return"Low"}
 function compute(d){
   const erg=d.rgOverride||((d.isGMO&&d.replComp==="no"&&d.riskGroup==="RG3")?"RG3*":d.riskGroup);
-  const pp=(d.procedures||[]).map(p=>p.aerosol&&p.volume&&p.concentration?cPSR(p.aerosol,p.volume,p.concentration):null);
+  const pp=(d.procedures||[]).map(p=>p.aerosol&&p.aerosol!=="unknown"&&p.volume&&p.concentration?cPSR(p.aerosol,p.volume,p.concentration):null);
   const O={Low:0,Moderate:1,High:2};
   const mx=pp.reduce((m,p)=>p&&O[p]>O[m]?p:m,"Low");
   const u=Object.values(d.modFactors||{}).filter(v=>v==="increase").length;
@@ -379,10 +387,19 @@ function rAssess(){
   else if(stp===5)h+=rS6(c);
   else if(stp===6)h+=rS7(c);
   else if(stp===7)h+=rS8(c);
+  const pp=pausePoint();
+  if(pp){
+    h+=`<div class="note n-red" style="border:1px solid var(--red-text)">
+      <div style="font-weight:600;margin-bottom:6px">⚠ ${t("ppHeading")}</div>
+      <div style="font-size:13px;margin-bottom:10px;line-height:1.5">${pp.msg}</div>
+      <label style="display:flex;gap:8px;font-size:13px;font-weight:500;cursor:pointer"><input type="checkbox" ${cur[pp.ack]?"checked":""} onchange="U('${pp.ack}',this.checked);R()"> ${t("ppAck")}</label>
+    </div>`;
+  }
   h+=`</div>`;
 
+  const blockNext=pp&&!cur[pp.ack];
   h+=`<div class="nav"><button class="btn bo" onclick="stp=Math.max(0,stp-1);R()" ${stp===0?"disabled":""}>${t("prev")}</button>
-    <button class="btn bp" onclick="stp=Math.min(7,stp+1);R()" ${stp===7?"disabled":""}>${t("nextStep")}</button></div>`;
+    <button class="btn bp" onclick="${blockNext?"":"stp=Math.min(7,stp+1);R()"}" ${(stp===7||blockNext)?"disabled":""} title="${blockNext?t("ppBlocked"):""}">${t("nextStep")}</button></div>`;
   return h;
 }
 
@@ -397,12 +414,18 @@ window.addProc=function(){cur.procedures.push({name:"",aerosol:"",volume:"",conc
 window.rmProc=function(i){cur.procedures.splice(i,1);R()};
 window.setPA=function(i,k,v){cur.procedures[i][k]=v;R()};
 
+function pausePoint(){
+  if(stp===0&&cur&&cur.riskGroup==="unknown")return{msg:t("pp1"),ack:"ackP1"};
+  if(stp===1&&cur&&(cur.procedures||[]).some(p=>p.aerosol==="unknown"))return{msg:t("pp2"),ack:"ackP2"};
+  if(stp===5&&cur){const b=compute(cur).bsl;if(b.indexOf("BSL-3")>-1||b.indexOf("BSL-4")>-1)return{msg:t("pp6"),ack:"ackP6"};}
+  return null;
+}
 function rS1(){
   let h=`<h2>${t("s1t")}</h2><p class="sub">${t("s1s")}</p>`;
   h+=`<div class="fl"><label>${t("bioAgent")}</label><input type="text" value="${esc(cur.agentName)}" onchange="U('agentName',this.value)" placeholder="${t("agentPh")}"></div>`;
   h+=`<div class="fl"><label>${t("riskGroup")}</label><div class="opt-g c2">`;
-  [{v:"RG1",d:t("rg1d")},{v:"RG2",d:t("rg2d")},{v:"RG3",d:t("rg3d")},{v:"RG4",d:t("rg4d")}].forEach(r=>{
-    h+=`<button class="opt ${cur.riskGroup===r.v?"sel":""}" onclick="setRG('${r.v}')"><b>${r.v}</b><small>${r.d}</small></button>`;
+  [{v:"RG1",l:"RG1",d:t("rg1d")},{v:"RG2",l:"RG2",d:t("rg2d")},{v:"RG3",l:"RG3",d:t("rg3d")},{v:"RG4",l:"RG4",d:t("rg4d")},{v:"unknown",l:t("rgUnknown"),d:t("rgUnknownD")}].forEach(r=>{
+    h+=`<button class="opt ${cur.riskGroup===r.v?"sel":""}" onclick="setRG('${r.v}')"><b>${r.l}</b><small>${r.d}</small></button>`;
   });
   h+=`</div></div>`;
   h+=`<label style="display:flex;gap:8px;font-size:13px;cursor:pointer;margin-bottom:14px"><input type="checkbox" ${cur.isGMO?"checked":""} onchange="setGMO(this)"> ${t("gmoLabel")}</label>`;
@@ -427,7 +450,7 @@ function rS2(){
     if(cur.procedures.length>1)h+=`<button style="font-size:12px;color:var(--red-text);background:none;border:none;cursor:pointer" onclick="rmProc(${i})">${t("remove")}</button>`;
     h+=`</div>`;
     h+=`<div class="fl"><label>${t("name")}</label><input type="text" value="${esc(p.name)}" onchange="UP(${i},'name',this.value)"></div>`;
-    h+=rOpts(t("aerosol"),["low:"+t("minimal"),"moderate:"+t("moderate"),"high:"+t("high")],p.aerosol,i,"aerosol",3);
+    h+=rOpts(t("aerosol"),["low:"+t("minimal"),"moderate:"+t("moderate"),"high:"+t("high"),"unknown:"+t("aeroUnchar")],p.aerosol,i,"aerosol",2);
     h+=rOpts(t("volume"),["low:<10 mL","moderate:10–100 mL","high:>100 mL"],p.volume,i,"volume",3);
     h+=rOpts(t("concentration"),["low:<10⁶","moderate:10⁶–10⁸","high:>10⁸"],p.concentration,i,"concentration",3);
     h+=`</div>`;
@@ -573,7 +596,7 @@ window.saveDraft=function(){cur.reviewer=cur.reviewer||profile.name;cur.institut
 window.saveFinal=function(){cur.reviewer=cur.reviewer||profile.name;cur.institution=cur.institution||profile.institution;cur=LS.save({...cur,status:"final"});assessments=LS.loadAll();toast(t("finalizedT"),"success");R()};
 
 // ── Bilingual assessment report (enriched TXT + printable PDF) ──
-const REPORT_VERSION="1.4.0";
+const REPORT_VERSION="1.5.0";
 const LVL=(x)=>({low:p("Low","Bajo"),moderate:p("Moderate","Moderado"),high:p("High","Alto")}[x]||p(x||"—",x||"—"));
 const PSRW=(x)=>({Low:p("Low","Bajo"),Moderate:p("Moderate","Moderado"),High:p("High","Alto")}[x]||p(x||"—",x||"—"));
 const FSTAT=(v)=>v==="increase"?p("Unfavorable","Desfavorable"):v==="decrease"?p("Favorable","Favorable"):p("Neutral","Neutro");
@@ -596,9 +619,10 @@ function reportModel(){
   const rid="PSR-"+(cur.reviewDate||now.toISOString().slice(0,10))+"-"+Math.random().toString(36).slice(2,6).toUpperCase();
   const S=[];
 
+  const RGD=(x)=>x==="unknown"?"Not established / No establecido":(x||"—");
   const b1=[{type:"kv",k:p("Biological agent","Agente biológico"),v:cur.agentName||"—"},
-            {type:"kv",k:p("Risk Group","Grupo de Riesgo"),v:cur.riskGroup||"—"},
-            {type:"kv",k:p("Effective RG","GR efectivo"),v:erg||"—"}];
+            {type:"kv",k:p("Risk Group","Grupo de Riesgo"),v:RGD(cur.riskGroup)},
+            {type:"kv",k:p("Effective RG","GR efectivo"),v:RGD(erg)}];
   if(cur.isGMO){
     b1.push({type:"kv",k:p("GMO","OMG"),v:"Yes / Sí"});
     b1.push({type:"kv",k:p("Parental organism","Organismo parental"),v:cur.parentalOrg||"—"});
@@ -626,7 +650,7 @@ function reportModel(){
     {type:"kv",k:p("Adjusted PSR","PSR ajustado"),v:PSRW(adj).en+" / "+PSRW(adj).es},
   ]});
 
-  const b4=[{type:"kv",k:p("Matrix cell","Celda de la matriz"),v:(erg||"—")+" × "+PSRW(adj).en+"/"+PSRW(adj).es+" PSR"},
+  const b4=[{type:"kv",k:p("Matrix cell","Celda de la matriz"),v:RGD(erg)+" × "+PSRW(adj).en+"/"+PSRW(adj).es+" PSR"},
             {type:"kv",k:p("Assigned BSL","NCB asignado"),v:bsl}];
   if(erg==="RG3*"&&bsl.indexOf("BSL-2+")>-1)b4.push({type:"note",en:RG3STAR.en,es:RG3STAR.es});
   S.push({title:p("4. BSL assignment","4. Asignación de NCB"),body:b4});

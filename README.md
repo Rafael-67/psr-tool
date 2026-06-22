@@ -22,6 +22,7 @@ The full suite is **bilingual (English / Spanish)**. The language toggle (top-le
 - Works entirely offline — no server, no account, no data leaves your device
 - Bilingual EN/ES with toggle
 - Region-appropriate respiratory protection (NIOSH N95/N99/N100 ↔ EN 149 FFP2/FFP3) and agent-aware decontamination / waste-inactivation guidance
+- Mandatory pause points (hard stops) at Steps 1, 2, and 6 that block progression until institutional (IBC) consultation is confirmed, mirroring the framework's decision gates (Figure 2)
 - Bilingual (EN/ES) structured assessment report, exportable as an enriched TXT file or a formatted PDF (via the browser print dialog; no external libraries, so the Quick Tool stays fully offline). The report includes agent classification, a procedure table, PSR determination with the escalation rule applied, the BSL matrix cell, full recommended controls, justification, documentation, and an assessor / biosafety-officer sign-off block
 - Ideal for laboratory use and biosafety committee consultations
 
@@ -92,6 +93,14 @@ The full suite is **bilingual (English / Spanish)**. The language toggle (top-le
 ### Escalation Rule
 
 ≥2 unfavorable modulating factors triggers automatic PSR escalation (Low→Moderate or Moderate→High).
+
+### Mandatory pause points
+
+The framework defines three mandatory pause points (Figure 2) that interrupt the sequential flow and require institutional consultation before proceeding. The tool enforces them as hard stops — a confirmation that the required Institutional Biosafety Committee (IBC) consultation/authorization has been obtained is needed before the next step unlocks:
+
+- **Step 1** — the agent has no established Risk Group classification (selectable as "Not established"; e.g., a novel engineered organism or gain-of-function variant)
+- **Step 2** — a procedure has an aerosol-generating potential that cannot be characterized (selectable as "Uncharacterizable"; its PSR is left undetermined pending expert consultation)
+- **Step 6** — the assigned containment is BSL-3 or BSL-4, requiring full IBC review and, where applicable, regulatory notification
 
 ### Respiratory protection (regional standards)
 
