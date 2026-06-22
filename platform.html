@@ -55,28 +55,115 @@ input[type=text],input[type=date],textarea,select{width:100%;padding:10px 12px;b
 <div class="wrap" id="app"></div>
 <script>
 const V="1.0.0";
+let lang=(localStorage.getItem("psr:lang")||"en");
+const p=(en,es)=>({en,es});
+const L=(x)=>(x&&typeof x==="object"&&("en"in x))?(x[lang]||x.en):x;
+const LE=(x)=>(x&&typeof x==="object"&&("en"in x))?(x.en||""):x;
+const T={
+  title:p("PSR assessment platform","Plataforma de evaluación PSR"),
+  onbSub:p("Configure your profile for audit trail and multi-institutional comparison.","Configure su perfil para el registro de auditoría y la comparación multiinstitucional."),
+  fullName:p("Full name","Nombre completo"),institution:p("Institution","Institución"),role:p("Role","Rol"),
+  selectPh:p("Select...","Seleccionar..."),rolePI:p("Principal Investigator","Investigador principal"),
+  roleBSO:p("Biosafety Officer","Responsable de Bioseguridad"),roleIBC:p("IBC Member","Miembro del CBS"),roleRes:p("Researcher","Investigador"),
+  startBtn:p("Start using the platform","Empezar a usar la plataforma"),completeFields:p("Complete all fields","Complete todos los campos"),
+  draftSaved:p("Draft saved","Borrador guardado"),finalizedT:p("Assessment finalized","Evaluación finalizada"),
+  deleted:p("Deleted","Eliminado"),csvExported:p("CSV exported","CSV exportado"),
+  exLoaded:p("example assessment(s) loaded","evaluación(es) de ejemplo cargadas"),exAlready:p("Examples already loaded","Ejemplos ya cargados"),
+  newAssess:p("+ New assessment","+ Nueva evaluación"),loadEx:p("Load S3/S4 examples","Cargar ejemplos S3/S4"),
+  loadExTitle:p("Load Supplementary Appendix S3 & S4 examples","Cargar ejemplos de los Apéndices Suplementarios S3 y S4"),
+  irrBtn:p("IRR analysis","Análisis IRR"),analytics:p("Analytics","Analítica"),settings:p("Settings","Configuración"),
+  total:p("Total","Total"),finalizedM:p("Finalized","Finalizadas"),drafts:p("Drafts","Borradores"),
+  myAssess:p("My assessments","Mis evaluaciones"),myAssessSub:p("Click to edit. Finalized assessments are available for IRR analysis.","Haga clic para editar. Las evaluaciones finalizadas están disponibles para el análisis IRR."),
+  noAssess:p("No assessments yet.","Aún no hay evaluaciones."),untitled:p("Untitled","Sin título"),
+  exportCsvBtn:p("Export all assessments as CSV (for statistical analysis)","Exportar todas las evaluaciones como CSV (para análisis estadístico)"),
+  loadExConfirm:p("This will add two example assessments (S3: Lentiviral Vector, S4: M. tuberculosis inactivated) from the Supplementary Material. Continue?","Se añadirán dos evaluaciones de ejemplo (S3: vector lentiviral, S4: M. tuberculosis inactivado) del Material Suplementario. ¿Continuar?"),
+  dashBtn:p("← Dashboard","← Panel"),saveDraftBtn:p("Save draft","Guardar borrador"),finalizeBtn:p("Finalize","Finalizar"),
+  exportBtn:p("Export","Exportar"),prev:p("Previous","Anterior"),nextStep:p("Next step","Siguiente paso"),
+  delConfirm:p("Delete this assessment?","¿Eliminar esta evaluación?"),
+  s1t:p("Step 1: Agent identification","Paso 1: Identificación del agente"),
+  s1s:p("Determine Risk Group (RG1–4). For GMOs, evaluate parental organism + genetic modification.","Determine el Grupo de Riesgo (GR1–4). Para OMG, evalúe el organismo parental + la modificación genética."),
+  bioAgent:p("Biological agent","Agente biológico"),agentPh:p("e.g., HIV-1 lentiviral vector","p. ej., vector lentiviral VIH-1"),
+  riskGroup:p("Risk Group","Grupo de Riesgo"),rg1d:p("No/low risk","Riesgo nulo/bajo"),rg2d:p("Moderate individual","Moderado individual"),
+  rg3d:p("High individual","Alto individual"),rg4d:p("High individual+community","Alto individual+comunitario"),
+  gmoLabel:p("Genetically modified organism (GMO)","Organismo modificado genéticamente (OMG)"),
+  parentalOrg:p("Parental organism","Organismo parental"),geneticMod:p("Genetic modification","Modificación genética"),
+  replQ:p("Replication competent?","¿Competente para la replicación?"),yes:p("Yes","Sí"),noRepl:p("No — replication-defective","No — defectivo en replicación"),
+  rg3starNote:p("RG3 replication-defective → RG3*. BSL-2+ permissible under documented conditions.","GR3 defectivo en replicación → GR3*. NCB-2+ admisible bajo condiciones documentadas."),
+  s2t:p("Step 2: Procedure characterization","Paso 2: Caracterización del procedimiento"),
+  s2s:p("List procedures, identify aerosol-generating steps, estimate volumes and concentrations.","Liste los procedimientos, identifique los pasos generadores de aerosoles, estime volúmenes y concentraciones."),
+  procedure:p("Procedure","Procedimiento"),remove:p("Remove","Eliminar"),name:p("Name","Nombre"),
+  aerosol:p("Aerosol","Aerosol"),volume:p("Volume","Volumen"),concentration:p("Concentration","Concentración"),
+  minimal:p("Minimal","Mínima"),moderate:p("Moderate","Moderada"),high:p("High","Alta"),addProc:p("+ Add procedure","+ Añadir procedimiento"),
+  s3t:p("Step 3: PSR classification","Paso 3: Clasificación PSR"),s3s:p("Assign Low/Moderate/High PSR to each procedure.","Asigne PSR Bajo/Moderado/Alto a cada procedimiento."),
+  incomplete:p("Incomplete","Incompleto"),maxPSR:p("Maximum PSR:","PSR máximo:"),
+  s3note:p("Highest PSR determines baseline. Adjusted by modulating factors next.","El PSR más alto determina la base. Se ajusta con los factores moduladores a continuación."),
+  s4t:p("Step 4: Modulating factors","Paso 4: Factores moduladores"),s4s:p("≥2 unfavorable factors triggers BSL escalation.","≥2 factores desfavorables activan la escalación del NCB."),
+  favorable:p("Favorable","Favorable"),neutral:p("Neutral","Neutro"),unfavorable:p("Unfavorable","Desfavorable"),
+  s4esc:p("≥2 unfavorable → escalation:","≥2 desfavorables → escalación:"),
+  s5t:p("Step 5: Likelihood × Severity","Paso 5: Probabilidad × Severidad"),s5s:p("Integrate agent RG with adjusted PSR.","Integre el GR del agente con el PSR ajustado."),
+  s6t:p("Step 6: BSL assignment","Paso 6: Asignación de NCB"),s6s:p("Final biosafety level determination.","Determinación final del nivel de contención biológica."),
+  assignedBSL:p("Assigned biosafety level","Nivel de contención biológica asignado"),
+  bsl2plusLbl:p("BSL-2+ for RG3*:","NCB-2+ para GR3*:"),
+  bsl2plusBody:p(" requires (1) documented risk assessment, (2) IBC approval, (3) Class II BSC + double gloves + eye protection, (4) personnel competency. Default BSL-3 if uncertain."," requiere (1) evaluación de riesgos documentada, (2) aprobación del CBS, (3) CSB Clase II + doble guante + protección ocular, (4) competencia del personal. NCB-3 por defecto si hay incertidumbre."),
+  justNarr:p("Justification narrative","Narrativa de justificación"),justPh:p("Written rationale for this BSL assignment...","Justificación escrita de esta asignación de NCB..."),
+  s7t:p("Step 7: Control selection","Paso 7: Selección de controles"),recFor:p("Recommended controls for","Controles recomendados para"),
+  engControls:p("Engineering controls","Controles de ingeniería"),ppe:p("PPE","EPI"),adminControls:p("Administrative controls","Controles administrativos"),
+  deconControls:p("Decontamination & waste inactivation","Descontaminación e inactivación de residuos"),
+  addControls:p("Additional controls","Controles adicionales"),addCtrlPh:p("Procedure-specific controls...","Controles específicos del procedimiento..."),
+  s8t:p("Step 8: Documentation and review","Paso 8: Documentación y revisión"),s8s:p("Document, obtain approval, establish review triggers.","Documente, obtenga aprobación, establezca desencadenantes de revisión."),
+  assessor:p("Assessor","Evaluador"),dateL:p("Date","Fecha"),reviewTriggers:p("Review triggers","Desencadenantes de revisión"),
+  triggersPh:p("Agent change, procedure modification, incident, annual review...","Cambio de agente, modificación del procedimiento, incidente, revisión anual..."),
+  assessSummary:p("Assessment summary","Resumen de la evaluación"),
+  lblAgent:p("Agent:","Agente:"),lblRG:p("RG:","GR:"),lblMaxPSR:p("Max PSR:","PSR máx.:"),lblAdjusted:p("Adjusted:","Ajustado:"),
+  lblBSL:p("BSL:","NCB:"),lblUnfav:p("Unfavorable:","Desfavorables:"),lblStatus:p("Status:","Estado:"),lblAssessor:p("Assessor:","Evaluador:"),
+  exportReport:p("Export report","Exportar informe"),printPDF:p("Print PDF","Imprimir PDF"),
+  irrTitle:p("Inter-rater reliability analysis","Análisis de fiabilidad entre evaluadores"),
+  irrSub:p("Compares BSL assignments across assessors for the same agent (matched by name). Requires ≥2 finalized assessments of the same agent.","Compara las asignaciones de NCB entre evaluadores para el mismo agente (emparejados por nombre). Requiere ≥2 evaluaciones finalizadas del mismo agente."),
+  agreementRate:p("Agreement rate","Tasa de acuerdo"),concordantPairs:p("Concordant pairs","Pares concordantes"),totalComparisons:p("Total comparisons","Comparaciones totales"),
+  irrNoData:p("No agents with multiple finalized assessments found. Create and finalize assessments for the same agent by different evaluators to enable IRR analysis.","No se encontraron agentes con múltiples evaluaciones finalizadas. Cree y finalice evaluaciones del mismo agente por distintos evaluadores para habilitar el análisis IRR."),
+  assessmentsFrom:p("assessments from","evaluaciones de"),evaluators:p("evaluators","evaluadores"),
+  fullAgreement:p("Full agreement: all assigned","Acuerdo total: todas asignaron"),discrepancy:p("Discrepancy:","Discrepancia:"),
+  stFinal:p("final","final"),stDraft:p("draft","borrador"),anon:p("Anon","Anón."),
+  loading:p("Loading...","Cargando..."),
+  rgAbbr:p("RG","GR"),psrLow:p("Low","Bajo"),psrMod:p("Moderate","Moderado"),psrHigh:p("High","Alto"),
+  deconWarn:p("⚠ Environmentally stable / non-enveloped agent detected: use a validated sporicidal/virucidal disinfectant (≥0.5–1% sodium hypochlorite); plain ethanol is INSUFFICIENT.","⚠ Agente ambientalmente estable / no envuelto detectado: utilice un desinfectante esporicida/virucida validado (hipoclorito sódico ≥0,5–1%); el etanol por sí solo es INSUFICIENTE."),
+  deconEnv:p("Enveloped agent: 70% ethanol or quaternary ammonium adequate; verify against agent safety data sheet.","Agente envuelto: etanol al 70% o amonio cuaternario adecuados; verifique con la ficha de seguridad del agente."),
+  respNote:p("Respiratory protection is specified as a protection level; the certified device follows the applicable regional standard — NIOSH N95/N99/N100 (US/Canada) and EN 149 FFP2/FFP3 (EU). N95 ≈ FFP2; FFP3 (≥99%) is recommended for the highest-risk aerosol-generating procedures.","La protección respiratoria se indica como nivel de protección; el dispositivo certificado sigue el estándar regional aplicable — NIOSH N95/N99/N100 (EE.UU./Canadá) y EN 149 FFP2/FFP3 (UE). N95 ≈ FFP2; FFP3 (≥99%) se recomienda para los procedimientos generadores de aerosoles de mayor riesgo."),
+};
+const t=(k)=>L(T[k])||k;
+function langToggle(){lang=lang==="en"?"es":"en";localStorage.setItem("psr:lang",lang);const b=document.getElementById("langBtn");if(b)b.textContent=lang==="en"?"ES":"EN";R();}
 const BSL={RG1:{Low:"BSL-1",Moderate:"BSL-1*",High:"BSL-2**"},RG2:{Low:"BSL-2",Moderate:"BSL-2",High:"BSL-2+"},RG3:{Low:"BSL-2+",Moderate:"BSL-3",High:"BSL-3"},"RG3*":{Low:"BSL-2+",Moderate:"BSL-2+/BSL-3",High:"BSL-3"},RG4:{Low:"BSL-4",Moderate:"BSL-4",High:"BSL-4"}};
 const MF=[
-  {id:"volume",l:"Volume",inc:">100 mL",dec:"<10 mL",neu:"10–100 mL"},
-  {id:"concentration",l:"Concentration",inc:">10⁸ CFU/PFU",dec:"<10⁶ CFU/PFU",neu:"10⁶–10⁸"},
-  {id:"frequency",l:"Frequency",inc:"Daily/Weekly",dec:"Occasional",neu:"Monthly"},
-  {id:"aerosol",l:"Aerosol",inc:"High (sonication)",dec:"Minimal (BSC)",neu:"Moderate"},
-  {id:"stability",l:"Env. stability",inc:"High (AAV, spores)",dec:"Low (lentivirus)",neu:"Moderate"},
-  {id:"experience",l:"Operator exp.",inc:"<6 months",dec:">2 years",neu:"6m–2y"},
-  {id:"supervision",l:"Supervision",inc:"None",dec:"Direct",neu:"Periodic"},
-  {id:"infrastructure",l:"Infrastructure",inc:"Inadequate",dec:"Appropriate+BSC III",neu:"Appropriate"},
-  {id:"incidents",l:"Incidents",inc:"Previous",dec:"None",neu:"No data"},
+  {id:"volume",l:p("Volume","Volumen"),inc:p(">100 mL",">100 mL"),dec:p("<10 mL","<10 mL"),neu:p("10–100 mL","10–100 mL")},
+  {id:"concentration",l:p("Concentration","Concentración"),inc:p(">10⁸ CFU/PFU",">10⁸ UFC/UFP"),dec:p("<10⁶ CFU/PFU","<10⁶ UFC/UFP"),neu:p("10⁶–10⁸","10⁶–10⁸")},
+  {id:"frequency",l:p("Frequency","Frecuencia"),inc:p("Daily/Weekly","Diaria/Semanal"),dec:p("Occasional","Ocasional"),neu:p("Monthly","Mensual")},
+  {id:"aerosol",l:p("Aerosol","Aerosol"),inc:p("High (sonication)","Alta (sonicación)"),dec:p("Minimal (BSC)","Mínima (CSB)"),neu:p("Moderate","Moderada")},
+  {id:"stability",l:p("Env. stability","Estabilidad amb."),inc:p("High (AAV, spores)","Alta (AAV, esporas)"),dec:p("Low (lentivirus)","Baja (lentivirus)"),neu:p("Moderate","Moderada")},
+  {id:"experience",l:p("Operator exp.","Experiencia op."),inc:p("<6 months","<6 meses"),dec:p(">2 years",">2 años"),neu:p("6m–2y","6m–2a")},
+  {id:"supervision",l:p("Supervision","Supervisión"),inc:p("None","Ninguna"),dec:p("Direct","Directa"),neu:p("Periodic","Periódica")},
+  {id:"infrastructure",l:p("Infrastructure","Infraestructura"),inc:p("Inadequate","Inadecuada"),dec:p("Appropriate+BSC III","Adecuada+CSB III"),neu:p("Appropriate","Adecuada")},
+  {id:"incidents",l:p("Incidents","Incidentes"),inc:p("Previous","Previos"),dec:p("None","Ninguno"),neu:p("No data","Sin datos")},
 ];
 const CTRL={
-  "BSL-1":{e:["Open bench","Handwashing sink"],p:["Lab coat","Gloves","Eye protection if splash"],a:["Standard practices","Biohazard signage"]},
-  "BSL-1*":{e:["BSC for aerosol steps","Contained sonicator"],p:["Lab coat","Gloves","Eye protection","N95 for aerosol"],a:["Aerosol training","SOPs for high-aerosol"]},
-  "BSL-2":{e:["Class II BSC for aerosol","Autoclave"],p:["Lab coat","Gloves","Eye protection","Face shield"],a:["Restricted access","Biohazard signage","SOPs","Spill response"]},
-  "BSL-2+":{e:["Mandatory Class II BSC","Sealed centrifuge buckets","Dedicated lab area"],p:["Double gloves","Goggles/face shield","Gown","N95 if aerosol"],a:["Documented risk assessment","IBC approval","Competency verification","Supervised new operators","Training program"]},
-  "BSL-2**":{e:["Class II BSC mandatory","Contained aerosol equipment"],p:["Double gloves","Eye protection","Lab coat"],a:["Documented justification","Aerosol SOP"]},
-  "BSL-2+/BSL-3":{e:["Class II BSC or BSL-3","Sealed buckets","HEPA exhaust"],p:["Double gloves","Eye protection","Respiratory","Gown"],a:["IBC approval","Risk assessment","Consider BSL-3 if ≥2 unfavorable"]},
-  "BSL-3":{e:["BSL-3 directional airflow","HEPA exhaust","Double-door","Class II/III BSC"],p:["Dedicated clothing","Double gloves","Respiratory","Full face shield"],a:["Controlled entry","Medical surveillance","Training","Emergency plan","Incident reporting"]},
-  "BSL-4":{e:["Maximum containment","Class III BSC/suit","Chemical shower","Double HEPA"],p:["Positive-pressure suit","Full decontamination"],a:["National authorization","Dedicated team","Continuous monitoring","Emergency protocols"]},
+  "BSL-1":{e:[p("Open bench","Mesa de trabajo abierta"),p("Handwashing sink","Lavabo para lavado de manos")],p:[p("Lab coat","Bata de laboratorio"),p("Gloves","Guantes"),p("Eye protection if splash","Protección ocular si hay salpicaduras")],a:[p("Standard practices","Prácticas estándar"),p("Biohazard signage","Señalización de riesgo biológico")],d:[p("70% ethanol or quaternary ammonium for surfaces","Etanol al 70% o amonio cuaternario para superficies"),p("Autoclave or validated chemical inactivation of waste before disposal","Autoclave o inactivación química validada de los residuos antes de su eliminación")]},
+  "BSL-1*":{e:[p("BSC for aerosol steps","CSB para pasos con aerosoles"),p("Contained sonicator","Sonicador confinado")],p:[p("Lab coat","Bata de laboratorio"),p("Gloves","Guantes"),p("Eye protection","Protección ocular"),p("N95 / FFP2 for aerosol","N95 / FFP2 para aerosoles")],a:[p("Aerosol training","Formación en aerosoles"),p("SOPs for high-aerosol","PNT para alta generación de aerosoles")],d:[p("70% ethanol or quaternary ammonium for surfaces","Etanol al 70% o amonio cuaternario para superficies"),p("Autoclave aerosol-contaminated waste before disposal","Autoclavar los residuos contaminados por aerosoles antes de su eliminación")]},
+  "BSL-2":{e:[p("Class II BSC for aerosol","CSB Clase II para aerosoles"),p("Autoclave","Autoclave")],p:[p("Lab coat","Bata de laboratorio"),p("Gloves","Guantes"),p("Eye protection","Protección ocular"),p("Face shield","Pantalla facial")],a:[p("Restricted access","Acceso restringido"),p("Biohazard signage","Señalización de riesgo biológico"),p("SOPs","PNT"),p("Spill response","Respuesta ante derrames")],d:[p("Validated surface disinfectant matched to agent (70% ethanol / quaternary ammonium for enveloped agents)","Desinfectante de superficies validado y adecuado al agente (etanol al 70% / amonio cuaternario para agentes envueltos)"),p("Spill kit with appropriate disinfectant","Kit de derrames con desinfectante adecuado"),p("Autoclave or validated chemical treatment of all biological waste","Autoclave o tratamiento químico validado de todos los residuos biológicos")]},
+  "BSL-2+":{e:[p("Mandatory Class II BSC","CSB Clase II obligatoria"),p("Sealed centrifuge buckets","Cubetas de centrífuga selladas"),p("Dedicated lab area","Área de laboratorio dedicada")],p:[p("Double gloves","Doble guante"),p("Goggles/face shield","Gafas/pantalla facial"),p("Gown","Bata"),p("N95 / FFP2 if aerosol","N95 / FFP2 si hay aerosoles")],a:[p("Documented risk assessment","Evaluación de riesgos documentada"),p("IBC approval","Aprobación del CBS"),p("Competency verification","Verificación de competencia"),p("Supervised new operators","Supervisión de operadores nuevos"),p("Training program","Programa de formación")],d:[p("Agent-matched disinfectant with defined contact time","Desinfectante adecuado al agente con tiempo de contacto definido"),p("For non-enveloped viruses (e.g., AAV) or spores: ≥0.5% sodium hypochlorite or validated sporicidal/virucidal agent","Para virus no envueltos (p. ej., AAV) o esporas: hipoclorito sódico ≥0,5% o agente esporicida/virucida validado"),p("Decontaminate BSC surfaces after each session","Descontaminar las superficies de la CSB tras cada sesión"),p("Autoclave waste on-site before disposal","Autoclavar los residuos in situ antes de su eliminación")]},
+  "BSL-2**":{e:[p("Class II BSC mandatory","CSB Clase II obligatoria"),p("Contained aerosol equipment","Equipo confinado para aerosoles")],p:[p("Double gloves","Doble guante"),p("Eye protection","Protección ocular"),p("Lab coat","Bata de laboratorio")],a:[p("Documented justification","Justificación documentada"),p("Aerosol SOP","PNT de aerosoles")],d:[p("70% ethanol or quaternary ammonium for surfaces","Etanol al 70% o amonio cuaternario para superficies"),p("Autoclave aerosol-contaminated waste before disposal","Autoclavar los residuos contaminados por aerosoles antes de su eliminación")]},
+  "BSL-2+/BSL-3":{e:[p("Class II BSC or BSL-3","CSB Clase II o NCB-3"),p("Sealed buckets","Cubetas selladas"),p("HEPA exhaust","Extracción HEPA")],p:[p("Double gloves","Doble guante"),p("Eye protection","Protección ocular"),p("Respiratory (FFP3 / N99–N100)","Respiratoria (FFP3 / N99–N100)"),p("Gown","Bata")],a:[p("IBC approval","Aprobación del CBS"),p("Risk assessment","Evaluación de riesgos"),p("Consider BSL-3 if ≥2 unfavorable","Considerar NCB-3 si ≥2 desfavorables")],d:[p("Agent-matched disinfectant with validated contact time","Desinfectante adecuado al agente con tiempo de contacto validado"),p("≥0.5% sodium hypochlorite or sporicidal agent for non-enveloped viruses / spores","Hipoclorito sódico ≥0,5% o agente esporicida para virus no envueltos / esporas"),p("Autoclave all waste on-site before removal","Autoclavar todos los residuos in situ antes de retirarlos")]},
+  "BSL-3":{e:[p("BSL-3 directional airflow","Flujo de aire direccional NCB-3"),p("HEPA exhaust","Extracción HEPA"),p("Double-door","Doble puerta"),p("Class II/III BSC","CSB Clase II/III")],p:[p("Dedicated clothing","Ropa dedicada"),p("Double gloves","Doble guante"),p("Respiratory (FFP3 / N99–N100)","Respiratoria (FFP3 / N99–N100)"),p("Full face shield","Pantalla facial completa")],a:[p("Controlled entry","Entrada controlada"),p("Medical surveillance","Vigilancia médica"),p("Training","Formación"),p("Emergency plan","Plan de emergencia"),p("Incident reporting","Notificación de incidentes")],d:[p("Validated surface disinfectant with documented contact time (e.g., 1% sodium hypochlorite, freshly prepared)","Desinfectante de superficies validado con tiempo de contacto documentado (p. ej., hipoclorito sódico al 1%, recién preparado)"),p("Sporicidal/virucidal agent for non-enveloped viruses and spores","Agente esporicida/virucida para virus no envueltos y esporas"),p("On-site autoclave; all waste inactivated before leaving containment","Autoclave in situ; todos los residuos inactivados antes de salir de la contención"),p("Periodic room/space decontamination per SOP","Descontaminación periódica de la sala/espacio según PNT")]},
+  "BSL-4":{e:[p("Maximum containment","Contención máxima"),p("Class III BSC/suit","CSB Clase III/traje"),p("Chemical shower","Ducha química"),p("Double HEPA","Doble HEPA")],p:[p("Positive-pressure suit","Traje de presión positiva"),p("Full decontamination","Descontaminación completa")],a:[p("National authorization","Autorización nacional"),p("Dedicated team","Equipo dedicado"),p("Continuous monitoring","Monitorización continua"),p("Emergency protocols","Protocolos de emergencia")],d:[p("Chemical shower for suit decontamination","Ducha química para descontaminación del traje"),p("Effluent decontamination system","Sistema de descontaminación de efluentes"),p("Double-door autoclave for all materials leaving containment","Autoclave de doble puerta para todo el material que sale de la contención")]},
 };
+const RESISTANT_AGENTS=/aav|adeno-?associated|adenoasociad|adenovir|parvovir|norovir|rotavir|enterovir|poliovir|coxsackie|hepatitis a|hav\b|papillomavir|papilomavir|\bhpv\b|\bvph\b|calicivir|reovir|bacillus|anthrac|[áa]ntrax|carbunco|clostrid|difficile|c\.?\s*diff|spore|espora|prion|crypto|cripto/i;
+function getDeconP(bsl){
+  const base=(CTRL[bsl]||CTRL["BSL-2"]).d||[];
+  const resistant=(cur.modFactors&&cur.modFactors.stability==="increase")||RESISTANT_AGENTS.test(cur.agentName||"")||RESISTANT_AGENTS.test(cur.parentalOrg||"");
+  const lead=resistant
+    ? t("deconWarn")
+    : t("deconEnv");
+  return [lead,...base];
+}
+// respiratory note now provided via t("respNote")
 
 // Storage
 const LS={
@@ -104,19 +191,19 @@ function compute(d){
 const EXAMPLES=[
   {
     id:"example_s3_lentiviral",
-    agentName:"Third-generation SIN lentiviral vector (pLenti-CRISPR, HIV-1 backbone)",
+    agentName:p("Third-generation SIN lentiviral vector (pLenti-CRISPR, HIV-1 backbone)","Vector lentiviral SIN de tercera generación (pLenti-CRISPR, esqueleto VIH-1)"),
     riskGroup:"RG3",
     isGMO:true,
     parentalOrg:"HIV-1",
-    geneticMod:"Third-generation self-inactivating lentiviral vector. Split-genome packaging (4-plasmid system). Deletions: gag, pol, env, tat, rev, vif, vpr, vpu, nef. Replication-incompetent. Max recombination risk <10⁻⁸.",
+    geneticMod:p("Third-generation self-inactivating lentiviral vector. Split-genome packaging (4-plasmid system). Deletions: gag, pol, env, tat, rev, vif, vpr, vpu, nef. Replication-incompetent. Max recombination risk <10⁻⁸.","Vector lentiviral autoinactivante de tercera generación. Empaquetamiento de genoma dividido (sistema de 4 plásmidos). Deleciones: gag, pol, env, tat, rev, vif, vpr, vpu, nef. Incompetente para la replicación. Riesgo máximo de recombinación <10⁻⁸."),
     replComp:"no",
     procedures:[
-      {name:"HEK293T transfection (T-175 flasks in BSC-II)",aerosol:"low",volume:"high",concentration:"low"},
-      {name:"Viral supernatant harvest (~120 mL, aspiration in BSC)",aerosol:"low",volume:"high",concentration:"low"},
-      {name:"Filtration 0.45 µm (syringe filter in BSC)",aerosol:"low",volume:"high",concentration:"low"},
-      {name:"Ultracentrifugation (SW32Ti, 25,000 rpm, 90 min, non-sealed rotor)",aerosol:"high",volume:"moderate",concentration:"high"},
-      {name:"Viral pellet resuspension (500 µL, high titer 10⁸ TU/mL in BSC)",aerosol:"moderate",volume:"low",concentration:"high"},
-      {name:"Aliquoting (50 µL, multichannel pipette, 10⁸ TU/mL)",aerosol:"low",volume:"low",concentration:"high"}
+      {name:p("HEK293T transfection (T-175 flasks in BSC-II)","Transfección de HEK293T (frascos T-175 en CSB-II)"),aerosol:"low",volume:"high",concentration:"low"},
+      {name:p("Viral supernatant harvest (~120 mL, aspiration in BSC)","Recolección de sobrenadante viral (~120 mL, aspiración en CSB)"),aerosol:"low",volume:"high",concentration:"low"},
+      {name:p("Filtration 0.45 µm (syringe filter in BSC)","Filtración 0,45 µm (filtro de jeringa en CSB)"),aerosol:"low",volume:"high",concentration:"low"},
+      {name:p("Ultracentrifugation (SW32Ti, 25,000 rpm, 90 min, non-sealed rotor)","Ultracentrifugación (SW32Ti, 25.000 rpm, 90 min, rotor no sellado)"),aerosol:"high",volume:"moderate",concentration:"high"},
+      {name:p("Viral pellet resuspension (500 µL, high titer 10⁸ TU/mL in BSC)","Resuspensión del pellet viral (500 µL, título alto 10⁸ UT/mL en CSB)"),aerosol:"moderate",volume:"low",concentration:"high"},
+      {name:p("Aliquoting (50 µL, multichannel pipette, 10⁸ TU/mL)","Alicuotado (50 µL, pipeta multicanal, 10⁸ UT/mL)"),aerosol:"low",volume:"low",concentration:"high"}
     ],
     modFactors:{
       volume:"increase",
@@ -129,12 +216,12 @@ const EXAMPLES=[
       infrastructure:"increase",
       incidents:"decrease"
     },
-    justification:"Although the lentiviral vector is classified as Risk Group 2 (RG3* due to replication-defective GMO derived from HIV-1 RG3), the specific procedures employed elevate exposure risk substantially beyond standard BSL-2 practices. The critical risk driver is high-speed ultracentrifugation (25,000 rpm for 90 minutes) of large volumes (4 × 30 mL) without sealed safety cups, generating significant aerosol potential. This is compounded by a final titer of 10⁸ TU/mL representing 1000-fold concentration.\n\nFour unfavorable modulating factors were identified: (1) procedural frequency (2×/week), (2) scale of operation (120–150 mL per run), (3) suboptimal infrastructure (no sealed rotor system), and (4) high titer final product (10⁸ TU/mL). Under the ≥2 factor escalation rule, containment enhancement is warranted.\n\nBSL-2+ assignment with respiratory protection during centrifugation, sealed rotors when available, and negative pressure is proportionate. Standard BSL-2 is insufficient due to aerosol risk; BSL-3 is disproportionate given replication-defective status and low environmental persistence.",
-    reviewer:"Dr. John Doe (Biosafety Officer)",
+    justification:p("Although the lentiviral vector is classified as Risk Group 2 (RG3* due to replication-defective GMO derived from HIV-1 RG3), the specific procedures employed elevate exposure risk substantially beyond standard BSL-2 practices. The critical risk driver is high-speed ultracentrifugation (25,000 rpm for 90 minutes) of large volumes (4 × 30 mL) without sealed safety cups, generating significant aerosol potential. This is compounded by a final titer of 10⁸ TU/mL representing 1000-fold concentration.\n\nFour unfavorable modulating factors were identified: (1) procedural frequency (2×/week), (2) scale of operation (120–150 mL per run), (3) suboptimal infrastructure (no sealed rotor system), and (4) high titer final product (10⁸ TU/mL). Under the ≥2 factor escalation rule, containment enhancement is warranted.\n\nBSL-2+ assignment with respiratory protection during centrifugation, sealed rotors when available, and negative pressure is proportionate. Standard BSL-2 is insufficient due to aerosol risk; BSL-3 is disproportionate given replication-defective status and low environmental persistence.","Aunque el vector lentiviral se clasifica como GR3* (OMG defectivo en replicación derivado del VIH-1 GR3), los procedimientos empleados elevan el riesgo de exposición sustancialmente por encima de las prácticas estándar de NCB-2. El factor crítico es la ultracentrifugación a alta velocidad (25.000 rpm durante 90 minutos) de grandes volúmenes (4 × 30 mL) sin cubetas de seguridad selladas, que genera un potencial de aerosoles significativo. A ello se suma un título final de 10⁸ UT/mL, que representa una concentración 1000×.\n\nSe identificaron cuatro factores moduladores desfavorables: (1) frecuencia procedimental (2×/semana), (2) escala de operación (120–150 mL por tanda), (3) infraestructura subóptima (sin sistema de rotor sellado) y (4) producto final de título alto (10⁸ UT/mL). Bajo la regla de escalación de ≥2 factores, se justifica reforzar la contención.\n\nLa asignación NCB-2+ con protección respiratoria durante la centrifugación, rotores sellados cuando estén disponibles y presión negativa es proporcionada. El NCB-2 estándar es insuficiente por el riesgo de aerosoles; el NCB-3 es desproporcionado dado el carácter defectivo en replicación y la baja persistencia ambiental."),
+    reviewer:p("Dr. John Doe (Biosafety Officer)","Dr. John Doe (Responsable de Bioseguridad)"),
     institution:"University Research Institute, Molecular Biology Dept.",
     reviewDate:"2025-01-15",
-    triggers:"Acquisition of sealed rotor system (reassess BSL); new laboratory personnel; procedure modification (scale increase >200 mL); incident or exposure event; annual review (January 2026).",
-    addCtrl:"Mandatory BSC-II for ALL open manipulations. N95/FFP2 respiratory protection during ultracentrifuge loading/unloading. Double gloves during centrifugation and resuspension steps. Goggles mandatory during centrifuge operations. Sealed ultracentrifuge buckets to be acquired (budget approved). Tube opening ONLY inside BSC-II. Wait 10 min post-centrifugation before opening rotor. Chemical inactivation (10% bleach, 20 min) before autoclaving waste. Dedicated lab area with negative pressure (−0.03\" H₂O). Specific training program for lentiviral vector handling (SOP-LV-2025-001). Direct supervision for first 5 production runs of new operators.",
+    triggers:p("Acquisition of sealed rotor system (reassess BSL); new laboratory personnel; procedure modification (scale increase >200 mL); incident or exposure event; annual review (January 2026).","Adquisición de sistema de rotor sellado (reevaluar NCB); personal nuevo de laboratorio; modificación del procedimiento (aumento de escala >200 mL); incidente o evento de exposición; revisión anual (enero de 2026)."),
+    addCtrl:p("Mandatory BSC-II for ALL open manipulations. N95/FFP2 respiratory protection during ultracentrifuge loading/unloading. Double gloves during centrifugation and resuspension steps. Goggles mandatory during centrifuge operations. Sealed ultracentrifuge buckets to be acquired (budget approved). Tube opening ONLY inside BSC-II. Wait 10 min post-centrifugation before opening rotor. Chemical inactivation (10% bleach, 20 min) before autoclaving waste. Dedicated lab area with negative pressure (−0.03\" H₂O). Specific training program for lentiviral vector handling (SOP-LV-2025-001). Direct supervision for first 5 production runs of new operators.","CSB-II obligatoria para TODAS las manipulaciones abiertas. Protección respiratoria N95/FFP2 durante la carga/descarga de la ultracentrífuga. Doble guante durante la centrifugación y resuspensión. Gafas obligatorias durante las operaciones de centrifugación. Cubetas de ultracentrífuga selladas por adquirir (presupuesto aprobado). Apertura de tubos SOLO dentro de la CSB-II. Esperar 10 min tras la centrifugación antes de abrir el rotor. Inactivación química (lejía al 10%, 20 min) antes de autoclavar los residuos. Área de laboratorio dedicada con presión negativa (−0,03\" H₂O). Programa de formación específico para el manejo de vectores lentivirales (PNT-LV-2025-001). Supervisión directa durante las 5 primeras tandas de producción de operadores nuevos."),
     status:"final",
     createdAt:"2025-01-15T09:00:00.000Z",
     updatedAt:"2025-01-15T14:30:00.000Z",
@@ -142,18 +229,18 @@ const EXAMPLES=[
   },
   {
     id:"example_s4_mtb_inactivated",
-    agentName:"Mycobacterium tuberculosis complex (heat-inactivated specimens and purified DNA)",
+    agentName:p("Mycobacterium tuberculosis complex (heat-inactivated specimens and purified DNA)","Complejo Mycobacterium tuberculosis (muestras inactivadas por calor y ADN purificado)"),
     riskGroup:"RG3",
     isGMO:false,
     parentalOrg:"",
     geneticMod:"",
     replComp:"",
     procedures:[
-      {name:"Receipt of heat-inactivated specimens (2–5 mL, sealed tubes, biohazard bags)",aerosol:"low",volume:"low",concentration:"low"},
-      {name:"Automated DNA extraction (QIAcube in BSC, 200 µL input, closed system)",aerosol:"low",volume:"low",concentration:"low"},
-      {name:"PCR setup (25 µL reaction, template DNA, pipetting in BSC)",aerosol:"low",volume:"low",concentration:"low"},
-      {name:"Thermal cycling (sealed PCR tubes, real-time PCR instrument)",aerosol:"low",volume:"low",concentration:"low"},
-      {name:"Result analysis (in silico, computer workstation)",aerosol:"low",volume:"low",concentration:"low"}
+      {name:p("Receipt of heat-inactivated specimens (2–5 mL, sealed tubes, biohazard bags)","Recepción de muestras inactivadas por calor (2–5 mL, tubos sellados, bolsas de bioriesgo)"),aerosol:"low",volume:"low",concentration:"low"},
+      {name:p("Automated DNA extraction (QIAcube in BSC, 200 µL input, closed system)","Extracción automatizada de ADN (QIAcube en CSB, 200 µL de entrada, sistema cerrado)"),aerosol:"low",volume:"low",concentration:"low"},
+      {name:p("PCR setup (25 µL reaction, template DNA, pipetting in BSC)","Preparación de PCR (reacción de 25 µL, ADN molde, pipeteo en CSB)"),aerosol:"low",volume:"low",concentration:"low"},
+      {name:p("Thermal cycling (sealed PCR tubes, real-time PCR instrument)","Termociclado (tubos de PCR sellados, equipo de PCR en tiempo real)"),aerosol:"low",volume:"low",concentration:"low"},
+      {name:p("Result analysis (in silico, computer workstation)","Análisis de resultados (in silico, estación de trabajo informática)"),aerosol:"low",volume:"low",concentration:"low"}
     ],
     modFactors:{
       volume:"decrease",
@@ -167,11 +254,11 @@ const EXAMPLES=[
       incidents:"decrease"
     },
     justification:"The parental organism (Mycobacterium tuberculosis) is classified as Risk Group 3, and viable cultures would ordinarily require BSL-3 containment. However, this assessment applies PSR principles to justify proportionate containment based on actual exposure risk rather than automatic RG-BSL mapping.\n\nCritical risk mitigation: (1) ALL specimens are heat-inactivated (56°C, 30 min) with validated culture-negative confirmation prior to laboratory receipt — no viable organisms handled; (2) DNA extraction uses closed automated systems (QIAcube) with minimal aerosol generation; (3) working volumes are small (<5 mL per sample); (4) PCR amplification in sealed tubes; (5) no cultivation, concentration, or manipulation of viable M. tuberculosis.\n\nPSR assessment: Low classification (minimal aerosol, small volumes, inactivated material). Only 1 unfavorable factor (daily diagnostic frequency) — insufficient for ≥2 escalation rule. Risk matrix: Moderate severity (inactivated RG3 material) × Rare exposure = LOW overall risk.\n\nEnhanced BSL-2 (not BSL-3) is justified by: proportionality principle, validated inactivation with culture-negative confirmation, WHO/BMBL precedent permitting reduced containment for inactivated RG3 materials.",
-    reviewer:"Dr. Robert Chen (Laboratory Director & Biosafety Officer)",
+    reviewer:p("Dr. Robert Chen (Laboratory Director & Biosafety Officer)","Dr. Robert Chen (Director de Laboratorio y Responsable de Bioseguridad)"),
     institution:"Clinical Diagnostics Laboratory, Infectious Disease Center",
     reviewDate:"2025-02-01",
-    triggers:"Introduction of viable M. tuberculosis cultures (IMMEDIATE BSL-3 upgrade required); change in extraction method; inactivation validation failure (culture-positive result); incident involving potential exposure; scale increase or change in sample types; new regulatory guidance on inactivated RG3 materials; personnel or facility changes.",
-    addCtrl:"CRITICAL: validated inactivation protocol (56°C, 30 min) with documented culture-negative confirmation and chain of custody for ALL specimens. Annual culture-negative spot checks on 'inactivated' specimens. Mandatory Class II BSC for all specimen handling. Automated closed-system DNA extraction (QIAcube). BSL-2 competency documented for all personnel. Molecular diagnostics certification required. TB screening at hire and annually. Autoclave waste 30 min at 121°C. Incident reporting with root cause analysis.",
+    triggers:p("Introduction of viable M. tuberculosis cultures (IMMEDIATE BSL-3 upgrade required); change in extraction method; inactivation validation failure (culture-positive result); incident involving potential exposure; scale increase or change in sample types; new regulatory guidance on inactivated RG3 materials; personnel or facility changes.","Introducción de cultivos viables de M. tuberculosis (ELEVACIÓN INMEDIATA a NCB-3); cambio del método de extracción; fallo en la validación de la inactivación (resultado de cultivo positivo); incidente con posible exposición; aumento de escala o cambio en los tipos de muestra; nueva guía regulatoria sobre materiales GR3 inactivados; cambios de personal o de instalaciones."),
+    addCtrl:p("CRITICAL: validated inactivation protocol (56°C, 30 min) with documented culture-negative confirmation and chain of custody for ALL specimens. Annual culture-negative spot checks on 'inactivated' specimens. Mandatory Class II BSC for all specimen handling. Automated closed-system DNA extraction (QIAcube). BSL-2 competency documented for all personnel. Molecular diagnostics certification required. TB screening at hire and annually. Autoclave waste 30 min at 121°C. Incident reporting with root cause analysis.","CRÍTICO: protocolo de inactivación validado (56 °C, 30 min) con confirmación documentada de cultivo negativo y cadena de custodia para TODAS las muestras. Verificaciones aleatorias anuales de cultivo negativo en muestras 'inactivadas'. CSB Clase II obligatoria para toda manipulación de muestras. Extracción de ADN automatizada en sistema cerrado (QIAcube). Competencia NCB-2 documentada para todo el personal. Certificación en diagnóstico molecular requerida. Cribado de TB al contratar y anualmente. Autoclavar residuos 30 min a 121 °C. Notificación de incidentes con análisis de causa raíz."),
     status:"final",
     createdAt:"2025-02-01T08:00:00.000Z",
     updatedAt:"2025-02-01T12:00:00.000Z",
@@ -180,17 +267,20 @@ const EXAMPLES=[
 ];
 
 window.loadExamples=function(){
-  if(!confirm("This will add two example assessments (S3: Lentiviral Vector, S4: M. tuberculosis inactivated) from the Supplementary Material. Continue?"))return;
+  if(!confirm(t("loadExConfirm")))return;
   let added=0;
   EXAMPLES.forEach(ex=>{
     if(!localStorage.getItem(`psr:${ex.id}`)){
-      LS.save(ex);
+      const o=JSON.parse(JSON.stringify(ex));
+      ["agentName","geneticMod","justification","triggers","addCtrl","reviewer"].forEach(k=>{o[k]=L(o[k]);});
+      if(Array.isArray(o.procedures))o.procedures=o.procedures.map(pr=>({...pr,name:L(pr.name)}));
+      LS.save(o);
       added++;
     }
   });
   assessments=LS.loadAll();
-  if(added>0)toast(`${added} example assessment(s) loaded`,"success");
-  else toast("Examples already loaded","info");
+  if(added>0)toast(`${added} ${t("exLoaded")}`,"success");
+  else toast(t("exAlready"),"info");
   R();
 };
 
@@ -199,9 +289,9 @@ let view="loading",profile=null,assessments=[],cur=null,stp=0,toastTimer=null;
 function blank(){return{id:null,agentName:"",riskGroup:"",isGMO:false,parentalOrg:"",geneticMod:"",replComp:"",procedures:[{name:"",aerosol:"",volume:"",concentration:""}],modFactors:Object.fromEntries(MF.map(f=>[f.id,"neutral"])),justification:"",reviewer:"",institution:"",reviewDate:new Date().toISOString().slice(0,10),triggers:"",addCtrl:"",status:"draft",createdAt:new Date().toISOString()}}
 
 // Pills
-function pp(l){const c=l==="Low"?"green":l==="Moderate"?"amber":"red";return`<span class="pill p-${c}">${l} PSR</span>`}
+function pp(l){const c=l==="Low"?"green":l==="Moderate"?"amber":"red";const m={Low:t("psrLow"),Moderate:t("psrMod"),High:t("psrHigh")};return`<span class="pill p-${c}">${m[l]||l} PSR</span>`}
 function bp(l){const m={"BSL-1":"green","BSL-1*":"green","BSL-2":"blue","BSL-2**":"blue","BSL-2+":"amber","BSL-2+/BSL-3":"amber","BSL-3":"red","BSL-4":"purple"};return`<span class="pill p-${m[l]||"gray"}">${l}</span>`}
-function sp(s){return`<span class="pill p-${s==="final"?"green":"gray"}">${s}</span>`}
+function sp(s){return`<span class="pill p-${s==="final"?"green":"gray"}">${s==="final"?t("stFinal"):t("stDraft")}</span>`}
 function esc(s){return(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
 function toast(t,type="info"){const el=document.createElement("div");el.className="toast";el.style.background=type==="success"?"var(--green-bg)":type==="error"?"var(--red-bg)":"var(--blue-bg)";el.style.color=type==="success"?"var(--green-text)":type==="error"?"var(--red-text)":"var(--blue-text)";el.textContent=t;document.body.appendChild(el);clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.remove(),3000)}
 
@@ -214,40 +304,41 @@ function R(){
   else if(view==="dash")h=rDash();
   else if(view==="assess"&&cur)h=rAssess();
   else if(view==="irr")h=rIRR();
-  else h="<p>Loading...</p>";
+  else h=`<p>${t("loading")}</p>`;
   document.getElementById("app").innerHTML=h;
+  if(!document.getElementById("langBtn")){const b=document.createElement("button");b.id="langBtn";b.textContent=lang==="en"?"ES":"EN";b.onclick=langToggle;b.style.cssText="position:fixed;top:16px;left:16px;z-index:200;padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;font-size:12px";document.body.appendChild(b);}
 }
 
 function rOnboard(){
   return`<div style="max-width:500px;margin:60px auto"><div class="card">
-    <h1>PSR assessment platform</h1>
-    <p class="sub">Configure your profile for audit trail and multi-institutional comparison.</p>
-    <div class="fl"><label>Full name</label><input type="text" id="pName" placeholder="e.g., Dr. Jane Smith"></div>
-    <div class="fl"><label>Institution</label><input type="text" id="pInst" placeholder="e.g., University of Valladolid"></div>
-    <div class="fl"><label>Role</label><select id="pRole"><option value="">Select...</option><option value="pi">Principal Investigator</option><option value="bso">Biosafety Officer</option><option value="ibc">IBC Member</option><option value="researcher">Researcher</option></select></div>
-    <button class="btn bp" style="width:100%" onclick="saveProfile()">Start using the platform</button>
+    <h1>${t("title")}</h1>
+    <p class="sub">${t("onbSub")}</p>
+    <div class="fl"><label>${t("fullName")}</label><input type="text" id="pName" placeholder="e.g., Dr. Jane Smith"></div>
+    <div class="fl"><label>${t("institution")}</label><input type="text" id="pInst" placeholder="e.g., University of Valladolid"></div>
+    <div class="fl"><label>${t("role")}</label><select id="pRole"><option value="">${t("selectPh")}</option><option value="pi">${t("rolePI")}</option><option value="bso">${t("roleBSO")}</option><option value="ibc">${t("roleIBC")}</option><option value="researcher">${t("roleRes")}</option></select></div>
+    <button class="btn bp" style="width:100%" onclick="saveProfile()">${t("startBtn")}</button>
   </div></div>`;
 }
-window.saveProfile=function(){const n=document.getElementById("pName").value,i=document.getElementById("pInst").value,r=document.getElementById("pRole").value;if(!n||!i||!r)return toast("Complete all fields","error");LS.profile({name:n,institution:i,role:r});view="dash";R()};
+window.saveProfile=function(){const n=document.getElementById("pName").value,i=document.getElementById("pInst").value,r=document.getElementById("pRole").value;if(!n||!i||!r)return toast(t("completeFields"),"error");LS.profile({name:n,institution:i,role:r});view="dash";R()};
 
 function rDash(){
   const fc=assessments.filter(a=>a.status==="final").length;
   const dc=assessments.filter(a=>a.status==="draft").length;
   let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:8px">
-    <div><h1>PSR assessment platform</h1><p style="font-size:13px;color:var(--text2)">${esc(profile.name)} · ${esc(profile.institution)}</p></div>
-    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn bp" onclick="startNew()">+ New assessment</button><button class="btn bo" onclick="loadExamples()" title="Load Supplementary Appendix S3 & S4 examples">Load S3/S4 examples</button><button class="btn bo" onclick="view='irr';R()">IRR analysis</button><a href="analytics.html" class="btn bo" style="text-decoration:none">Analytics</a><button class="btn bo" onclick="view='onboard';R()">Settings</button></div>
+    <div><h1>${t("title")}</h1><p style="font-size:13px;color:var(--text2)">${esc(profile.name)} · ${esc(profile.institution)}</p></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn bp" onclick="startNew()">${t("newAssess")}</button><button class="btn bo" onclick="loadExamples()" title="${t("loadExTitle")}">${t("loadEx")}</button><button class="btn bo" onclick="view='irr';R()">${t("irrBtn")}</button><a href="analytics.html" class="btn bo" style="text-decoration:none">${t("analytics")}</a><button class="btn bo" onclick="view='onboard';R()">${t("settings")}</button></div>
   </div>`;
   h+=`<div style="display:flex;gap:12px;margin-bottom:20px">`
-  h+=`<div class="metric"><div class="mv">${assessments.length}</div><div class="ml">Total</div></div>`;
-  h+=`<div class="metric"><div class="mv">${fc}</div><div class="ml">Finalized</div></div>`;
-  h+=`<div class="metric"><div class="mv">${dc}</div><div class="ml">Drafts</div></div></div>`;
+  h+=`<div class="metric"><div class="mv">${assessments.length}</div><div class="ml">${t("total")}</div></div>`;
+  h+=`<div class="metric"><div class="mv">${fc}</div><div class="ml">${t("finalizedM")}</div></div>`;
+  h+=`<div class="metric"><div class="mv">${dc}</div><div class="ml">${t("drafts")}</div></div></div>`;
   
-  h+=`<div class="card"><h2>My assessments</h2><p class="sub">Click to edit. Finalized assessments are available for IRR analysis.</p>`;
-  if(assessments.length===0)h+=`<p style="font-size:13px;color:var(--text2);padding:16px 0">No assessments yet.</p>`;
+  h+=`<div class="card"><h2>${t("myAssess")}</h2><p class="sub">${t("myAssessSub")}</p>`;
+  if(assessments.length===0)h+=`<p style="font-size:13px;color:var(--text2);padding:16px 0">${t("noAssess")}</p>`;
   else assessments.forEach(a=>{
     const c=compute(a);
     h+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border-radius:var(--r);margin-bottom:8px;cursor:pointer" onclick="editA('${a.id}')">
-      <div style="flex:1"><div style="font-weight:500;font-size:14px">${esc(a.agentName)||"Untitled"}</div><div style="font-size:11px;color:var(--text2)">${(a.updatedAt||"").slice(0,10)} · ${esc(a.institution||"—")}</div></div>
+      <div style="flex:1"><div style="font-weight:500;font-size:14px">${esc(a.agentName)||t("untitled")}</div><div style="font-size:11px;color:var(--text2)">${(a.updatedAt||"").slice(0,10)} · ${esc(a.institution||"—")}</div></div>
       ${sp(a.status)} ${pp(c.ap)} ${bp(c.bsl)}
       <button onclick="event.stopPropagation();delA('${a.id}')" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text3)">×</button>
     </div>`;
@@ -256,22 +347,22 @@ function rDash(){
 
   // Export all as CSV for external analysis
   if(assessments.length>0){
-    h+=`<button class="btn bo" style="width:100%;margin-bottom:16px" onclick="exportCSV()">Export all assessments as CSV (for statistical analysis)</button>`;
+    h+=`<button class="btn bo" style="width:100%;margin-bottom:16px" onclick="exportCSV()">${t("exportCsvBtn")}</button>`;
   }
   return h;
 }
 window.startNew=function(){cur=blank();cur.reviewer=profile.name;cur.institution=profile.institution;stp=0;view="assess";R()};
 window.editA=function(id){const a=assessments.find(x=>x.id===id);if(a){cur={...a,procedures:[...a.procedures.map(p=>({...p}))],modFactors:{...a.modFactors}};stp=0;view="assess";R()}};
-window.delA=function(id){if(!confirm("Delete this assessment?"))return;LS.del(id);assessments=LS.loadAll();R();toast("Deleted")};
+window.delA=function(id){if(!confirm(t("delConfirm")))return;LS.del(id);assessments=LS.loadAll();R();toast(t("deleted"))};
 
 function rAssess(){
   const c=compute(cur);
   let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:8px">
-    <button class="btn bo" onclick="view='dash';R()">← Dashboard</button>
+    <button class="btn bo" onclick="view='dash';R()">${t("dashBtn")}</button>
     <div style="display:flex;gap:6px;flex-wrap:wrap">
-      <button class="btn bo" onclick="saveDraft()">Save draft</button>
-      <button class="btn bs" onclick="saveFinal()">Finalize</button>
-      <button class="btn bo" onclick="exportTXT()">Export</button>
+      <button class="btn bo" onclick="saveDraft()">${t("saveDraftBtn")}</button>
+      <button class="btn bs" onclick="saveFinal()">${t("finalizeBtn")}</button>
+      <button class="btn bo" onclick="exportTXT()">${t("exportBtn")}</button>
     </div></div>`;
   
   // Step bar
@@ -290,8 +381,8 @@ function rAssess(){
   else if(stp===7)h+=rS8(c);
   h+=`</div>`;
 
-  h+=`<div class="nav"><button class="btn bo" onclick="stp=Math.max(0,stp-1);R()" ${stp===0?"disabled":""}>Previous</button>
-    <button class="btn bp" onclick="stp=Math.min(7,stp+1);R()" ${stp===7?"disabled":""}>Next step</button></div>`;
+  h+=`<div class="nav"><button class="btn bo" onclick="stp=Math.max(0,stp-1);R()" ${stp===0?"disabled":""}>${t("prev")}</button>
+    <button class="btn bp" onclick="stp=Math.min(7,stp+1);R()" ${stp===7?"disabled":""}>${t("nextStep")}</button></div>`;
   return h;
 }
 
@@ -307,41 +398,41 @@ window.rmProc=function(i){cur.procedures.splice(i,1);R()};
 window.setPA=function(i,k,v){cur.procedures[i][k]=v;R()};
 
 function rS1(){
-  let h=`<h2>Step 1: Agent identification</h2><p class="sub">Determine Risk Group (RG1–4). For GMOs, evaluate parental organism + genetic modification.</p>`;
-  h+=`<div class="fl"><label>Biological agent</label><input type="text" value="${esc(cur.agentName)}" onchange="U('agentName',this.value)" placeholder="e.g., HIV-1 lentiviral vector"></div>`;
-  h+=`<div class="fl"><label>Risk Group</label><div class="opt-g c2">`;
-  [{v:"RG1",d:"No/low risk"},{v:"RG2",d:"Moderate individual"},{v:"RG3",d:"High individual"},{v:"RG4",d:"High individual+community"}].forEach(r=>{
+  let h=`<h2>${t("s1t")}</h2><p class="sub">${t("s1s")}</p>`;
+  h+=`<div class="fl"><label>${t("bioAgent")}</label><input type="text" value="${esc(cur.agentName)}" onchange="U('agentName',this.value)" placeholder="${t("agentPh")}"></div>`;
+  h+=`<div class="fl"><label>${t("riskGroup")}</label><div class="opt-g c2">`;
+  [{v:"RG1",d:t("rg1d")},{v:"RG2",d:t("rg2d")},{v:"RG3",d:t("rg3d")},{v:"RG4",d:t("rg4d")}].forEach(r=>{
     h+=`<button class="opt ${cur.riskGroup===r.v?"sel":""}" onclick="setRG('${r.v}')"><b>${r.v}</b><small>${r.d}</small></button>`;
   });
   h+=`</div></div>`;
-  h+=`<label style="display:flex;gap:8px;font-size:13px;cursor:pointer;margin-bottom:14px"><input type="checkbox" ${cur.isGMO?"checked":""} onchange="setGMO(this)"> Genetically modified organism (GMO)</label>`;
+  h+=`<label style="display:flex;gap:8px;font-size:13px;cursor:pointer;margin-bottom:14px"><input type="checkbox" ${cur.isGMO?"checked":""} onchange="setGMO(this)"> ${t("gmoLabel")}</label>`;
   if(cur.isGMO){
     h+=`<div style="padding:14px;background:var(--bg2);border-radius:var(--r)">`;
-    h+=`<div class="fl"><label>Parental organism</label><input type="text" value="${esc(cur.parentalOrg)}" onchange="U('parentalOrg',this.value)"></div>`;
-    h+=`<div class="fl"><label>Genetic modification</label><input type="text" value="${esc(cur.geneticMod)}" onchange="U('geneticMod',this.value)"></div>`;
-    h+=`<div class="fl"><label>Replication competent?</label><div class="opt-g c2">`;
-    h+=`<button class="opt ${cur.replComp==="yes"?"sel":""}" onclick="setRepl('yes')"><b>Yes</b></button>`;
-    h+=`<button class="opt ${cur.replComp==="no"?"sel":""}" onclick="setRepl('no')"><b>No — replication-defective</b></button></div></div>`;
-    if(cur.replComp==="no"&&cur.riskGroup==="RG3")h+=`<div class="note n-teal">RG3 replication-defective → RG3*. BSL-2+ permissible under documented conditions.</div>`;
+    h+=`<div class="fl"><label>${t("parentalOrg")}</label><input type="text" value="${esc(cur.parentalOrg)}" onchange="U('parentalOrg',this.value)"></div>`;
+    h+=`<div class="fl"><label>${t("geneticMod")}</label><input type="text" value="${esc(cur.geneticMod)}" onchange="U('geneticMod',this.value)"></div>`;
+    h+=`<div class="fl"><label>${t("replQ")}</label><div class="opt-g c2">`;
+    h+=`<button class="opt ${cur.replComp==="yes"?"sel":""}" onclick="setRepl('yes')"><b>${t("yes")}</b></button>`;
+    h+=`<button class="opt ${cur.replComp==="no"?"sel":""}" onclick="setRepl('no')"><b>${t("noRepl")}</b></button></div></div>`;
+    if(cur.replComp==="no"&&cur.riskGroup==="RG3")h+=`<div class="note n-teal">${t("rg3starNote")}</div>`;
     h+=`</div>`;
   }
   return h;
 }
 
 function rS2(){
-  let h=`<h2>Step 2: Procedure characterization</h2><p class="sub">List procedures, identify aerosol-generating steps, estimate volumes and concentrations.</p>`;
+  let h=`<h2>${t("s2t")}</h2><p class="sub">${t("s2s")}</p>`;
   cur.procedures.forEach((p,i)=>{
     h+=`<div style="padding:14px;background:var(--bg2);border-radius:var(--r);margin-bottom:10px">`;
-    h+=`<div style="display:flex;justify-content:space-between;margin-bottom:10px"><b style="font-size:14px">Procedure ${i+1}</b>`;
-    if(cur.procedures.length>1)h+=`<button style="font-size:12px;color:var(--red-text);background:none;border:none;cursor:pointer" onclick="rmProc(${i})">Remove</button>`;
+    h+=`<div style="display:flex;justify-content:space-between;margin-bottom:10px"><b style="font-size:14px">${t("procedure")} ${i+1}</b>`;
+    if(cur.procedures.length>1)h+=`<button style="font-size:12px;color:var(--red-text);background:none;border:none;cursor:pointer" onclick="rmProc(${i})">${t("remove")}</button>`;
     h+=`</div>`;
-    h+=`<div class="fl"><label>Name</label><input type="text" value="${esc(p.name)}" onchange="UP(${i},'name',this.value)"></div>`;
-    h+=rOpts("Aerosol",["low:Minimal","moderate:Moderate","high:High"],p.aerosol,i,"aerosol",3);
-    h+=rOpts("Volume",["low:<10 mL","moderate:10–100 mL","high:>100 mL"],p.volume,i,"volume",3);
-    h+=rOpts("Concentration",["low:<10⁶","moderate:10⁶–10⁸","high:>10⁸"],p.concentration,i,"concentration",3);
+    h+=`<div class="fl"><label>${t("name")}</label><input type="text" value="${esc(p.name)}" onchange="UP(${i},'name',this.value)"></div>`;
+    h+=rOpts(t("aerosol"),["low:"+t("minimal"),"moderate:"+t("moderate"),"high:"+t("high")],p.aerosol,i,"aerosol",3);
+    h+=rOpts(t("volume"),["low:<10 mL","moderate:10–100 mL","high:>100 mL"],p.volume,i,"volume",3);
+    h+=rOpts(t("concentration"),["low:<10⁶","moderate:10⁶–10⁸","high:>10⁸"],p.concentration,i,"concentration",3);
     h+=`</div>`;
   });
-  h+=`<button class="btn bo" style="width:100%;border-style:dashed" onclick="addProc()">+ Add procedure</button>`;
+  h+=`<button class="btn bo" style="width:100%;border-style:dashed" onclick="addProc()">${t("addProc")}</button>`;
   return h;
 }
 function rOpts(label,opts,val,pi,key,cols){
@@ -351,33 +442,33 @@ function rOpts(label,opts,val,pi,key,cols){
 }
 
 function rS3(c){
-  let h=`<h2>Step 3: PSR classification</h2><p class="sub">Assign Low/Moderate/High PSR to each procedure.</p>`;
+  let h=`<h2>${t("s3t")}</h2><p class="sub">${t("s3s")}</p>`;
   cur.procedures.forEach((p,i)=>{if(!p.name)return;
-    h+=`<div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--bg2);border-radius:var(--r);margin-bottom:6px"><span>${esc(p.name)}</span>${c.pp[i]?pp(c.pp[i]):'<span class="pill p-gray">Incomplete</span>'}</div>`;
+    h+=`<div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--bg2);border-radius:var(--r);margin-bottom:6px"><span>${esc(p.name)}</span>${c.pp[i]?pp(c.pp[i]):'<span class="pill p-gray">${t("incomplete")}</span>'}</div>`;
   });
-  h+=`<div class="note n-pur"><b>Maximum PSR:</b> ${pp(c.mx)}<div style="margin-top:4px;font-size:12px">Highest PSR determines baseline. Adjusted by modulating factors next.</div></div>`;
+  h+=`<div class="note n-pur"><b>${t("maxPSR")}</b> ${pp(c.mx)}<div style="margin-top:4px;font-size:12px">${t("s3note")}</div></div>`;
   return h;
 }
 
 function rS4(c){
-  let h=`<h2>Step 4: Modulating factors</h2><p class="sub">≥2 unfavorable factors triggers BSL escalation.</p>`;
+  let h=`<h2>${t("s4t")}</h2><p class="sub">${t("s4s")}</p>`;
   MF.forEach(f=>{const v=cur.modFactors[f.id];
-    h+=`<div class="mod-row"><span style="font-size:11px;font-weight:500">${f.l}</span><div style="display:flex;gap:4px">`;
-    [{k:"decrease",l:"Favorable",d:f.dec,cls:"sf"},{k:"neutral",l:"Neutral",d:f.neu,cls:""},{k:"increase",l:"Unfavorable",d:f.inc,cls:"su"}].forEach(o=>{
-      h+=`<button class="mod-btn ${v===o.k?"sel ":""} ${v===o.k?o.cls:""}" onclick="UM('${f.id}','${o.k}')"><div style="font-weight:500">${o.l}</div><div style="font-size:8px;opacity:.7">${o.d}</div></button>`;
+    h+=`<div class="mod-row"><span style="font-size:11px;font-weight:500">${L(f.l)}</span><div style="display:flex;gap:4px">`;
+    [{k:"decrease",l:t("favorable"),d:f.dec,cls:"sf"},{k:"neutral",l:t("neutral"),d:f.neu,cls:""},{k:"increase",l:t("unfavorable"),d:f.inc,cls:"su"}].forEach(o=>{
+      h+=`<button class="mod-btn ${v===o.k?"sel ":""} ${v===o.k?o.cls:""}" onclick="UM('${f.id}','${o.k}')"><div style="font-weight:500">${o.l}</div><div style="font-size:8px;opacity:.7">${L(o.d)}</div></button>`;
     });
     h+=`</div></div>`;
   });
   h+=`<div style="display:flex;gap:12px;margin-top:14px">`;
-  h+=`<div class="metric ${c.u>=2?"alert-metric":""}"><div class="mv">${c.u}</div><div class="ml">Unfavorable</div></div>`;
-  h+=`<div class="metric"><div class="mv">${c.f}</div><div class="ml">Favorable</div></div></div>`;
-  if(c.u>=2)h+=`<div class="note n-red">≥2 unfavorable → escalation: ${c.mx} → ${c.ap}</div>`;
+  h+=`<div class="metric ${c.u>=2?"alert-metric":""}"><div class="mv">${c.u}</div><div class="ml">${t("unfavorable")}</div></div>`;
+  h+=`<div class="metric"><div class="mv">${c.f}</div><div class="ml">${t("favorable")}</div></div></div>`;
+  if(c.u>=2)h+=`<div class="note n-red">${t("s4esc")} ${c.mx} → ${c.ap}</div>`;
   return h;
 }
 
 function rS5(c){
-  let h=`<h2>Step 5: Likelihood × Severity</h2><p class="sub">Integrate agent RG with adjusted PSR.</p>`;
-  h+=`<table class="matrix"><thead><tr><th style="text-align:left">RG</th><th>Low</th><th>Moderate</th><th>High</th></tr></thead><tbody>`;
+  let h=`<h2>${t("s5t")}</h2><p class="sub">${t("s5s")}</p>`;
+  h+=`<table class="matrix"><thead><tr><th style="text-align:left">${t('rgAbbr')}</th><th>${t('psrLow')}</th><th>${t('psrMod')}</th><th>${t('psrHigh')}</th></tr></thead><tbody>`;
   Object.entries(BSL).forEach(([rg,ps])=>{h+=`<tr><td style="font-weight:500">${rg}</td>`;["Low","Moderate","High"].forEach(p=>{h+=`<td style="text-align:center" ${rg===c.erg&&p===c.ap?'class="hi"':''}>${ps[p]}</td>`});h+=`</tr>`});
   h+=`</tbody></table>`;
   h+=`<div style="text-align:center;padding:14px;background:var(--accent-bg);border-radius:var(--r);margin-top:12px"><div style="font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap">
@@ -386,54 +477,58 @@ function rS5(c){
 }
 
 function rS6(c){
-  let h=`<h2>Step 6: BSL assignment</h2><p class="sub">Final biosafety level determination.</p>`;
-  h+=`<div style="text-align:center;padding:20px 0"><div style="font-size:14px;color:var(--text2);margin-bottom:6px">Assigned biosafety level</div>
+  let h=`<h2>${t("s6t")}</h2><p class="sub">${t("s6s")}</p>`;
+  h+=`<div style="text-align:center;padding:20px 0"><div style="font-size:14px;color:var(--text2);margin-bottom:6px">${t("assignedBSL")}</div>
     <div style="font-size:36px;font-weight:600">${c.bsl}</div>
     <div style="margin-top:10px"><span class="pill p-gray">${esc(cur.agentName)||"—"}</span> · <span class="pill p-gray">${c.erg}</span> · ${pp(c.ap)}</div></div>`;
-  if(c.erg==="RG3*"&&c.bsl.includes("BSL-2+"))h+=`<div class="note n-amb"><b>BSL-2+ for RG3*:</b> requires (1) documented risk assessment, (2) IBC approval, (3) Class II BSC + double gloves + eye protection, (4) personnel competency. Default BSL-3 if uncertain.</div>`;
-  h+=`<div class="fl" style="margin-top:14px"><label>Justification narrative</label><textarea rows="5" onchange="U('justification',this.value)" placeholder="Written rationale for this BSL assignment...">${esc(cur.justification)}</textarea></div>`;
+  if(c.erg==="RG3*"&&c.bsl.includes("BSL-2+"))h+=`<div class="note n-amb"><b>${t("bsl2plusLbl")}</b>${t("bsl2plusBody")}</div>`;
+  h+=`<div class="fl" style="margin-top:14px"><label>${t("justNarr")}</label><textarea rows="5" onchange="U('justification',this.value)" placeholder="${t("justPh")}">${esc(cur.justification)}</textarea></div>`;
   return h;
 }
 
 function rS7(c){
   const ctrl=CTRL[c.bsl]||CTRL["BSL-2"];
-  let h=`<h2>Step 7: Control selection</h2><p class="sub">Recommended controls for ${bp(c.bsl)}</p>`;
-  [{k:"e",t:"Engineering controls"},{k:"p",t:"PPE"},{k:"a",t:"Administrative controls"}].forEach(s=>{
+  let h=`<h2>${t("s7t")}</h2><p class="sub">${t("recFor")} ${bp(c.bsl)}</p>`;
+  [{k:"e",t:t("engControls")},{k:"p",t:t("ppe")},{k:"a",t:t("adminControls")}].forEach(s=>{
     h+=`<div style="margin-bottom:14px"><div style="font-size:14px;font-weight:500;margin-bottom:6px">${s.t}</div>`;
-    (ctrl[s.k]||[]).forEach(item=>{h+=`<label style="display:flex;gap:8px;font-size:13px;padding:5px 10px;border-radius:6px;background:var(--bg2);margin-bottom:4px;cursor:pointer"><input type="checkbox" checked> ${item}</label>`});
+    (ctrl[s.k]||[]).forEach(item=>{h+=`<label style="display:flex;gap:8px;font-size:13px;padding:5px 10px;border-radius:6px;background:var(--bg2);margin-bottom:4px;cursor:pointer"><input type="checkbox" checked> ${L(item)}</label>`});
+    if(s.k==="p"){h+=`<div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.4">${t('respNote')}</div>`;}
     h+=`</div>`;
   });
-  h+=`<div class="fl"><label>Additional controls</label><textarea rows="3" onchange="U('addCtrl',this.value)" placeholder="Procedure-specific controls...">${esc(cur.addCtrl)}</textarea></div>`;
+  h+=`<div style="margin-bottom:14px"><div style="font-size:14px;font-weight:500;margin-bottom:6px">${t("deconControls")}</div>`;
+  getDeconP(c.bsl).forEach(item=>{h+=`<label style="display:flex;gap:8px;font-size:13px;padding:5px 10px;border-radius:6px;background:var(--bg2);margin-bottom:4px;cursor:pointer"><input type="checkbox" checked> ${L(item)}</label>`});
+  h+=`</div>`;
+  h+=`<div class="fl"><label>${t("addControls")}</label><textarea rows="3" onchange="U('addCtrl',this.value)" placeholder="${t("addCtrlPh")}">${esc(cur.addCtrl)}</textarea></div>`;
   return h;
 }
 
 function rS8(c){
-  let h=`<h2>Step 8: Documentation and review</h2><p class="sub">Document, obtain approval, establish review triggers.</p>`;
-  h+=`<div class="fl"><label>Assessor</label><input type="text" value="${esc(cur.reviewer||profile.name)}" onchange="U('reviewer',this.value)"></div>`;
-  h+=`<div class="fl"><label>Institution</label><input type="text" value="${esc(cur.institution||profile.institution)}" onchange="U('institution',this.value)"></div>`;
-  h+=`<div class="fl"><label>Date</label><input type="date" value="${esc(cur.reviewDate)}" onchange="U('reviewDate',this.value)"></div>`;
-  h+=`<div class="fl"><label>Review triggers</label><textarea rows="2" onchange="U('triggers',this.value)" placeholder="Agent change, procedure modification, incident, annual review...">${esc(cur.triggers)}</textarea></div>`;
+  let h=`<h2>${t("s8t")}</h2><p class="sub">${t("s8s")}</p>`;
+  h+=`<div class="fl"><label>${t("assessor")}</label><input type="text" value="${esc(cur.reviewer||profile.name)}" onchange="U('reviewer',this.value)"></div>`;
+  h+=`<div class="fl"><label>${t("institution")}</label><input type="text" value="${esc(cur.institution||profile.institution)}" onchange="U('institution',this.value)"></div>`;
+  h+=`<div class="fl"><label>${t("dateL")}</label><input type="date" value="${esc(cur.reviewDate)}" onchange="U('reviewDate',this.value)"></div>`;
+  h+=`<div class="fl"><label>${t("reviewTriggers")}</label><textarea rows="2" onchange="U('triggers',this.value)" placeholder="${t("triggersPh")}">${esc(cur.triggers)}</textarea></div>`;
 
   h+=`<div style="margin-top:16px;padding:18px;background:var(--bg2);border-radius:var(--rl)">
-    <div style="font-size:16px;font-weight:600;margin-bottom:12px">Assessment summary</div>
+    <div style="font-size:16px;font-weight:600;margin-bottom:12px">${t("assessSummary")}</div>
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:13px">
-      <div><span style="color:var(--text2)">Agent:</span> ${esc(cur.agentName)||"—"}</div>
-      <div><span style="color:var(--text2)">RG:</span> ${c.erg||"—"}</div>
-      <div><span style="color:var(--text2)">Max PSR:</span> ${pp(c.mx)}</div>
-      <div><span style="color:var(--text2)">Adjusted:</span> ${pp(c.ap)}</div>
-      <div><span style="color:var(--text2)">BSL:</span> ${bp(c.bsl)}</div>
-      <div><span style="color:var(--text2)">Unfavorable:</span> ${c.u}</div>
-      <div><span style="color:var(--text2)">Status:</span> ${sp(cur.status)}</div>
-      <div><span style="color:var(--text2)">Assessor:</span> ${esc(cur.reviewer)||"—"}</div>
+      <div><span style="color:var(--text2)">${t("lblAgent")}</span> ${esc(cur.agentName)||"—"}</div>
+      <div><span style="color:var(--text2)">${t("lblRG")}</span> ${c.erg||"—"}</div>
+      <div><span style="color:var(--text2)">${t("lblMaxPSR")}</span> ${pp(c.mx)}</div>
+      <div><span style="color:var(--text2)">${t("lblAdjusted")}</span> ${pp(c.ap)}</div>
+      <div><span style="color:var(--text2)">${t("lblBSL")}</span> ${bp(c.bsl)}</div>
+      <div><span style="color:var(--text2)">${t("lblUnfav")}</span> ${c.u}</div>
+      <div><span style="color:var(--text2)">${t("lblStatus")}</span> ${sp(cur.status)}</div>
+      <div><span style="color:var(--text2)">${t("lblAssessor")}</span> ${esc(cur.reviewer)||"—"}</div>
     </div>`;
   cur.procedures.filter(p=>p.name).forEach((p,i)=>{h+=`<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:13px">${esc(p.name)} ${c.pp[i]?pp(c.pp[i]):""}</div>`});
   if(cur.justification)h+=`<div style="margin-top:8px;font-size:13px;font-style:italic">${esc(cur.justification)}</div>`;
   h+=`</div>`;
 
   h+=`<div style="display:flex;gap:8px;margin-top:14px">
-    <button class="btn bs" style="flex:1" onclick="saveFinal()">Finalize</button>
-    <button class="btn bo" style="flex:1" onclick="exportTXT()">Export report</button>
-    <button class="btn bo" style="flex:1" onclick="window.print()">Print PDF</button>
+    <button class="btn bs" style="flex:1" onclick="saveFinal()">${t("finalizeBtn")}</button>
+    <button class="btn bo" style="flex:1" onclick="exportTXT()">${t("exportReport")}</button>
+    <button class="btn bo" style="flex:1" onclick="window.print()">${t("printPDF")}</button>
   </div>`;
   return h;
 }
@@ -449,33 +544,33 @@ function rIRR(){
   pairs.forEach(([_,g])=>{for(let i=0;i<g.length;i++)for(let j=i+1;j<g.length;j++){total++;if(compute(g[i]).bsl===compute(g[j]).bsl)agreements++}});
   const rate=total>0?Math.round(agreements/total*100):0;
 
-  let h=`<button class="btn bo" onclick="view='dash';R()" style="margin-bottom:16px">← Dashboard</button>`;
-  h+=`<h1>Inter-rater reliability analysis</h1><p class="sub">Compares BSL assignments across assessors for the same agent (matched by name). Requires ≥2 finalized assessments of the same agent.</p>`;
+  let h=`<button class="btn bo" onclick="view='dash';R()" style="margin-bottom:16px">${t("dashBtn")}</button>`;
+  h+=`<h1>${t("irrTitle")}</h1><p class="sub">${t("irrSub")}</p>`;
   
   if(total>0){
     h+=`<div style="display:flex;gap:12px;margin-bottom:20px">`;
-    h+=`<div class="metric ${rate<80?"alert-metric":""}"><div class="mv">${rate}%</div><div class="ml">Agreement rate</div></div>`;
-    h+=`<div class="metric"><div class="mv">${agreements}</div><div class="ml">Concordant pairs</div></div>`;
-    h+=`<div class="metric"><div class="mv">${total}</div><div class="ml">Total comparisons</div></div></div>`;
+    h+=`<div class="metric ${rate<80?"alert-metric":""}"><div class="mv">${rate}%</div><div class="ml">${t("agreementRate")}</div></div>`;
+    h+=`<div class="metric"><div class="mv">${agreements}</div><div class="ml">${t("concordantPairs")}</div></div>`;
+    h+=`<div class="metric"><div class="mv">${total}</div><div class="ml">${t("totalComparisons")}</div></div></div>`;
   }
 
-  if(pairs.length===0)h+=`<div class="card"><p style="font-size:13px;color:var(--text2);padding:16px 0">No agents with multiple finalized assessments found. Create and finalize assessments for the same agent by different evaluators to enable IRR analysis.</p></div>`;
+  if(pairs.length===0)h+=`<div class="card"><p style="font-size:13px;color:var(--text2);padding:16px 0">${t("irrNoData")}</p></div>`;
   else pairs.forEach(([_,g])=>{
-    h+=`<div class="card"><h2>${esc(g[0].agentName)}</h2><p class="sub">${g.length} assessments from ${new Set(g.map(a=>a.reviewer||a.institution)).size} evaluators</p>`;
+    h+=`<div class="card"><h2>${esc(g[0].agentName)}</h2><p class="sub">${g.length} ${t("assessmentsFrom")} ${new Set(g.map(a=>a.reviewer||a.institution)).size} ${t("evaluators")}</p>`;
     g.forEach(a=>{const c=compute(a);
       h+=`<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border-radius:var(--r);margin-bottom:6px;font-size:13px">
-        <div style="flex:1"><b>${esc(a.reviewer||"Anon")}</b><div style="font-size:11px;color:var(--text2)">${esc(a.institution)} · ${(a.updatedAt||"").slice(0,10)}</div></div>
+        <div style="flex:1"><b>${esc(a.reviewer||t("anon"))}</b><div style="font-size:11px;color:var(--text2)">${esc(a.institution)} · ${(a.updatedAt||"").slice(0,10)}</div></div>
         <span class="pill p-gray">${c.erg}</span> ${pp(c.ap)} ${bp(c.bsl)}</div>`;
     });
     const bsls=g.map(a=>compute(a).bsl);const ok=bsls.every(b=>b===bsls[0]);
-    h+=`<div class="note ${ok?"n-teal":"n-red"}">${ok?`Full agreement: all assigned ${bsls[0]}`:`Discrepancy: ${[...new Set(bsls)].join(" vs ")}`}</div></div>`;
+    h+=`<div class="note ${ok?"n-teal":"n-red"}">${ok?`${t("fullAgreement")} ${bsls[0]}`:`${t("discrepancy")} ${[...new Set(bsls)].join(" vs ")}`}</div></div>`;
   });
   return h;
 }
 
 // Save/Export
-window.saveDraft=function(){cur.reviewer=cur.reviewer||profile.name;cur.institution=cur.institution||profile.institution;cur=LS.save({...cur,status:"draft"});assessments=LS.loadAll();toast("Draft saved","success");R()};
-window.saveFinal=function(){cur.reviewer=cur.reviewer||profile.name;cur.institution=cur.institution||profile.institution;cur=LS.save({...cur,status:"final"});assessments=LS.loadAll();toast("Assessment finalized","success");R()};
+window.saveDraft=function(){cur.reviewer=cur.reviewer||profile.name;cur.institution=cur.institution||profile.institution;cur=LS.save({...cur,status:"draft"});assessments=LS.loadAll();toast(t("draftSaved"),"success");R()};
+window.saveFinal=function(){cur.reviewer=cur.reviewer||profile.name;cur.institution=cur.institution||profile.institution;cur=LS.save({...cur,status:"final"});assessments=LS.loadAll();toast(t("finalizedT"),"success");R()};
 
 window.exportTXT=function(){
   const c=compute(cur);
@@ -486,6 +581,14 @@ window.exportTXT=function(){
   cur.procedures.filter(p=>p.name).forEach((p,i)=>{r+=`  ${i+1}. ${p.name} → ${c.pp[i]||"N/A"} PSR (Aer:${p.aerosol} Vol:${p.volume} Conc:${p.concentration})\n`});
   r+=`\nPSR: Max=${c.mx} | Adjusted=${c.ap} | Unfav=${c.u} | Fav=${c.f}\nBSL: ${c.bsl}\n`;
   r+=`\nMODULATING FACTORS:\n`;MF.forEach(f=>{r+=`  ${f.l}: ${cur.modFactors[f.id]}\n`});
+  const ctrl=CTRL[c.bsl]||CTRL["BSL-2"];
+  r+=`\nRECOMMENDED CONTROLS (${c.bsl}):\n`;
+  r+=`  Engineering: ${(ctrl.e||[]).join("; ")}\n`;
+  r+=`  PPE: ${(ctrl.p||[]).join("; ")}\n`;
+  r+=`    [Respiratory protection follows regional standard: NIOSH N95/N99/N100 (US/Canada) or EN 149 FFP2/FFP3 (EU); N95 ≈ FFP2; FFP3 for highest-risk aerosol procedures]\n`;
+  r+=`  Administrative: ${(ctrl.a||[]).join("; ")}\n`;
+  r+=`  Decontamination & waste: ${getDeconP(c.bsl).join("; ")}\n`;
+  if(cur.addCtrl)r+=`  Additional: ${cur.addCtrl}\n`;
   r+=`\nJUSTIFICATION: ${cur.justification||"(not provided)"}\n`;
   r+=`\nASSESSOR: ${cur.reviewer} | INSTITUTION: ${cur.institution} | DATE: ${cur.reviewDate} | STATUS: ${cur.status}\nTRIGGERS: ${cur.triggers||"(not set)"}\n`;
   r+=`\n${"=".repeat(50)}\nPSR Biosafety Assessment Platform\nhttps://rafael-67.github.io/psr-tool/\n`;
@@ -495,7 +598,7 @@ window.exportTXT=function(){
 window.exportCSV=function(){
   let csv="ID,Agent,RiskGroup,EffectiveRG,MaxPSR,AdjustedPSR,BSL,Unfavorable,Favorable,Status,Reviewer,Institution,Date\n";
   assessments.forEach(a=>{const c=compute(a);csv+=`"${a.id}","${a.agentName}","${a.riskGroup}","${c.erg}","${c.mx}","${c.ap}","${c.bsl}",${c.u},${c.f},"${a.status}","${a.reviewer}","${a.institution}","${a.reviewDate}"\n`});
-  const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`PSR_Assessments_${new Date().toISOString().slice(0,10)}.csv`;a.click();toast("CSV exported","success")
+  const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`PSR_Assessments_${new Date().toISOString().slice(0,10)}.csv`;a.click();toast(t("csvExported"),"success")
 };
 
 R();

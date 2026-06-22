@@ -88,7 +88,7 @@ input[type=text]:focus,textarea:focus{outline:none;border-color:var(--accent)}
 <div class="wrap" id="app"></div>
 
 <script>
-let lang='en',step=0;
+let lang=(localStorage.getItem('psr:lang')||'en'),step=0;
 const T={
   title:{en:'PSR biosafety assessment tool',es:'Herramienta de evaluación PSR de bioseguridad'},
   subtitle:{en:'8-step Procedure-Specific Risk framework for biosafety level assignment',es:'Framework de Riesgo Específico del Procedimiento (REP) en 8 pasos para asignación de nivel de bioseguridad'},
@@ -138,6 +138,11 @@ const T={
   engControls:{en:'Engineering controls',es:'Controles de ingeniería'},
   ppeControls:{en:'Personal protective equipment (PPE)',es:'Equipos de protección individual (EPI)'},
   adminControls:{en:'Administrative controls',es:'Controles administrativos'},
+  deconControls:{en:'Decontamination & waste inactivation',es:'Descontaminación e inactivación de residuos'},
+  loadEx3:{en:'Load Example S3: Lentiviral Vector',es:'Cargar ejemplo S3: vector lentiviral'},
+  loadEx4:{en:'Load Example S4: M. tuberculosis',es:'Cargar ejemplo S4: M. tuberculosis'},
+  respNote:{en:'Respiratory protection is specified as a protection level; the certified device follows the applicable regional standard — NIOSH N95/N99/N100 (US/Canada) and EN 149 FFP2/FFP3 (EU). N95 ≈ FFP2; FFP3 (≥99%) is recommended for the highest-risk aerosol-generating procedures.',
+            es:'La protección respiratoria se indica como nivel de protección; el dispositivo certificado sigue el estándar regional aplicable — NIOSH N95/N99/N100 (EE.UU./Canadá) y EN 149 FFP2/FFP3 (UE). N95 ≈ FFP2; FFP3 (≥99%) se recomienda para los procedimientos generadores de aerosoles de mayor riesgo.'},
   addControls:{en:'Additional procedure-specific controls',es:'Controles adicionales específicos del procedimiento'},
   addControlsPh:{en:'Add any controls specific to your procedures...',es:'Añada controles específicos de sus procedimientos...'},
   assessor:{en:'Assessment performed by',es:'Evaluación realizada por'},
@@ -179,50 +184,56 @@ const MOD_FACTORS=[
 
 const BSL_MATRIX={RG1:{Low:'BSL-1',Moderate:'BSL-1*',High:'BSL-2**'},RG2:{Low:'BSL-2',Moderate:'BSL-2',High:'BSL-2+'},RG3:{Low:'BSL-2+',Moderate:'BSL-3',High:'BSL-3'},'RG3*':{Low:'BSL-2+',Moderate:'BSL-2+/BSL-3',High:'BSL-3'},RG4:{Low:'BSL-4',Moderate:'BSL-4',High:'BSL-4'}};
 
+const p=(en,es)=>({en,es});
 const CONTROLS={
-  'BSL-1':{eng:['Open bench','Handwashing sink'],ppe:['Lab coat','Gloves','Eye protection if splash'],admin:['Standard microbiological practices','Biohazard signage']},
-  'BSL-1*':{eng:['BSC recommended for aerosol steps','Contained sonicator'],ppe:['Lab coat','Gloves','Eye protection','N95 for aerosol'],admin:['Aerosol hazard training','SOPs for high-aerosol procedures']},
-  'BSL-2':{eng:['Class II BSC for aerosol procedures','Autoclave available'],ppe:['Lab coat','Gloves','Eye protection','Face shield if splash'],admin:['Restricted access','Biohazard signage','SOPs','Spill response']},
-  'BSL-2+':{eng:['Mandatory Class II BSC all procedures','Sealed centrifuge buckets','Dedicated lab area recommended'],ppe:['Double gloves','Eye protection (goggles/face shield)','Lab coat or disposable gown','N95 if aerosol risk'],admin:['Documented risk assessment','IBC/CBS approval','Operator competency verification','Direct supervision for new operators','Specific training program']},
-  'BSL-2**':{eng:['Class II BSC mandatory','Contained equipment for aerosol steps'],ppe:['Double gloves','Eye protection','Lab coat'],admin:['Documented justification for enhanced RG1','Aerosol management SOP']},
-  'BSL-2+/BSL-3':{eng:['Class II BSC mandatory or full BSL-3','Sealed centrifuge buckets','HEPA exhaust (BSL-3)'],ppe:['Double gloves','Eye protection','Respiratory protection','Disposable gown'],admin:['IBC approval required','Written risk assessment','Consider BSL-3 if ≥2 unfavorable factors']},
-  'BSL-3':{eng:['BSL-3 facility with directional airflow','HEPA exhaust','Double-door interlocking','Class II/III BSC'],ppe:['Dedicated clothing','Double gloves','Respiratory protection','Full face shield'],admin:['Controlled entry','Medical surveillance','Comprehensive training','Emergency response plan','Incident reporting']},
-  'BSL-4':{eng:['Maximum containment','Class III BSC or positive-pressure suit','Chemical shower','Double HEPA exhaust'],ppe:['Positive-pressure suit or Class III BSC','Full personal decontamination'],admin:['National-level authorization','Dedicated team','Continuous monitoring','Emergency protocols']},
+  'BSL-1':{eng:[p('Open bench','Mesa de trabajo abierta'),p('Handwashing sink','Lavabo para lavado de manos')],ppe:[p('Lab coat','Bata de laboratorio'),p('Gloves','Guantes'),p('Eye protection if splash','Protección ocular si hay salpicaduras')],admin:[p('Standard microbiological practices','Prácticas microbiológicas estándar'),p('Biohazard signage','Señalización de riesgo biológico')],decon:[p('70% ethanol or quaternary ammonium for surfaces','Etanol al 70% o amonio cuaternario para superficies'),p('Autoclave or validated chemical inactivation of waste before disposal','Autoclave o inactivación química validada de los residuos antes de su eliminación')]},
+  'BSL-1*':{eng:[p('BSC recommended for aerosol steps','CSB recomendada para pasos con aerosoles'),p('Contained sonicator','Sonicador confinado')],ppe:[p('Lab coat','Bata de laboratorio'),p('Gloves','Guantes'),p('Eye protection','Protección ocular'),p('N95 / FFP2 for aerosol','N95 / FFP2 para aerosoles')],admin:[p('Aerosol hazard training','Formación en riesgo por aerosoles'),p('SOPs for high-aerosol procedures','PNT para procedimientos de alta generación de aerosoles')],decon:[p('70% ethanol or quaternary ammonium for surfaces','Etanol al 70% o amonio cuaternario para superficies'),p('Autoclave aerosol-contaminated waste before disposal','Autoclavar los residuos contaminados por aerosoles antes de su eliminación')]},
+  'BSL-2':{eng:[p('Class II BSC for aerosol procedures','CSB Clase II para procedimientos con aerosoles'),p('Autoclave available','Autoclave disponible')],ppe:[p('Lab coat','Bata de laboratorio'),p('Gloves','Guantes'),p('Eye protection','Protección ocular'),p('Face shield if splash','Pantalla facial si hay salpicaduras')],admin:[p('Restricted access','Acceso restringido'),p('Biohazard signage','Señalización de riesgo biológico'),p('SOPs','PNT'),p('Spill response','Respuesta ante derrames')],decon:[p('Validated surface disinfectant matched to agent (70% ethanol / quaternary ammonium for enveloped agents)','Desinfectante de superficies validado y adecuado al agente (etanol al 70% / amonio cuaternario para agentes envueltos)'),p('Spill kit with appropriate disinfectant','Kit de derrames con desinfectante adecuado'),p('Autoclave or validated chemical treatment of all biological waste','Autoclave o tratamiento químico validado de todos los residuos biológicos')]},
+  'BSL-2+':{eng:[p('Mandatory Class II BSC all procedures','CSB Clase II obligatoria en todos los procedimientos'),p('Sealed centrifuge buckets','Cubetas de centrífuga selladas'),p('Dedicated lab area recommended','Área de laboratorio dedicada recomendada')],ppe:[p('Double gloves','Doble guante'),p('Eye protection (goggles/face shield)','Protección ocular (gafas/pantalla facial)'),p('Lab coat or disposable gown','Bata de laboratorio o bata desechable'),p('N95 / FFP2 if aerosol risk','N95 / FFP2 si hay riesgo de aerosoles')],admin:[p('Documented risk assessment','Evaluación de riesgos documentada'),p('IBC/CBS approval','Aprobación del CBS'),p('Operator competency verification','Verificación de competencia del operador'),p('Direct supervision for new operators','Supervisión directa para operadores nuevos'),p('Specific training program','Programa de formación específico')],decon:[p('Agent-matched disinfectant with defined contact time','Desinfectante adecuado al agente con tiempo de contacto definido'),p('For non-enveloped viruses (e.g., AAV) or spores: ≥0.5% sodium hypochlorite or validated sporicidal/virucidal agent','Para virus no envueltos (p. ej., AAV) o esporas: hipoclorito sódico ≥0,5% o agente esporicida/virucida validado'),p('Decontaminate BSC surfaces after each session','Descontaminar las superficies de la CSB tras cada sesión'),p('Autoclave waste on-site before disposal','Autoclavar los residuos in situ antes de su eliminación')]},
+  'BSL-2**':{eng:[p('Class II BSC mandatory','CSB Clase II obligatoria'),p('Contained equipment for aerosol steps','Equipo confinado para pasos con aerosoles')],ppe:[p('Double gloves','Doble guante'),p('Eye protection','Protección ocular'),p('Lab coat','Bata de laboratorio')],admin:[p('Documented justification for enhanced RG1','Justificación documentada para GR1 reforzado'),p('Aerosol management SOP','PNT de gestión de aerosoles')],decon:[p('70% ethanol or quaternary ammonium for surfaces','Etanol al 70% o amonio cuaternario para superficies'),p('Autoclave aerosol-contaminated waste before disposal','Autoclavar los residuos contaminados por aerosoles antes de su eliminación')]},
+  'BSL-2+/BSL-3':{eng:[p('Class II BSC mandatory or full BSL-3','CSB Clase II obligatoria o NCB-3 completo'),p('Sealed centrifuge buckets','Cubetas de centrífuga selladas'),p('HEPA exhaust (BSL-3)','Extracción HEPA (NCB-3)')],ppe:[p('Double gloves','Doble guante'),p('Eye protection','Protección ocular'),p('Respiratory protection (FFP3 / N99–N100)','Protección respiratoria (FFP3 / N99–N100)'),p('Disposable gown','Bata desechable')],admin:[p('IBC approval required','Se requiere aprobación del CBS'),p('Written risk assessment','Evaluación de riesgos por escrito'),p('Consider BSL-3 if ≥2 unfavorable factors','Considerar NCB-3 si ≥2 factores desfavorables')],decon:[p('Agent-matched disinfectant with validated contact time','Desinfectante adecuado al agente con tiempo de contacto validado'),p('≥0.5% sodium hypochlorite or sporicidal agent for non-enveloped viruses / spores','Hipoclorito sódico ≥0,5% o agente esporicida para virus no envueltos / esporas'),p('Autoclave all waste on-site before removal','Autoclavar todos los residuos in situ antes de retirarlos')]},
+  'BSL-3':{eng:[p('BSL-3 facility with directional airflow','Instalación NCB-3 con flujo de aire direccional'),p('HEPA exhaust','Extracción HEPA'),p('Double-door interlocking','Doble puerta con enclavamiento'),p('Class II/III BSC','CSB Clase II/III')],ppe:[p('Dedicated clothing','Ropa dedicada'),p('Double gloves','Doble guante'),p('Respiratory protection (FFP3 / N99–N100)','Protección respiratoria (FFP3 / N99–N100)'),p('Full face shield','Pantalla facial completa')],admin:[p('Controlled entry','Entrada controlada'),p('Medical surveillance','Vigilancia médica'),p('Comprehensive training','Formación integral'),p('Emergency response plan','Plan de respuesta ante emergencias'),p('Incident reporting','Notificación de incidentes')],decon:[p('Validated surface disinfectant with documented contact time (e.g., 1% sodium hypochlorite, freshly prepared)','Desinfectante de superficies validado con tiempo de contacto documentado (p. ej., hipoclorito sódico al 1%, recién preparado)'),p('Sporicidal/virucidal agent for non-enveloped viruses and spores','Agente esporicida/virucida para virus no envueltos y esporas'),p('On-site autoclave; all waste inactivated before leaving containment','Autoclave in situ; todos los residuos inactivados antes de salir de la contención'),p('Periodic room/space decontamination per SOP','Descontaminación periódica de la sala/espacio según PNT')]},
+  'BSL-4':{eng:[p('Maximum containment','Contención máxima'),p('Class III BSC or positive-pressure suit','CSB Clase III o traje de presión positiva'),p('Chemical shower','Ducha química'),p('Double HEPA exhaust','Doble extracción HEPA')],ppe:[p('Positive-pressure suit or Class III BSC','Traje de presión positiva o CSB Clase III'),p('Full personal decontamination','Descontaminación personal completa')],admin:[p('National-level authorization','Autorización a nivel nacional'),p('Dedicated team','Equipo dedicado'),p('Continuous monitoring','Monitorización continua'),p('Emergency protocols','Protocolos de emergencia')],decon:[p('Chemical shower for suit decontamination','Ducha química para descontaminación del traje'),p('Effluent decontamination system','Sistema de descontaminación de efluentes'),p('Double-door autoclave for all materials leaving containment','Autoclave de doble puerta para todo el material que sale de la contención')]},
 };
+const L=(x)=>(x&&typeof x==='object')?(x[lang]||x.en):x;
+const LE=(x)=>(x&&typeof x==='object')?(x.en||''):x;
 
 let D={agentName:'',riskGroup:'',isGMO:false,parentalOrg:'',geneticMod:'',replComp:'',rgOverride:'',
   procedures:[{name:'',aerosol:'',volume:'',concentration:''}],
   modFactors:{},justification:'',reviewer:'',reviewDate:'',triggers:'',addControls:''};
 MOD_FACTORS.forEach(f=>D.modFactors[f.id]='neutral');
 
-const EX_S3={agentName:'Third-generation SIN lentiviral vector (pLenti-CRISPR, HIV-1 backbone)',riskGroup:'RG3',isGMO:true,rgOverride:'',parentalOrg:'HIV-1',geneticMod:'Third-generation self-inactivating lentiviral vector. Split-genome packaging (4-plasmid system). Deletions: gag, pol, env, tat, rev, vif, vpr, vpu, nef. Replication-incompetent. Max recombination risk <10⁻⁸.',replComp:'no',
+const EX_S3={agentName:p('Third-generation SIN lentiviral vector (pLenti-CRISPR, HIV-1 backbone)','Vector lentiviral SIN de tercera generación (pLenti-CRISPR, esqueleto VIH-1)'),riskGroup:'RG3',isGMO:true,rgOverride:'',parentalOrg:'HIV-1',geneticMod:p('Third-generation self-inactivating lentiviral vector. Split-genome packaging (4-plasmid system). Deletions: gag, pol, env, tat, rev, vif, vpr, vpu, nef. Replication-incompetent. Max recombination risk <10⁻⁸.','Vector lentiviral autoinactivante de tercera generación. Empaquetamiento de genoma dividido (sistema de 4 plásmidos). Deleciones: gag, pol, env, tat, rev, vif, vpr, vpu, nef. Incompetente para la replicación. Riesgo máximo de recombinación <10⁻⁸.'),replComp:'no',
   procedures:[
-    {name:'HEK293T transfection (T-175 flasks in BSC-II)',aerosol:'low',volume:'high',concentration:'low'},
-    {name:'Viral supernatant harvest (~120 mL, aspiration in BSC)',aerosol:'low',volume:'high',concentration:'low'},
-    {name:'Filtration 0.45 µm (syringe filter in BSC)',aerosol:'low',volume:'high',concentration:'low'},
-    {name:'Ultracentrifugation (SW32Ti, 25,000 rpm, 90 min, non-sealed rotor)',aerosol:'high',volume:'moderate',concentration:'high'},
-    {name:'Viral pellet resuspension (500 µL, high titer 10⁸ TU/mL in BSC)',aerosol:'moderate',volume:'low',concentration:'high'},
-    {name:'Aliquoting (50 µL, multichannel pipette, 10⁸ TU/mL)',aerosol:'low',volume:'low',concentration:'high'}
+    {name:p('HEK293T transfection (T-175 flasks in BSC-II)','Transfección de HEK293T (frascos T-175 en CSB-II)'),aerosol:'low',volume:'high',concentration:'low'},
+    {name:p('Viral supernatant harvest (~120 mL, aspiration in BSC)','Recolección de sobrenadante viral (~120 mL, aspiración en CSB)'),aerosol:'low',volume:'high',concentration:'low'},
+    {name:p('Filtration 0.45 µm (syringe filter in BSC)','Filtración 0,45 µm (filtro de jeringa en CSB)'),aerosol:'low',volume:'high',concentration:'low'},
+    {name:p('Ultracentrifugation (SW32Ti, 25,000 rpm, 90 min, non-sealed rotor)','Ultracentrifugación (SW32Ti, 25.000 rpm, 90 min, rotor no sellado)'),aerosol:'high',volume:'moderate',concentration:'high'},
+    {name:p('Viral pellet resuspension (500 µL, high titer 10⁸ TU/mL in BSC)','Resuspensión del pellet viral (500 µL, título alto 10⁸ UT/mL en CSB)'),aerosol:'moderate',volume:'low',concentration:'high'},
+    {name:p('Aliquoting (50 µL, multichannel pipette, 10⁸ TU/mL)','Alicuotado (50 µL, pipeta multicanal, 10⁸ UT/mL)'),aerosol:'low',volume:'low',concentration:'high'}
   ],
   modFactors:{volume:'increase',concentration:'increase',frequency:'increase',aerosol:'increase',stability:'decrease',experience:'decrease',supervision:'decrease',infrastructure:'increase',incidents:'decrease'},
-  justification:'Although the lentiviral vector is classified as RG3* (replication-defective GMO derived from HIV-1 RG3), high-speed ultracentrifugation (25,000 rpm, 90 min) of large volumes without sealed safety cups generates significant aerosol potential. Final titer 10⁸ TU/mL (1000× concentration). Four unfavorable modulating factors (frequency, scale, infrastructure, titer) trigger ≥2 escalation. BSL-2+ with respiratory protection is proportionate; standard BSL-2 insufficient, BSL-3 disproportionate given replication-defective status.',
-  reviewer:'Dr. John Doe (Biosafety Officer)',reviewDate:'2025-01-15',triggers:'Sealed rotor acquisition; new personnel; scale increase >200 mL; incident; annual review.',addControls:'Mandatory BSC-II all steps. N95 during centrifuge ops. Double gloves for centrifugation/resuspension. Sealed buckets to acquire. Tube opening only in BSC-II. Wait 10 min post-centrifugation. 10% bleach 20 min before autoclaving. Negative pressure lab. Training SOP-LV-2025-001.'};
+  justification:p('Although the lentiviral vector is classified as RG3* (replication-defective GMO derived from HIV-1 RG3), high-speed ultracentrifugation (25,000 rpm, 90 min) of large volumes without sealed safety cups generates significant aerosol potential. Final titer 10⁸ TU/mL (1000× concentration). Four unfavorable modulating factors (frequency, scale, infrastructure, titer) trigger ≥2 escalation. BSL-2+ with respiratory protection is proportionate; standard BSL-2 insufficient, BSL-3 disproportionate given replication-defective status.','Aunque el vector lentiviral se clasifica como GR3* (OMG defectivo en replicación derivado del VIH-1 GR3), la ultracentrifugación a alta velocidad (25.000 rpm, 90 min) de grandes volúmenes sin cubetas de seguridad selladas genera un potencial de aerosoles significativo. Título final 10⁸ UT/mL (concentración 1000×). Cuatro factores moduladores desfavorables (frecuencia, escala, infraestructura, título) activan la escalación por ≥2. NCB-2+ con protección respiratoria es proporcionado; NCB-2 estándar es insuficiente y NCB-3 desproporcionado dado el carácter defectivo en replicación.'),
+  reviewer:p('Dr. John Doe (Biosafety Officer)','Dr. John Doe (Responsable de Bioseguridad)'),reviewDate:'2025-01-15',triggers:p('Sealed rotor acquisition; new personnel; scale increase >200 mL; incident; annual review.','Adquisición de rotor sellado; personal nuevo; aumento de escala >200 mL; incidente; revisión anual.'),addControls:p('Mandatory BSC-II all steps. N95 during centrifuge ops. Double gloves for centrifugation/resuspension. Sealed buckets to acquire. Tube opening only in BSC-II. Wait 10 min post-centrifugation. 10% bleach 20 min before autoclaving. Negative pressure lab. Training SOP-LV-2025-001.','CSB-II obligatoria en todos los pasos. N95/FFP2 durante las operaciones de centrifugación. Doble guante para centrifugación/resuspensión. Cubetas selladas por adquirir. Apertura de tubos solo en CSB-II. Esperar 10 min tras la centrifugación. Lejía al 10% durante 20 min antes del autoclave. Laboratorio con presión negativa. Formación PNT-LV-2025-001.')};
 
-const EX_S4={agentName:'Mycobacterium tuberculosis complex (heat-inactivated specimens and purified DNA)',riskGroup:'RG3',isGMO:false,rgOverride:'',parentalOrg:'',geneticMod:'',replComp:'',
+const EX_S4={agentName:p('Mycobacterium tuberculosis complex (heat-inactivated specimens and purified DNA)','Complejo Mycobacterium tuberculosis (muestras inactivadas por calor y ADN purificado)'),riskGroup:'RG3',isGMO:false,rgOverride:'',parentalOrg:'',geneticMod:'',replComp:'',
   procedures:[
-    {name:'Receipt of heat-inactivated specimens (2–5 mL, sealed tubes)',aerosol:'low',volume:'low',concentration:'low'},
-    {name:'Automated DNA extraction (QIAcube in BSC, 200 µL, closed system)',aerosol:'low',volume:'low',concentration:'low'},
-    {name:'PCR setup (25 µL reaction, template DNA, pipetting in BSC)',aerosol:'low',volume:'low',concentration:'low'},
-    {name:'Thermal cycling (sealed PCR tubes, real-time PCR instrument)',aerosol:'low',volume:'low',concentration:'low'},
-    {name:'Result analysis (in silico, computer workstation)',aerosol:'low',volume:'low',concentration:'low'}
+    {name:p('Receipt of heat-inactivated specimens (2–5 mL, sealed tubes)','Recepción de muestras inactivadas por calor (2–5 mL, tubos sellados)'),aerosol:'low',volume:'low',concentration:'low'},
+    {name:p('Automated DNA extraction (QIAcube in BSC, 200 µL, closed system)','Extracción automatizada de ADN (QIAcube en CSB, 200 µL, sistema cerrado)'),aerosol:'low',volume:'low',concentration:'low'},
+    {name:p('PCR setup (25 µL reaction, template DNA, pipetting in BSC)','Preparación de PCR (reacción de 25 µL, ADN molde, pipeteo en CSB)'),aerosol:'low',volume:'low',concentration:'low'},
+    {name:p('Thermal cycling (sealed PCR tubes, real-time PCR instrument)','Termociclado (tubos de PCR sellados, equipo de PCR en tiempo real)'),aerosol:'low',volume:'low',concentration:'low'},
+    {name:p('Result analysis (in silico, computer workstation)','Análisis de resultados (in silico, estación de trabajo informática)'),aerosol:'low',volume:'low',concentration:'low'}
   ],
   modFactors:{volume:'decrease',concentration:'decrease',frequency:'increase',aerosol:'decrease',stability:'decrease',experience:'decrease',supervision:'neutral',infrastructure:'decrease',incidents:'decrease'},
-  justification:'Parental organism M. tuberculosis is RG3, but ALL specimens are heat-inactivated (56°C, 30 min) with validated culture-negative confirmation. No viable organisms handled. DNA extraction via closed automated system (QIAcube), small volumes (<5 mL), sealed PCR tubes. Only 1 unfavorable factor (daily frequency) — below ≥2 threshold. Risk: Moderate severity (inactivated RG3) × Rare exposure = LOW. Enhanced BSL-2 justified by proportionality, validated inactivation, and WHO/BMBL precedent.',
-  reviewer:'Dr. Robert Chen (Lab Director & BSO)',reviewDate:'2025-02-01',triggers:'Introduction of viable M. tb cultures (IMMEDIATE BSL-3 upgrade); extraction method change; inactivation failure; exposure incident; regulatory updates.',addControls:'CRITICAL: validated inactivation protocol (56°C, 30 min) with culture-negative confirmation. Annual spot checks. Mandatory BSC for specimen handling. QIAcube closed system. TB screening at hire/annually. Autoclave 121°C 30 min. Incident reporting with root cause analysis.'};
+  justification:p('Parental organism M. tuberculosis is RG3, but ALL specimens are heat-inactivated (56°C, 30 min) with validated culture-negative confirmation. No viable organisms handled. DNA extraction via closed automated system (QIAcube), small volumes (<5 mL), sealed PCR tubes. Only 1 unfavorable factor (daily frequency) — below ≥2 threshold. Risk: Moderate severity (inactivated RG3) × Rare exposure = LOW. Enhanced BSL-2 justified by proportionality, validated inactivation, and WHO/BMBL precedent.','El organismo parental M. tuberculosis es GR3, pero TODAS las muestras están inactivadas por calor (56 °C, 30 min) con confirmación validada de cultivo negativo. No se manipulan organismos viables. Extracción de ADN mediante sistema automatizado cerrado (QIAcube), volúmenes pequeños (<5 mL), tubos de PCR sellados. Solo 1 factor desfavorable (frecuencia diaria), por debajo del umbral de ≥2. Riesgo: severidad moderada (GR3 inactivado) × exposición rara = BAJO. NCB-2 reforzado justificado por proporcionalidad, inactivación validada y precedente de la OMS/BMBL.'),
+  reviewer:p('Dr. Robert Chen (Lab Director & BSO)','Dr. Robert Chen (Director de Laboratorio y RBS)'),reviewDate:'2025-02-01',triggers:p('Introduction of viable M. tb cultures (IMMEDIATE BSL-3 upgrade); extraction method change; inactivation failure; exposure incident; regulatory updates.','Introducción de cultivos viables de M. tb (ELEVACIÓN INMEDIATA a NCB-3); cambio del método de extracción; fallo de inactivación; incidente de exposición; actualizaciones regulatorias.'),addControls:p('CRITICAL: validated inactivation protocol (56°C, 30 min) with culture-negative confirmation. Annual spot checks. Mandatory BSC for specimen handling. QIAcube closed system. TB screening at hire/annually. Autoclave 121°C 30 min. Incident reporting with root cause analysis.','CRÍTICO: protocolo de inactivación validado (56 °C, 30 min) con confirmación de cultivo negativo. Verificaciones aleatorias anuales. CSB obligatoria para la manipulación de muestras. Sistema cerrado QIAcube. Cribado de TB al contratar/anualmente. Autoclave 121 °C 30 min. Notificación de incidentes con análisis de causa raíz.')};
 
 function loadExample(which){
   const ex=which==='s3'?EX_S3:EX_S4;
-  D={...JSON.parse(JSON.stringify(ex))};
+  const o=JSON.parse(JSON.stringify(ex));
+  ['agentName','geneticMod','justification','triggers','addControls','reviewer'].forEach(k=>{o[k]=L(o[k]);});
+  if(Array.isArray(o.procedures))o.procedures=o.procedures.map(pr=>({...pr,name:L(pr.name)}));
+  D=o;
   step=0;render();
 }
 
@@ -248,7 +259,7 @@ function bslPill(level){const m={'BSL-1':'green','BSL-1*':'green','BSL-2':'blue'
 function render(){
   const subs=[t('step1sub'),t('step2sub'),t('step3sub'),t('step4sub'),t('step5sub'),t('step6sub'),t('step7sub'),t('step8sub')];
   let h=`<h1>${t('title')}</h1><p class="sub">${t('subtitle')}</p>`;
-  h+=`<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap"><button class="btn btn-outline" style="font-size:11px;padding:5px 12px" onclick="loadExample('s3')">Load Example S3: Lentiviral Vector</button><button class="btn btn-outline" style="font-size:11px;padding:5px 12px" onclick="loadExample('s4')">Load Example S4: M. tuberculosis</button></div>`;
+  h+=`<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap"><button class="btn btn-outline" style="font-size:11px;padding:5px 12px" onclick="loadExample('s3')">${t('loadEx3')}</button><button class="btn btn-outline" style="font-size:11px;padding:5px 12px" onclick="loadExample('s4')">${t('loadEx4')}</button></div>`;
   
   // Step bar
   h+=`<div class="steps-bar">`;
@@ -399,14 +410,29 @@ function renderStep6(){
   return h;
 }
 
+// Non-enveloped viruses & spore-formers: ethanol-resistant, need sporicidal/virucidal agents
+const RESISTANT_AGENTS=/aav|adeno-?associated|adenoasociad|adenovir|parvovir|norovir|rotavir|enterovir|poliovir|coxsackie|hepatitis a|hav\b|papillomavir|papilomavir|\bhpv\b|\bvph\b|calicivir|reovir|bacillus|anthrac|[áa]ntrax|carbunco|clostrid|difficile|c\.?\s*diff|spore|espora|prion|crypto|cripto/i;
+function getDecon(bsl){
+  const base=(CONTROLS[bsl]||CONTROLS['BSL-2']).decon||[];
+  const nameHit=RESISTANT_AGENTS.test(D.agentName||'')||RESISTANT_AGENTS.test(D.parentalOrg||'');
+  const resistant=D.modFactors.stability==='increase'||nameHit;
+  const lead=resistant
+    ? p('⚠ Environmentally stable / non-enveloped agent detected: use a validated sporicidal/virucidal disinfectant (≥0.5–1% sodium hypochlorite); plain ethanol is INSUFFICIENT.','⚠ Agente ambientalmente estable / no envuelto detectado: utilice un desinfectante esporicida/virucida validado (hipoclorito sódico ≥0,5–1%); el etanol por sí solo es INSUFICIENTE.')
+    : p('Enveloped agent: 70% ethanol or quaternary ammonium adequate; verify against agent safety data sheet.','Agente envuelto: etanol al 70% o amonio cuaternario adecuados; verifique con la ficha de seguridad del agente.');
+  return [lead,...base];
+}
 function renderStep7(){
   const bsl=getBSL(),ctrl=CONTROLS[bsl]||CONTROLS['BSL-2'];
   let h=`<p style="font-size:13px;color:var(--text2);margin-bottom:16px">${t('recControls')} ${bslPill(bsl)}</p>`;
   [{k:'eng',t:t('engControls')},{k:'ppe',t:t('ppeControls')},{k:'admin',t:t('adminControls')}].forEach(s=>{
     h+=`<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:500;margin-bottom:8px">${s.t}</div>`;
-    (ctrl[s.k]||[]).forEach(item=>{h+=`<label class="check-label" style="margin-bottom:4px"><input type="checkbox" checked> ${item}</label>`});
+    (ctrl[s.k]||[]).forEach(item=>{h+=`<label class="check-label" style="margin-bottom:4px"><input type="checkbox" checked> ${L(item)}</label>`});
+    if(s.k==='ppe'){h+=`<div style="font-size:12px;color:var(--text2);margin-top:4px;line-height:1.4">${t('respNote')}</div>`;}
     h+=`</div>`;
   });
+  h+=`<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:500;margin-bottom:8px">${t('deconControls')}</div>`;
+  getDecon(bsl).forEach(item=>{h+=`<label class="check-label" style="margin-bottom:4px"><input type="checkbox" checked> ${L(item)}</label>`});
+  h+=`</div>`;
   h+=`<div class="field"><label class="field-label">${t('addControls')}</label><textarea rows="3" onchange="D.addControls=this.value" placeholder="${t('addControlsPh')}">${esc(D.addControls)}</textarea></div>`;
   return h;
 }
@@ -460,6 +486,14 @@ function exportReport(){
   r+=`\nJustification: ${D.justification||'(not provided)'}\n`;
   r+=`\nMODULATING FACTORS:\n`;
   MOD_FACTORS.forEach(f=>{r+=`  ${f.en}: ${D.modFactors[f.id]}\n`});
+  const ctrl=CONTROLS[bsl]||CONTROLS['BSL-2'];
+  r+=`\nRECOMMENDED CONTROLS (${bsl}):\n`;
+  r+=`  Engineering: ${(ctrl.eng||[]).map(LE).join('; ')}\n`;
+  r+=`  PPE: ${(ctrl.ppe||[]).map(LE).join('; ')}\n`;
+  r+=`    [Respiratory protection follows regional standard: NIOSH N95/N99/N100 (US/Canada) or EN 149 FFP2/FFP3 (EU); N95 ≈ FFP2; FFP3 for highest-risk aerosol procedures]\n`;
+  r+=`  Administrative: ${(ctrl.admin||[]).map(LE).join('; ')}\n`;
+  r+=`  Decontamination & waste: ${getDecon(bsl).map(LE).join('; ')}\n`;
+  if(D.addControls)r+=`  Additional: ${D.addControls}\n`;
   r+=`\nAssessor: ${D.reviewer||'(not provided)'}\nDate: ${D.reviewDate||'(not provided)'}\nReview triggers: ${D.triggers||'(not provided)'}\n`;
   r+=`\n${'='.repeat(40)}\nGenerated by PSR Biosafety Assessment Tool\nBased on: Procedure-Specific Risk (PSR) Framework\nRef: PSR Framework — Manuscript in preparation\n`;
   
@@ -471,7 +505,8 @@ function exportReport(){
 }
 
 function esc(s){return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
-function toggleLang(){lang=lang==='en'?'es':'en';document.getElementById('langBtn').textContent=lang==='en'?'ES':'EN';render()}
+function toggleLang(){lang=lang==='en'?'es':'en';localStorage.setItem('psr:lang',lang);document.getElementById('langBtn').textContent=lang==='en'?'ES':'EN';render()}
+(function(){var b=document.getElementById('langBtn');if(b)b.textContent=lang==='en'?'ES':'EN';})();
 
 render();
 </script>
