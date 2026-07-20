@@ -1,3 +1,7 @@
+# PSR Tool v2.0-compat
+
+> Compatibility baseline preserving PSR Tool v1.4 functionality and updated to cite the final published article (Front Bioeng Biotechnol. 2026;14:1879247; doi:10.3389/fbioe.2026.1879247).
+
 # PSR Biosafety Assessment Tool
 
 Interactive digital implementation of the **Procedure-Specific Risk (PSR) framework** for biosafety level assignment in modern biotechnology laboratories.
@@ -8,7 +12,7 @@ Interactive digital implementation of the **Procedure-Specific Risk (PSR) framew
 
 This tool implements the 8-step PSR framework described in:
 
-> Cena-Diez R (2026) An 8-step procedure-specific risk framework enables reproducible biosafety level assignment beyond agent-based classification. Front. Bioeng. Biotechnol. 14:1879247. doi: 10.3389/fbioe.2026.1879247.
+> Cena-Diez R. *An 8-Step Procedure-Specific Risk Framework Enables Reproducible Biosafety Level Assignment Beyond Agent-Based Classification.* Frontiers in Bioengineering and Biotechnology [manuscript submitted].
 
 The PSR framework operationalizes a shift from static, agent-based biosafety classification toward dynamic, procedure-specific risk assessment. It integrates agent hazard (Risk Group) with procedural exposure likelihood to determine proportionate biosafety level assignments.
 
@@ -147,7 +151,9 @@ MIT License. Free for research and institutional biosafety use.
 If you use this tool in your research, please cite:
 
 ```
-Cena-Diez R (2026) An 8-step procedure-specific risk framework enables reproducible biosafety level assignment beyond agent-based classification. Front. Bioeng. Biotechnol. 14:1879247. doi: 10.3389/fbioe.2026.1879247.
+Cena-Diez R. An 8-Step Procedure-Specific Risk Framework Enables Reproducible
+Biosafety Level Assignment Beyond Agent-Based Classification.
+Frontiers in Bioengineering and Biotechnology [manuscript submitted].
 
 Digital tool available at: https://rafael-67.github.io/psr-tool/
 ```
