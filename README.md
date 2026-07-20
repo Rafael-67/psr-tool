@@ -1,7 +1,3 @@
-# PSR Tool v2.0-compat
-
-> Compatibility baseline preserving PSR Tool v1.4 functionality and updated to cite the final published article (Front Bioeng Biotechnol. 2026;14:1879247; doi:10.3389/fbioe.2026.1879247).
-
 # PSR Biosafety Assessment Tool
 
 Interactive digital implementation of the **Procedure-Specific Risk (PSR) framework** for biosafety level assignment in modern biotechnology laboratories.
