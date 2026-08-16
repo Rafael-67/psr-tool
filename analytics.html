@@ -42,20 +42,24 @@ th{font-weight:600;font-size:12px;color:var(--text2);text-transform:uppercase;le
 .kappa-interp{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500}
 @media print{.tab-row,.btn{display:none}.card{break-inside:avoid}}
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.7/chart.umd.min.js" onerror="window._noChart=true"></script>
 </head>
 <body>
 <div class="wrap" id="app"></div>
+<script src="psr-core.js"></script>
+<script src="psr-data.js"></script>
+<script src="psr-irr.js"></script>
+<script src="psr-a11y.js"></script>
+<script src="psr-examples.js"></script>
 <script>
 // ── Core algorithm ──
-const BSL_M={RG1:{Low:"BSL-1",Moderate:"BSL-1*",High:"BSL-2**"},RG2:{Low:"BSL-2",Moderate:"BSL-2",High:"BSL-2+"},RG3:{Low:"BSL-2+",Moderate:"BSL-3",High:"BSL-3"},"RG3*":{Low:"BSL-2+",Moderate:"BSL-2+/BSL-3",High:"BSL-3"},RG4:{Low:"BSL-4",Moderate:"BSL-4",High:"BSL-4"}};
+const BSL_M=PSRCore.TABLE8;
 let lang=(localStorage.getItem("psr:lang")||"en");
 const p=(en,es)=>({en,es});
 const L=(x)=>(x&&typeof x==="object"&&("en"in x))?(x[lang]||x.en):x;
 const T={
   pageTitle:p("PSR analytics","Analítica PSR"),assessLoaded:p("assessments loaded","evaluaciones cargadas"),builtinTag:p(" (built-in examples)"," (ejemplos integrados)"),
   platformBtn:p("← Platform","← Plataforma"),importBtn:p("Import CSV/JSON","Importar CSV/JSON"),exportBtn:p("Export dataset","Exportar conjunto de datos"),
-  builtinNote:p("Showing built-in examples from the manuscript (Case Studies 1–6). Create assessments in the Platform or import your own data.","Mostrando ejemplos integrados del manuscrito (Casos de estudio 1–6). Cree evaluaciones en la Plataforma o importe sus propios datos."),
+  builtinNote:p("Showing 14 demonstration assessments: six complete digital-tool examples plus eight traceable v2 adaptations of the seven repository v7 records (the two HIV-1 procedures are separated).","Mostrando 14 evaluaciones de demostración: seis ejemplos completos de la herramienta digital y ocho adaptaciones v2 trazables de los siete registros v7 del repositorio (los dos procedimientos de VIH-1 están separados)."),
   saveExamples:p("Save examples to browser","Guardar ejemplos en el navegador"),
   tabOverview:p("Overview","Resumen"),tabDist:p("Distributions","Distribuciones"),tabMF:p("Modulating factors","Factores moduladores"),
   tabIRR:p("IRR analysis","Análisis IRR"),tabRisk:p("Risk patterns","Patrones de riesgo"),tabTemporal:p("Temporal","Temporal"),
@@ -70,7 +74,7 @@ const T={
   dsAssessments:p("Assessments","Evaluaciones"),dsBefore:p("Before modulation","Antes de la modulación"),dsAfter:p("After modulation","Después de la modulación"),dsProcedures:p("Procedures","Procedimientos"),
   mfScoring:p("Modulating factor scoring pattern","Patrón de puntuación de factores moduladores"),
   favorable:p("Favorable","Favorable"),neutral:p("Neutral","Neutro"),unfavorable:p("Unfavorable","Desfavorable"),
-  escDrivers:p("Escalation drivers","Impulsores de la escalación"),noEsc:p("No escalations detected.","No se detectaron escalaciones."),
+  escDrivers:p("Escalation-consideration drivers","Impulsores de consideración de escalación"),noEsc:p("No escalation considerations detected.","No se detectaron consideraciones de escalación."),
   thFactor:p("Factor","Factor"),thUnfavEsc:p("Unfavorable in escalated","Desfavorable en escaladas"),thRate:p("Rate","Tasa"),
   mfCorr:p("Factor correlation with BSL elevation","Correlación de factores con la elevación de NCB"),
   dsStdBSL:p("Standard BSL","NCB estándar"),dsElevBSL:p("Elevated BSL","NCB elevado"),
@@ -99,6 +103,26 @@ const T={
   importError:p("Import error: ","Error de importación: "),importedProc:p("Imported","Importado"),
   psrLow:p("Low","Bajo"),psrMod:p("Moderate","Moderado"),psrHigh:p("High","Alto"),rgAbbr:p("RG","GR"),
   noDataChart:p("No data","Sin datos"),
+  formalIRRTitle:p("Formal IRR","IRR formal"),
+  formalIRRSub:p("Only finalized study records are included. Unit: studyId + scenarioId + scenarioVersion. Demonstrations, individual work and legacy imports are excluded.","Solo se incluyen registros de estudio finalizados. Unidad: studyId + scenarioId + scenarioVersion. Se excluyen las demostraciones, el trabajo individual y las importaciones heredadas."),
+  formalIRRCounts:p("Included: {included}; excluded: {excluded}; standardized scenarios: {scenarios}","Incluidas: {included}; excluidas: {excluded}; escenarios estandarizados: {scenarios}"),
+  formalIRRBlocked:p("Formal IRR blocked: duplicate final assessments.","IRR formal bloqueado: evaluaciones finales duplicadas."),
+  formalIRRNoPanel:p("No eligible study panel. Complete the required study/scenario/version/rater/institution metadata for at least two raters.","No hay un panel de estudio elegible. Complete los metadatos requeridos de estudio/escenario/versión/evaluador/institución para al menos dos evaluadores."),
+  raterALbl:p("Rater A","Evaluador A"),raterBLbl:p("Rater B","Evaluador B"),
+  ratersCompared:p("Raters compared","Evaluadores comparados"),
+  commonScenarios:p("Common scenarios","Escenarios comunes"),
+  categoriesLbl:p("Categories","Categorías"),
+  observedAgreementLbl:p("Observed agreement","Acuerdo observado"),
+  expectedAgreementLbl:p("Expected agreement","Acuerdo esperado"),
+  cohenKappaLbl:p("Cohen's κ","κ de Cohen"),
+  landisKochBand:p("Landis & Koch band","Banda de Landis y Koch"),
+  completePanelFleiss:p("Complete-panel Fleiss' κ","κ de Fleiss de panel completo"),
+  fleissCannotCalc:p("Definitive Fleiss' κ cannot be calculated.","No se puede calcular una κ de Fleiss definitiva."),
+  fleissSameRaterSet:p("The same exact rater set is required for every scenario; missing ratings are never padded.","Se requiere exactamente el mismo conjunto de evaluadores para cada escenario; las valoraciones que faltan nunca se rellenan."),
+  missingLbl:p("missing:","faltan:"),
+  scenariosLbl:p("Scenarios","Escenarios"),
+  exactPanelLbl:p("Exact panel","Panel exacto"),
+  interpretationLbl:p("Interpretation","Interpretación"),
 };
 const t=(k)=>L(T[k])||k;
 const IK={
@@ -112,33 +136,35 @@ const PSRD=()=>[t("psrLow"),t("psrMod"),t("psrHigh")];
 function langToggle(){lang=lang==="en"?"es":"en";localStorage.setItem("psr:lang",lang);const b=document.getElementById("langBtn");if(b)b.textContent=lang==="en"?"ES":"EN";render();}
 const MF_IDS=["volume","concentration","frequency","aerosol","stability","experience","supervision","infrastructure","incidents"];
 const MF_LABELS=[p("Volume","Volumen"),p("Concentration","Concentración"),p("Frequency","Frecuencia"),p("Aerosol","Aerosol"),p("Env. stability","Estabilidad amb."),p("Operator exp.","Experiencia op."),p("Supervision","Supervisión"),p("Infrastructure","Infraestructura"),p("Incidents","Incidentes")];
-function cPSR(a,v,c){const s={l:0,m:0,h:0};[a,v,c].forEach(x=>{if(x==="low")s.l++;else if(x==="moderate")s.m++;else if(x==="high")s.h++});if(s.h>=2||(s.h>=1&&s.m>=1))return"High";if(s.m>=2||(s.h===1&&s.l>=2))return"Moderate";return"Low"}
+const cPSR=PSRCore.classifyPSR;
 function compute(d){
-  const erg=d.isGMO&&d.replComp==="no"&&d.riskGroup==="RG3"?"RG3*":d.riskGroup;
+  const agent={...d,rg3StarApplicable:!!d.rg3StarBasis};
   const pp=(d.procedures||[]).map(p=>p.aerosol&&p.volume&&p.concentration?cPSR(p.aerosol,p.volume,p.concentration):null);
   const O={Low:0,Moderate:1,High:2};const mx=pp.reduce((m,p)=>p&&O[p]>O[m]?p:m,"Low");
-  const mf=d.modFactors||{};const u=Object.values(mf).filter(v=>v==="increase").length;const f=Object.values(mf).filter(v=>v==="decrease").length;
-  let ap=mx;if(u>=2&&mx==="Low")ap="Moderate";if(u>=2&&mx==="Moderate")ap="High";if(f>=2&&mx==="High"&&u===0)ap="Moderate";
-  const bsl=erg?(BSL_M[erg]?.[ap]||"—"):"—";
-  return{erg,pp,mx,ap,u,f,bsl};
+  const modulation=PSRCore.evaluateModulatingFactors(d.modFactors);const u=modulation.unfavorableFactorCount,f=modulation.favorableFactorCount;
+  const psrLevel=mx;
+  const decision=PSRCore.evaluateContainmentDecision({agent,psrLevel,finalProposedBsl:d.finalProposedBsl,bslOverrideReason:d.bslOverrideReason,escalationConsideration:modulation.escalationConsideration,escalationDecision:d.escalationDecision,escalationRationale:d.escalationRationale,bsl2Conditions:{riskAssessmentDocumented:d.bsl2RiskAssessmentDocumented,institutionalStatus:d.bsl2InstitutionalStatus,enhancedControlsDocumented:d.bsl2EnhancedControlsDocumented,operatorCompetencyDocumented:d.bsl2OperatorCompetencyDocumented}}),erg=decision.table8Notation,bsl=decision.matrixBsl||"—";
+  const step5=PSRCore.evaluateStep5({riskGroup:d.riskGroup,psrLevel,modulatingFactors:d.modFactors,severityModification:d.severityModification,effectiveSeverity:d.effectiveSeverity,severityBasis:d.severityBasis,severityBasisOther:d.severityBasisOther,severityJustification:d.severityJustification,severityEvidence:d.severityEvidence,selectedLikelihood:d.selectedLikelihood,likelihoodJustification:d.likelihoodJustification});
+  const pausePoints=PSRCore.evaluatePausePoints({riskGroup:d.riskGroup,aerosolUncharacterized:(d.procedures||[]).some(p=>p.aerosol==="unknown"),matrixBsl:decision.matrixBsl,overallRiskLevel:step5.overallRiskLevel});
+  return{riskGroup:d.riskGroup,table8Notation:erg,erg,pp,mx,psrLevel,u,f,escalationConsideration:modulation.escalationConsideration,bsl,matrixBsl:decision.matrixBsl,...decision,...step5,pausePoints};
 }
 
 // ── Built-in example assessments ──
 const BUILTIN_EXAMPLES=[
-{id:"example_s3_lentiviral",agentName:"Third-generation SIN lentiviral vector (pLenti-CRISPR, HIV-1 backbone)",riskGroup:"RG3",isGMO:true,parentalOrg:"HIV-1",
-geneticMod:"3rd-gen SIN lentiviral. 4-plasmid split-genome. Deletions: gag,pol,env,tat,rev,vif,vpr,vpu,nef. Replication-incompetent.",replComp:"no",
+{id:"example_s3_lentiviral",agentName:"Third-generation SIN lentiviral vector (pLenti-CRISPR, HIV-1 backbone)",riskGroup:"RG2",isGMO:true,parentalOrg:"HIV-1",
+geneticMod:"3rd-gen SIN lentiviral. 4-plasmid split-genome. Deletions: gag,pol,env,tat,rev,vif,vpr,vpu,nef. Replication-incompetent.",replComp:"no",regulatoryNotation:null,regulatoryClassificationSource:"BMBL Appendix B",regulatoryNotationDocumented:false,rg3StarBasis:null,rg3StarDocumented:false,rg3StarEvidence:"",
 procedures:[
-{name:"HEK293T transfection (T-175 flasks in BSC-II)",aerosol:"low",volume:"high",concentration:"low"},
+{name:"HEK293T transfection (T-175 flasks in BSC-II, ~95 mL)",aerosol:"low",volume:"moderate",concentration:"low"},
 {name:"Viral supernatant harvest (~120 mL)",aerosol:"low",volume:"high",concentration:"low"},
-{name:"Filtration 0.45 µm (syringe filter in BSC)",aerosol:"low",volume:"high",concentration:"low"},
+{name:"Filtration 0.45 µm (syringe filter in BSC, ~95 mL)",aerosol:"low",volume:"moderate",concentration:"low"},
 {name:"Ultracentrifugation (SW32Ti, 25,000 rpm, 90 min, non-sealed)",aerosol:"high",volume:"moderate",concentration:"high"},
 {name:"Viral pellet resuspension (500 µL, 10⁸ TU/mL)",aerosol:"moderate",volume:"low",concentration:"high"},
 {name:"Aliquoting (50 µL, 10⁸ TU/mL)",aerosol:"low",volume:"low",concentration:"high"}
 ],
-modFactors:{volume:"increase",concentration:"increase",frequency:"increase",aerosol:"increase",stability:"decrease",experience:"decrease",supervision:"decrease",infrastructure:"increase",incidents:"decrease"},
-justification:"RG3* (replication-defective HIV-1 GMO). High-speed ultracentrifugation without sealed cups + 10⁸ TU/mL titer + 4 unfavorable factors → BSL-2+ with respiratory protection.",
+modFactors:{volume:"increase",concentration:"increase",frequency:"increase",aerosol:"neutral",stability:"decrease",experience:"decrease",supervision:"decrease",infrastructure:"increase",incidents:"neutral"},
+justification:"Classification: RG2 (documented attenuation per BMBL Appendix B). A High procedure parameter makes Step 3 PSR High; Table 8 assigns BSL-2+ for RG2 + High PSR. Four unfavorable procedural modulating factors (volume, concentration, frequency, infrastructure) warrant additional professional consideration for escalation but do not change Step 3 PSR.",
 reviewer:"Dr. John Doe",institution:"University Research Institute",reviewDate:"2025-01-15",status:"final",createdAt:"2025-01-15T09:00:00Z",updatedAt:"2025-01-15T14:30:00Z",version:"1.0.0"},
-{id:"example_s4_mtb_inactivated",agentName:"Mycobacterium tuberculosis complex (heat-inactivated specimens & purified DNA)",riskGroup:"RG3",isGMO:false,parentalOrg:"",geneticMod:"",replComp:"",
+{id:"example_s4_mtb_inactivated",agentName:"Mycobacterium tuberculosis complex (heat-inactivated specimens & purified DNA)",riskGroup:"RG3",isGMO:false,parentalOrg:"",geneticMod:"",replComp:"",regulatoryNotation:null,regulatoryClassificationSource:"",regulatoryNotationDocumented:false,rg3StarBasis:"validated_inactivation",rg3StarDocumented:true,rg3StarEvidence:"Validated heat inactivation (56°C, 30 min) with culture-negative confirmation",
 procedures:[
 {name:"Receipt of heat-inactivated specimens (2–5 mL, sealed tubes)",aerosol:"low",volume:"low",concentration:"low"},
 {name:"Automated DNA extraction (QIAcube in BSC, 200 µL, closed)",aerosol:"low",volume:"low",concentration:"low"},
@@ -151,8 +177,7 @@ justification:"RG3 parental organism but ALL specimens heat-inactivated (56°C/3
 reviewer:"Dr. Robert Chen",institution:"Clinical Diagnostics Laboratory",reviewDate:"2025-02-01",status:"final",createdAt:"2025-02-01T08:00:00Z",updatedAt:"2025-02-01T12:00:00Z",version:"1.0.0"},
 {id:"example_ecoli_sonication",agentName:"E. coli BL21(DE3) recombinant protein expression",riskGroup:"RG1",isGMO:true,parentalOrg:"E. coli K-12",geneticMod:"BL21(DE3) with pET expression vector, human recombinant protein",replComp:"yes",
 procedures:[
-{name:"Bacterial culture (500 mL LB, shaker incubator)",aerosol:"low",volume:"high",concentration:"low"},
-{name:"IPTG induction",aerosol:"low",volume:"high",concentration:"low"},
+{name:"Bacterial culture and IPTG induction (500 mL LB, shaker incubator)",aerosol:"low",volume:"high",concentration:"low"},
 {name:"Centrifugation (sealed rotor, 4000 rpm)",aerosol:"low",volume:"high",concentration:"moderate"},
 {name:"Pellet resuspension in lysis buffer (50 mL)",aerosol:"low",volume:"moderate",concentration:"high"},
 {name:"Sonication (6 × 30 sec cycles, ice bath, open vessel)",aerosol:"high",volume:"moderate",concentration:"high"},
@@ -162,16 +187,19 @@ procedures:[
 modFactors:{volume:"neutral",concentration:"increase",frequency:"increase",aerosol:"increase",stability:"decrease",experience:"decrease",supervision:"neutral",infrastructure:"neutral",incidents:"decrease"},
 justification:"RG1 agent but sonication generates extreme aerosols at 10⁹–10¹⁰ CFU/mL. BSL-2 practices for sonication step despite RG1.",
 reviewer:"Dr. Ana López",institution:"University of Valladolid",reviewDate:"2025-03-10",status:"final",createdAt:"2025-03-10T10:00:00Z",updatedAt:"2025-03-10T15:00:00Z",version:"1.0.0"},
-{id:"example_hiv_pseudovirus",agentName:"HIV-1 pseudovirus (VSV-G, single-round, replication-defective)",riskGroup:"RG3",isGMO:true,parentalOrg:"HIV-1",geneticMod:"env-deleted, VSV-G pseudotyped, single-round infection, replication-defective",replComp:"no",
+{id:"example_hiv1_hightitre",agentName:"HIV-1 wild-type — high-titre concentration (Supplementary Appendix S2, Example E, Sub-protocol B)",riskGroup:"RG3",isGMO:false,parentalOrg:"",geneticMod:"",replComp:"yes",regulatoryNotation:null,regulatoryClassificationSource:"WHO Laboratory Biosafety Manual 4th ed. (2020); BMBL 6th ed. (2020)",regulatoryNotationDocumented:false,rg3StarBasis:null,rg3StarDocumented:false,rg3StarEvidence:"",
 procedures:[
-{name:"TZM-bl cell culture and maintenance",aerosol:"low",volume:"low",concentration:"low"},
-{name:"Infection with pseudovirus (MOI 0.1–1, 24-well plates in BSC-II)",aerosol:"moderate",volume:"low",concentration:"moderate"},
-{name:"Incubation 48–72h (sealed plates)",aerosol:"low",volume:"low",concentration:"low"},
-{name:"Cell lysis and luciferase assay",aerosol:"low",volume:"low",concentration:"low"}
+{name:"Large-volume supernatant collection (50–200 mL)",aerosol:"low",volume:"high",concentration:"low"},
+{name:"Ultracentrifugation for viral pellet concentration (rotor unsealing generates aerosol)",aerosol:"high",volume:"moderate",concentration:"moderate"},
+{name:"Resuspension and aliquoting (10⁷–10⁸ TCID50/mL)",aerosol:"moderate",volume:"low",concentration:"moderate"},
+{name:"Titration assays",aerosol:"low",volume:"low",concentration:"moderate"}
 ],
-modFactors:{volume:"decrease",concentration:"neutral",frequency:"increase",aerosol:"decrease",stability:"decrease",experience:"decrease",supervision:"neutral",infrastructure:"decrease",incidents:"decrease"},
-justification:"Single-round replication defect, cannot spread between cells. Small volumes (5–10 mL), BSC-contained. RG3* + Moderate PSR → BSL-2.",
-reviewer:"Dr. Maria García",institution:"University of Valladolid",reviewDate:"2025-03-15",status:"final",createdAt:"2025-03-15T09:00:00Z",updatedAt:"2025-03-15T13:00:00Z",version:"1.0.0"},
+modFactors:{volume:"increase",concentration:"increase",frequency:"neutral",aerosol:"increase",stability:"neutral",experience:"neutral",supervision:"neutral",infrastructure:"neutral",incidents:"neutral"},
+severityModification:true,effectiveSeverity:"Moderate",severityBasis:"confirmed_non_airborne_transmission",severityJustification:"HIV-1 baseline RG3 severity is reduced to Moderate because transmission is strictly parenteral/mucosal, not airborne, and effective post-exposure prophylaxis and antiretroviral therapy are available, reducing the consequence of exposure relative to an airborne-transmissible RG3 agent.",severityEvidence:"WHO Laboratory Biosafety Manual, 4th ed. (2020); BMBL, 6th ed. (2020)",
+selectedLikelihood:"Very Likely",likelihoodJustification:"High PSR combined with 3 unfavorable procedural modulating factors caps the applicable likelihood range to the sole valid option, Very Likely, per the Table 5 escalated range.",
+finalProposedBsl:"BSL-3",
+justification:"Same wild-type, replication-competent HIV-1 (RG3) as the routine-infection sub-protocol (Example E, Sub-protocol A), but large-volume, high-titre ultracentrifugation with rotor unsealing drives Step 3 PSR to High. Table 8 assigns BSL-3 for RG3 + High PSR regardless of the agent's non-airborne transmission route. This is the article's own definitive illustration that PSR rejects automatic RG-to-BSL correlation: the identical agent yields BSL-2+ under routine infection conditions and BSL-3 here, driven exclusively by procedural exposure differences.",
+reviewer:"Dr. Sofia Martins",institution:"Karolinska Institutet, Virology Unit",reviewDate:"2025-06-12",status:"final",createdAt:"2025-06-12T09:00:00Z",updatedAt:"2025-06-12T11:30:00Z",version:"1.0.0"},
 {id:"example_aav_production",agentName:"Recombinant AAV serotype 2 (dystrophin gene therapy vector)",riskGroup:"RG2",isGMO:true,parentalOrg:"AAV2 (wild-type)",geneticMod:"Recombinant AAV2, rep/cap deleted, dystrophin transgene, produced via triple transfection",replComp:"no",
 procedures:[
 {name:"Triple transfection of HEK293T cells",aerosol:"moderate",volume:"high",concentration:"low"},
@@ -181,7 +209,7 @@ procedures:[
 {name:"Concentration/diafiltration (Amicon, 500 mL → 2 mL)",aerosol:"moderate",volume:"high",concentration:"high"}
 ],
 modFactors:{volume:"increase",concentration:"increase",frequency:"neutral",aerosol:"increase",stability:"increase",experience:"decrease",supervision:"decrease",infrastructure:"neutral",incidents:"decrease"},
-justification:"Nominally RG2 but AAV extreme environmental stability + 10¹² particles/mL + 500 mL volume. 4 unfavorable factors → escalation. BSL-2+.",
+justification:"RG2 with High PSR because volume and concentration are High. Table 8 assigns BSL-2+. Four unfavorable factors trigger professional consideration of containment escalation but do not change PSR.",
 reviewer:"Dr. John Doe",institution:"University Research Institute",reviewDate:"2025-04-20",status:"final",createdAt:"2025-04-20T08:00:00Z",updatedAt:"2025-04-20T16:00:00Z",version:"1.0.0"},
 {id:"example_crispr_rnp",agentName:"CRISPR-Cas9 RNP electroporation (non-viral delivery)",riskGroup:"RG1",isGMO:false,parentalOrg:"",geneticMod:"",replComp:"",
 procedures:[
@@ -193,11 +221,13 @@ modFactors:{volume:"decrease",concentration:"decrease",frequency:"neutral",aeros
 justification:"Non-replicative protein–RNA complex. Rapid degradation. No infectious capability. RG1 + Low PSR → BSL-1.",
 reviewer:"Dr. Ana López",institution:"University of Valladolid",reviewDate:"2025-05-05",status:"final",createdAt:"2025-05-05T09:00:00Z",updatedAt:"2025-05-05T11:00:00Z",version:"1.0.0"}
 ];
+BUILTIN_EXAMPLES.forEach((example,index)=>{example.schemaVersion=PSRData.SCHEMA_VERSION;example.algorithmVersion=PSRData.ALGORITHM_VERSION;example.dataOrigin="demonstration";example.reviewer=`Example assessor ${String(index+1).padStart(2,"0")}`;example.institution=`Example institution ${String.fromCharCode(65+index)}`;example.formalIRREligible=false});
+BUILTIN_EXAMPLES.push(...PSRExamples.adaptV7(BUILTIN_EXAMPLES));
 
 // ── Load data ──
 function loadAll(){
   const idx=JSON.parse(localStorage.getItem("psr:index")||"[]");
-  const stored=idx.map(id=>{try{return JSON.parse(localStorage.getItem(`psr:${id}`))}catch{return null}}).filter(Boolean);
+  const stored=idx.map(id=>{try{return PSRData.toFlat(JSON.parse(localStorage.getItem(`psr:${id}`)))}catch{return null}}).filter(Boolean);
   if(stored.length===0) return BUILTIN_EXAMPLES;
   return stored;
 }
@@ -425,9 +455,9 @@ function chartOrSVG(id,cfg){
 
 // ── Colors ──
 const COLORS={
-  bsl:{"BSL-1":"#97c459","BSL-1*":"#c0dd97","BSL-2":"#85b7eb","BSL-2**":"#b5d4f4","BSL-2+":"#ef9f27","BSL-2+/BSL-3":"#f0997b","BSL-3":"#e24b4a","BSL-4":"#7f77dd"},
+  bsl:{"BSL-1":"#97c459","BSL-2":"#85b7eb","BSL-2+":"#ef9f27","BSL-2+/BSL-3":"#f0997b","BSL-3":"#e24b4a","BSL-4":"#7f77dd"},
   psr:{Low:"#97c459",Moderate:"#ef9f27",High:"#e24b4a"},
-  rg:{RG1:"#97c459",RG2:"#85b7eb",RG3:"#e24b4a","RG3*":"#f0997b",RG4:"#7f77dd"},
+  rg:{RG1:"#97c459",RG2:"#85b7eb",RG3:"#e24b4a",RG4:"#7f77dd"},
   mf:{increase:"#e24b4a",neutral:"#b4b2a9",decrease:"#97c459"},
 };
 
@@ -446,13 +476,13 @@ function render(){
 <div><h1>${t("pageTitle")}</h1><p style="font-size:13px;color:var(--text2)">${assessments.length} ${t("assessLoaded")}${usingBuiltin?t("builtinTag"):""}</p></div>
 <div style="display:flex;gap:8px;flex-wrap:wrap"><a href="platform.html" class="btn bo">${t("platformBtn")}</a>
 <button class="btn bo" onclick="document.getElementById('csvInput').click()">${t("importBtn")}</button>
+<button class="btn bp" onclick="persistExamples()">${t("saveExamples")}</button>
 <button class="btn bs" onclick="exportFullCSV()">${t("exportBtn")}</button>
 <input type="file" id="csvInput" accept=".csv,.json" style="display:none" onchange="handleImport(this)">
 </div></div>`;
   if(usingBuiltin){
     h+=`<div class="note" style="background:var(--accent-bg);color:var(--purple-t);margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
 <span>${t("builtinNote")}</span>
-<button class="btn bp" style="font-size:12px;padding:6px 14px" onclick="persistExamples()">${t("saveExamples")}</button>
 </div>`;
   }
   h+=`<div class="tab-row">`;
@@ -472,6 +502,7 @@ function render(){
     else if(tab==="temporal") h+=rTemporal();
   }
   document.getElementById("app").innerHTML=h;
+  PSRA11y.enhance(document.getElementById("app"),lang);
   if(!document.getElementById("langBtn")){const b=document.createElement("button");b.id="langBtn";b.textContent=lang==="en"?"ES":"EN";b.onclick=langToggle;b.style.cssText="position:fixed;top:16px;left:16px;z-index:200;padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;font-size:12px";document.body.appendChild(b);}
   requestAnimationFrame(()=>{
     if(tab==="overview") renderOverviewCharts();
@@ -486,7 +517,7 @@ function render(){
 // ── Overview tab ──
 function rOverview(){
   const final=computed_all.filter(a=>a.status==="final");
-  const esc_rate=computed_all.filter(a=>a.ap!==a.mx).length;
+  const esc_rate=computed_all.filter(a=>a.escalationConsideration).length;
   const gmo_count=computed_all.filter(a=>a.isGMO).length;
   const institutions=[...new Set(computed_all.map(a=>a.institution).filter(Boolean))];
   const agents=[...new Set(computed_all.map(a=>(a.agentName||"").toLowerCase().trim()).filter(Boolean))];
@@ -523,8 +554,8 @@ function renderOverviewCharts(){
 
 // ── Distributions tab ──
 function rDistributions(){
-  const psrDist=countBy(computed_all,a=>a.ap);
-  const before=countBy(computed_all,a=>a.mx);const after=countBy(computed_all,a=>a.ap);
+  const psrDist=countBy(computed_all,a=>a.psrLevel);
+  const before=countBy(computed_all,a=>a.mx);const after=countBy(computed_all,a=>a.psrLevel);
   const allProcs=[];computed_all.forEach(a=>{(a.procedures||[]).forEach((p,j)=>{if(a.pp&&a.pp[j])allProcs.push({psr:a.pp[j]})})});
   const procPSR=countBy(allProcs,p=>p.psr);
   let h=`<div class="grid2">
@@ -543,7 +574,7 @@ function rModFactors(){
   let h=`<div class="card"><h3>${t("mfScoring")}</h3>
 ${chartOrSVG("ch-mf",{type:"bar",data:{labels:MF_LABELS.map(L),datasets:[{label:t("favorable"),data:fav,backgroundColor:"rgba(151,196,89,0.7)"},{label:t("neutral"),data:neu,backgroundColor:"rgba(180,178,169,0.5)"},{label:t("unfavorable"),data:unfav,backgroundColor:"rgba(226,75,74,0.7)"}]},options:{indexAxis:"y",scales:{x:{beginAtZero:true,stacked:true}}}})}</div>`;
   h+=`<div class="card"><h3>${t("escDrivers")}</h3>`;
-  const escalated=computed_all.filter(a=>a.ap!==a.mx);
+  const escalated=computed_all.filter(a=>a.escalationConsideration);
   if(escalated.length===0)h+=`<p style="color:var(--text3);padding:8px">${t("noEsc")}</p>`;
   else{
     const drivers={};MF_IDS.forEach((id,i)=>{drivers[L(MF_LABELS[i])]=escalated.filter(a=>(a.modFactors||{})[id]==="increase").length});
@@ -554,7 +585,7 @@ ${chartOrSVG("ch-mf",{type:"bar",data:{labels:MF_LABELS.map(L),datasets:[{label:
   }
   h+=`</div>`;
   const elevated2=computed_all.filter(a=>["BSL-2+","BSL-2+/BSL-3","BSL-3","BSL-4"].includes(a.bsl));
-  const standard2=computed_all.filter(a=>["BSL-1","BSL-1*","BSL-2","BSL-2**"].includes(a.bsl));
+  const standard2=computed_all.filter(a=>["BSL-1","BSL-2"].includes(a.bsl));
   const elevRate2=[],stdRate2=[];
   MF_IDS.forEach(id=>{
     elevRate2.push(elevated2.length>0?Math.round(elevated2.filter(a=>(a.modFactors||{})[id]==="increase").length/elevated2.length*100):0);
@@ -665,15 +696,35 @@ ${fk&&fk.kappa!==null?`<div class="metric ${fk.kappa>=.61?"good":fk.kappa<.41?"a
 
   return h;
 }
+let irrRaterA="",irrRaterB="";
+function rIRR(){
+  const audit=PSRIRR.audit(computed_all),raters=audit.raters;
+  if(!irrRaterA&&raters.length)irrRaterA=raters[0];if(!irrRaterB&&raters.length>1)irrRaterB=raters[1];
+  let h=`<div class="card"><h3>${t("formalIRRTitle")}</h3><p class="sub">${t("formalIRRSub")}</p><p class="sub">${t("formalIRRCounts").replace("{included}",audit.included.length).replace("{excluded}",audit.excluded.length).replace("{scenarios}",audit.scenarios.size)}</p>`;
+  if(audit.duplicates.length){h+=`<div class="note" style="background:var(--red-bg);color:var(--red-t)"><strong>${t("formalIRRBlocked")}</strong><ul>${audit.duplicates.map(d=>`<li>${esc(d.key)}: ${d.assessmentIds.map(esc).join(", ")}</li>`).join("")}</ul></div></div>`;return h}
+  if(raters.length<2){return h+`<div class="empty"><p>${t("formalIRRNoPanel")}</p></div></div>`}
+  h+=`<div class="grid2"><label>${t("raterALbl")}<select onchange="irrRaterA=this.value;R()">${raters.map(r=>`<option ${r===irrRaterA?'selected':''}>${esc(r)}</option>`).join('')}</select></label><label>${t("raterBLbl")}<select onchange="irrRaterB=this.value;R()">${raters.map(r=>`<option ${r===irrRaterB?'selected':''}>${esc(r)}</option>`).join('')}</select></label></div>`;
+  let ck;try{ck=PSRIRR.cohen(computed_all,irrRaterA,irrRaterB)}catch(err){return h+`<div class="note">${esc(err.message)}</div></div>`}
+  h+=`<table><tbody><tr><th>${t("ratersCompared")}</th><td>${esc(irrRaterA)} / ${esc(irrRaterB)}</td></tr><tr><th>${t("commonScenarios")}</th><td>${ck.n}</td></tr><tr><th>${t("categoriesLbl")}</th><td>${ck.categories.map(esc).join(', ')||'—'}</td></tr><tr><th>${t("observedAgreementLbl")}</th><td>${ck.po==null?'—':ck.po.toFixed(3)}</td></tr><tr><th>${t("expectedAgreementLbl")}</th><td>${ck.pe==null?'—':ck.pe.toFixed(3)}</td></tr><tr><th>${t("cohenKappaLbl")}</th><td>${ck.kappa==null?'—':ck.kappa.toFixed(3)}</td></tr><tr><th>${t("landisKochBand")}</th><td>${ti(ck.interpretation)}</td></tr></tbody></table></div>`;
+  const fk=PSRIRR.fleiss(computed_all);h+=`<div class="card"><h3>${t("completePanelFleiss")}</h3>`;
+  if(fk.blocked){h+=`<div class="note" style="background:var(--amber-bg)"><strong>${t("fleissCannotCalc")}</strong><p>${t("fleissSameRaterSet")}</p>${(fk.missingByScenario||[]).map(x=>`<p>${esc(x.scenario)} — ${t("missingLbl")} ${x.missingRaters.map(esc).join(', ')}</p>`).join('')}</div>`}else h+=`<table><tbody><tr><th>${t("scenariosLbl")}</th><td>${fk.N}</td></tr><tr><th>${t("exactPanelLbl")}</th><td>${fk.raters.map(esc).join(', ')}</td></tr><tr><th>${t("observedAgreementLbl")}</th><td>${fk.Pbar.toFixed(3)}</td></tr><tr><th>${t("expectedAgreementLbl")}</th><td>${fk.Pe.toFixed(3)}</td></tr><tr><th>Fleiss' κ</th><td>${fk.kappa==null?'—':fk.kappa.toFixed(3)}</td></tr><tr><th>${t("interpretationLbl")}</th><td>${ti(fk.interpretation)}</td></tr></tbody></table><p class="sub">${esc(fk.provenance)}</p>`;
+  return h+`</div>`;
+}
 function renderIRRCharts(){}
 
 // ── Risk patterns tab ──
 function rRiskPatterns(){
-  const rgs=["RG1","RG2","RG3","RG3*","RG4"];
+  const rgs=["RG1","RG2","RG3","RG4"];
   const bsls=[...new Set(computed_all.map(a=>a.bsl))].sort();
-  const datasets=bsls.map(bsl=>({label:bsl,data:rgs.map(rg=>computed_all.filter(a=>(a.erg||a.riskGroup)===rg&&a.bsl===bsl).length),backgroundColor:COLORS.bsl[bsl]||"#999"}));
+  // Risk Group plots always use the underlying regulatory/scientific RG. RG3* is a Table 8 condition, not a separate Risk Group.
+  const datasets=bsls.map(bsl=>({label:bsl,data:rgs.map(rg=>computed_all.filter(a=>a.riskGroup===rg&&a.bsl===bsl).length),backgroundColor:COLORS.bsl[bsl]||"#999"}));
   let h=`<div class="card"><h3>${t("heatTitle")}</h3>
-${chartOrSVG("ch-heatmap",{type:"bar",data:{labels:rgs,datasets},options:{scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}})}</div>`;
+${chartOrSVG("ch-heatmap",{type:"bar",data:{labels:rgs,datasets},options:{scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}})}<p class="sub">RG3* is not plotted as a Risk Group; it is a Table 8 operational condition applied to records whose underlying Risk Group remains RG3. / GR3* no se representa como Grupo de Riesgo; es una condición operacional de la Tabla 8 aplicada a registros cuyo Grupo de Riesgo subyacente sigue siendo GR3.</p></div>`;
+  const rg3Records=computed_all.filter(a=>a.riskGroup==="RG3");
+  if(rg3Records.length){
+    const starN=rg3Records.filter(a=>a.erg==="RG3*").length;
+    h+=`<div class="card"><h3>RG3* Table 8 condition / Condición GR3* de la Tabla 8</h3><div class="metric-grid"><div class="metric"><div class="mv">${starN}</div><div class="ml">Applicable / Aplicable</div></div><div class="metric"><div class="mv">${rg3Records.length-starN}</div><div class="ml">Not established / No establecida</div></div></div><p class="sub">These records all remain RG3; this panel reports only whether the Table 8 attenuation condition is established. / Todos estos registros permanecen en GR3; este panel informa únicamente de si se ha establecido la condición de atenuación de la Tabla 8.</p></div>`;
+  }
   h+=`<div class="card"><h3>${t("procByPSR")}</h3>`;
   const procByPSR={Low:[],Moderate:[],High:[]};
   computed_all.forEach(a=>{(a.procedures||[]).forEach((p,i)=>{if(p.name&&a.pp[i])procByPSR[a.pp[i]].push(p.name.toLowerCase().trim())})});
@@ -690,7 +741,7 @@ ${chartOrSVG("ch-heatmap",{type:"bar",data:{labels:rgs,datasets},options:{scales
   const gmo2=computed_all.filter(a=>a.isGMO);const ngmo2=computed_all.filter(a=>!a.isGMO);
   const psrLevels2=["Low","Moderate","High"];
   h+=`<div class="card"><h3>${t("gmoProfile")}</h3>
-${chartOrSVG("ch-gmo",{type:"bar",data:{labels:PSRD(),datasets:[{label:t("dsGMO"),data:psrLevels2.map(l=>gmo2.filter(a=>a.ap===l).length),backgroundColor:"rgba(127,119,221,0.7)"},{label:t("dsNonGMO"),data:psrLevels2.map(l=>ngmo2.filter(a=>a.ap===l).length),backgroundColor:"rgba(93,202,165,0.7)"}]},options:{scales:{y:{beginAtZero:true}}}})}</div>`;
+${chartOrSVG("ch-gmo",{type:"bar",data:{labels:PSRD(),datasets:[{label:t("dsGMO"),data:psrLevels2.map(l=>gmo2.filter(a=>a.psrLevel===l).length),backgroundColor:"rgba(127,119,221,0.7)"},{label:t("dsNonGMO"),data:psrLevels2.map(l=>ngmo2.filter(a=>a.psrLevel===l).length),backgroundColor:"rgba(93,202,165,0.7)"}]},options:{scales:{y:{beginAtZero:true}}}})}</div>`;
   return h;
 }
 function renderRPCharts(){}
@@ -714,7 +765,7 @@ function rTemporal(){
 function renderTemporalCharts(){}
 
 // ── Helpers ──
-function bslPill(l){const m={"BSL-1":"green","BSL-1*":"green","BSL-2":"blue","BSL-2**":"blue","BSL-2+":"amber","BSL-2+/BSL-3":"amber","BSL-3":"red","BSL-4":"purple"};return`<span class="pill p-${m[l]||"gray"}">${l}</span>`}
+function bslPill(l){const m={"BSL-1":"green","BSL-2":"blue","BSL-2+":"amber","BSL-2+/BSL-3":"amber","BSL-3":"red","BSL-4":"purple"};return`<span class="pill p-${m[l]||"gray"}">${l}</span>`}
 
 window.persistExamples=function(){
   BUILTIN_EXAMPLES.forEach(ex=>{
@@ -732,14 +783,15 @@ window.handleImport=function(input){
   const reader=new FileReader();
   reader.onload=function(e){
     try{
-      let data;
-      if(f.name.endsWith(".json"))data=JSON.parse(e.target.result);
-      else data=importCSV(e.target.result);
+      let data,differences=0;
+      if(f.name.endsWith(".json")){
+        const records=PSRData.importJSON(e.target.result),idx=JSON.parse(localStorage.getItem("psr:index")||"[]");records.forEach(record=>{const flat=PSRData.toFlat(record),current=compute(flat);differences+=PSRData.compareCalculated(record.calculatedResults,{...current,finalProposedBsl:flat.finalProposedBsl}).length;localStorage.setItem(`psr:${record.assessmentId}`,JSON.stringify(record));if(!idx.includes(record.assessmentId))idx.push(record.assessmentId)});localStorage.setItem("psr:index",JSON.stringify(idx));data=[];init();
+      }else data=importCSV(e.target.result);
       if(Array.isArray(data)&&data.length>0){
         data.forEach(d=>{
           if(d.agentName||d.Agent){
             const a={id:`imp_${Date.now()}_${Math.random().toString(36).slice(2,5)}`,agentName:d.agentName||d.Agent||"",riskGroup:d.riskGroup||d.RiskGroup||d.EffectiveRG||"",isGMO:d.isGMO==="true"||d.isGMO===true,parentalOrg:d.parentalOrg||"",geneticMod:d.geneticMod||"",replComp:d.replComp||"",
-            procedures:d.procedures||[{name:d.KeyProcedures||t("importedProc"),aerosol:d.aerosol||"moderate",volume:d.volume||"moderate",concentration:d.concentration||"moderate"}],
+            dataOrigin:"individual",legacyIncomplete:true,formalIRREligible:false,procedures:[],
             modFactors:d.modFactors||Object.fromEntries(MF_IDS.map(id=>[id,"neutral"])),
             justification:d.justification||d.Justification||"",reviewer:d.reviewer||d.Reviewer||d.Assessor||"",institution:d.institution||d.Institution||"",
             reviewDate:d.reviewDate||d.Date||new Date().toISOString().slice(0,10),status:d.status||d.Status||"final",createdAt:d.createdAt||new Date().toISOString(),updatedAt:new Date().toISOString(),version:"1.0.0"};
@@ -749,20 +801,16 @@ window.handleImport=function(input){
         });
         init();
       }
+      if(differences)alert(`${differences} stored historical result(s) differ from the current recalculation. Stored results were preserved.`);
     }catch(err){alert(t("importError")+err.message)}
   };
   reader.readAsText(f);
 };
 
 window.exportFullCSV=function(){
-  let csv="ID,Agent,RiskGroup,EffectiveRG,IsGMO,ParentalOrg,ReplicationComp,MaxPSR,AdjustedPSR,BSL,UnfavorableFactors,FavorableFactors,Escalated,Status,Reviewer,Institution,Date";
-  MF_IDS.forEach(id=>{csv+=`,MF_${id}`});
-  csv+=",NumProcedures,Justification\n";
-  computed_all.forEach(a=>{
-    csv+=`"${a.id}","${a.agentName}","${a.riskGroup}","${a.erg}",${a.isGMO},"${a.parentalOrg||""}","${a.replComp||""}","${a.mx}","${a.ap}","${a.bsl}",${a.u},${a.f},${a.ap!==a.mx},"${a.status}","${a.reviewer||""}","${a.institution||""}","${a.reviewDate||""}"`;
-    MF_IDS.forEach(id=>{csv+=`,"${(a.modFactors||{})[id]||"neutral"}"`});
-    csv+=`,${(a.procedures||[]).length},"${(a.justification||"").replace(/"/g,'""').replace(/\n/g," ")}"\n`;
-  });
+  const columns=["id","agentName","riskGroup","table8Notation","isGMO","parentalOrg","replComp","mx","psrLevel","bsl","u","f","escalationConsideration","status","reviewer","institution","reviewDate","numProcedures","justification",...MF_IDS.map(id=>`MF_${id}`),"individualSusceptibility","individualSusceptibilityOther","occupationalHealthAction"];
+  const rows=computed_all.map(a=>({...a,numProcedures:(a.procedures||[]).length,...Object.fromEntries(MF_IDS.map(id=>[`MF_${id}`,(a.modFactors||{})[id]||"neutral"])),individualSusceptibility:a.individualSusceptibility||"none",individualSusceptibilityOther:a.individualSusceptibilityOther||"",occupationalHealthAction:a.occupationalHealthAction||""}));
+  const csv=PSRData.toCSV(rows,columns);
   const b=new Blob([csv],{type:"text/csv"});const el=document.createElement("a");el.href=URL.createObjectURL(b);el.download=`PSR_Full_Dataset_${new Date().toISOString().slice(0,10)}.csv`;el.click();
 };
 

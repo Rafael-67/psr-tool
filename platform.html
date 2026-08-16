@@ -53,8 +53,11 @@ input[type=text],input[type=date],textarea,select{width:100%;padding:10px 12px;b
 </head>
 <body>
 <div class="wrap" id="app"></div>
+<script src="psr-core.js"></script>
+<script src="psr-data.js"></script>
+<script src="psr-a11y.js"></script>
 <script>
-const V="1.0.0";
+const V="2.0.0";
 let lang=(localStorage.getItem("psr:lang")||"en");
 const p=(en,es)=>({en,es});
 const L=(x)=>(x&&typeof x==="object"&&("en"in x))?(x[lang]||x.en):x;
@@ -82,30 +85,46 @@ const T={
   delConfirm:p("Delete this assessment?","¿Eliminar esta evaluación?"),
   s1t:p("Step 1: Agent identification","Paso 1: Identificación del agente"),
   s1s:p("Determine Risk Group (RG1–4). For GMOs, evaluate parental organism + genetic modification.","Determine el Grupo de Riesgo (GR1–4). Para OMG, evalúe el organismo parental + la modificación genética."),
-  bioAgent:p("Biological agent","Agente biológico"),agentPh:p("e.g., HIV-1 lentiviral vector","p. ej., vector lentiviral VIH-1"),
+  bioAgent:p("Biological agent / material","Agente biológico / material"),agentPh:p("e.g., HIV-1 lentiviral vector","p. ej., vector lentiviral VIH-1"),
+  classificationSourceLabel:p("Classification source","Fuente de clasificación"),classificationSourceSelect:p("— select source —","— seleccione fuente —"),
+  classSrcWHO:p("WHO Laboratory Biosafety Manual","Manual de Bioseguridad de Laboratorio de la OMS"),classSrcBMBL:p("BMBL (CDC/NIH)","BMBL (CDC/NIH)"),classSrcEU:p("EU Directive 2000/54/EC","Directiva UE 2000/54/CE"),classSrcINSST:p("INSST","INSST"),classSrcOther:p("Other (specify)","Otra (especifique)"),classSrcOtherLabel:p("Specify other source","Especifique otra fuente"),
+  agentTraitsTitle:p("Agent characterization (Supplementary Appendix S1, Section 2)","Caracterización del agente (Apéndice S1, Sección 2)"),
+  transmissionRoute:p("Route of transmission","Vía de transmisión"),environmentalStability:p("Environmental stability","Estabilidad ambiental"),infectiousDose:p("Infectious dose","Dosis infecciosa"),treatmentAvailable:p("Treatment available","Tratamiento disponible"),additionalHazards:p("Additional hazards","Peligros adicionales"),
   riskGroup:p("Risk Group","Grupo de Riesgo"),rg1d:p("No/low risk","Riesgo nulo/bajo"),rg2d:p("Moderate individual","Moderado individual"),
   rg3d:p("High individual","Alto individual"),rg4d:p("High individual+community","Alto individual+comunitario"),
   gmoLabel:p("Genetically modified organism (GMO)","Organismo modificado genéticamente (OMG)"),
   parentalOrg:p("Parental organism","Organismo parental"),geneticMod:p("Genetic modification","Modificación genética"),
   replQ:p("Replication competent?","¿Competente para la replicación?"),yes:p("Yes","Sí"),noRepl:p("No — replication-defective","No — defectivo en replicación"),
-  rg3starNote:p("RG3 replication-defective → RG3*. BSL-2+ permissible under documented conditions.","GR3 defectivo en replicación → GR3*. NCB-2+ admisible bajo condiciones documentadas."),
+  rg3starNote:p("RG3* is a documented Table 8 operational designation, not a separate Risk Group. Its qualifying basis is recorded separately; validated inactivation and confirmed absence of airborne transmissibility are not biologically synonymous with attenuation. High PSR always requires BSL-3.","GR3* es una designación operativa documentada de la Tabla 8, no un Grupo de Riesgo separado. Su base se registra por separado; la inactivación validada y la ausencia confirmada de transmisibilidad aérea no son biológicamente sinónimos de atenuación. Un PSR Alto siempre exige NCB-3."),
+  rg3RegCheck:p("RG3** documented in an authoritative EU regulatory classification","GR3** documentado en una clasificación regulatoria autorizada de la UE"),rg3RegSource:p("Authoritative regulatory source","Fuente regulatoria autorizada"),
+  rg3StarBasis:p("RG3* operational designation (Table 8)","Designación operativa GR3* (Tabla 8)"),rg3None:p("Not established","No establecida"),rg3Repl:p("Replication incompetence","Incompetencia para la replicación"),rg3Air:p("Confirmed absence of airborne transmissibility","Ausencia confirmada de transmisibilidad aérea"),rg3Inactive:p("Validated inactivation","Inactivación validada"),rg3Evidence:p("Evidence / reference (required)","Evidencia / referencia (obligatoria)"),
   s2t:p("Step 2: Procedure characterization","Paso 2: Caracterización del procedimiento"),
   s2s:p("List procedures, identify aerosol-generating steps, estimate volumes and concentrations.","Liste los procedimientos, identifique los pasos generadores de aerosoles, estime volúmenes y concentraciones."),
   procedure:p("Procedure","Procedimiento"),remove:p("Remove","Eliminar"),name:p("Name","Nombre"),
-  aerosol:p("Aerosol","Aerosol"),volume:p("Volume","Volumen"),concentration:p("Concentration","Concentración"),
-  minimal:p("Minimal","Mínima"),moderate:p("Moderate","Moderada"),high:p("High","Alta"),addProc:p("+ Add procedure","+ Añadir procedimiento"),
+  aerosol:p("Aerosol","Aerosol"),volume:p("Volume","Volumen"),volumeValue:p("Observed/estimated volume (optional)","Volumen observado/estimado (opcional)"),concentration:p("Concentration","Concentración"),concValue:p("Observed/estimated concentration (optional)","Concentración observada/estimada (opcional)"),quantitativeNote:p("Quantitative values are recorded for traceability. The selected PSR category remains authoritative in this validation release.","Los valores cuantitativos se registran para trazabilidad. La categoría PSR seleccionada sigue siendo la referencia en esta versión de validación."),categoryMismatch:p("Value/category mismatch — review the selected category.","Discordancia valor/categoría — revise la categoría seleccionada."),
+  minimal:p("Minimal","Mínima"),moderate:p("Moderate","Moderada"),high:p("High","Alta"),aeroUnknown:p("Cannot be characterized — expert consultation required","No puede caracterizarse — se requiere consulta experta"),addProc:p("+ Add procedure","+ Añadir procedimiento"),
   s3t:p("Step 3: PSR classification","Paso 3: Clasificación PSR"),s3s:p("Assign Low/Moderate/High PSR to each procedure.","Asigne PSR Bajo/Moderado/Alto a cada procedimiento."),
   incomplete:p("Incomplete","Incompleto"),maxPSR:p("Maximum PSR:","PSR máximo:"),
-  s3note:p("Highest PSR determines baseline. Adjusted by modulating factors next.","El PSR más alto determina la base. Se ajusta con los factores moduladores a continuación."),
-  s4t:p("Step 4: Modulating factors","Paso 4: Factores moduladores"),s4s:p("≥2 unfavorable factors triggers BSL escalation.","≥2 factores desfavorables activan la escalación del NCB."),
+  s3note:p("The highest parameter determines PSR. Step 4 does not change this category.","El parámetro más alto determina el PSR. El Paso 4 no cambia esta categoría."),
+  s4t:p("Step 4: Modulating factors","Paso 4: Factores moduladores"),s4s:p("≥2 unfavorable factors require professional consideration of containment escalation; Step 3 PSR remains unchanged.","≥2 factores desfavorables requieren consideración profesional de escalación de la contención; el PSR del Paso 3 permanece sin cambios."),
   favorable:p("Favorable","Favorable"),neutral:p("Neutral","Neutro"),unfavorable:p("Unfavorable","Desfavorable"),
-  s4esc:p("≥2 unfavorable → escalation:","≥2 desfavorables → escalación:"),
-  s5t:p("Step 5: Likelihood × Severity","Paso 5: Probabilidad × Severidad"),s5s:p("Integrate agent RG with adjusted PSR.","Integre el GR del agente con el PSR ajustado."),
+  s4esc:p("Containment escalation requires professional consideration and written justification; PSR unchanged.","La escalación de contención requiere consideración profesional y justificación escrita; PSR sin cambios."),
+  indivSuscTitle:p("Individual susceptibility","Susceptibilidad individual"),
+  indivSuscNote:p("Individual susceptibility affects the severity of consequences, not the probability of exposure. It is documented separately and never counts toward the ≥2 unfavorable procedural factors escalation threshold. Address through occupational health surveillance.","La susceptibilidad individual afecta a la severidad de las consecuencias, no a la probabilidad de exposición. Se documenta por separado y nunca cuenta para el umbral de escalación de ≥2 factores procedimentales desfavorables. Se debe abordar mediante vigilancia de salud laboral."),
+  indivSuscNone:p("None identified","No se identifica ningún factor"),
+  indivSuscImmuno:p("Immunocompromised personnel","Personal inmunocomprometido"),
+  indivSuscVaccine:p("Vaccination unavailable","Vacunación no disponible"),
+  indivSuscOther:p("Other","Otro"),
+  indivSuscOtherLabel:p("Specify other factor","Especifique otro factor"),
+  occHealthAction:p("Occupational health action","Medida de salud laboral"),
+  s5t:p("Step 5: Likelihood × Severity","Paso 5: Probabilidad × Severidad"),s5s:p("Modulating factors inform likelihood without changing Step 3 PSR.","Los factores moduladores informan la probabilidad sin cambiar el PSR del Paso 3."),baselineSeverity:p("Baseline severity","Severidad basal"),effectiveSeverity:p("Effective severity","Severidad efectiva"),severityModify:p("Apply a documented modification to effective severity","Aplicar una modificación documentada de la severidad efectiva"),severityBasis:p("Severity-modification basis","Base de modificación de la severidad"),severityJust:p("Severity-modification justification","Justificación de la modificación de severidad"),severityEvidence:p("Severity evidence / reference","Evidencia / referencia de severidad"),
+  severityBasisSelect:p("— select basis —","— seleccione base —"),severityBasisAirborne:p("Confirmed non-airborne transmission route","Vía de transmisión no aérea confirmada"),severityBasisTreatment:p("Effective treatment or PEP available","Tratamiento o profilaxis postexposición eficaz disponible"),severityBasisInactivation:p("Validated agent inactivation","Inactivación del agente validada"),severityBasisOtherOpt:p("Other (specify)","Otra (especifique)"),severityBasisOtherLabel:p("Specify other basis","Especifique otra base"),severityNotMoreSevere:p("Effective severity cannot exceed the Risk Group baseline. Increased individual risk (e.g. immunocompromised personnel) is addressed in the Individual susceptibility block of Step 4, not here.","La severidad efectiva no puede superar la severidad base del Grupo de Riesgo. El aumento de riesgo individual (p. ej. personal inmunocomprometido) se aborda en el bloque de Susceptibilidad individual del Paso 4, no aquí."),baseLikelihoodRange:p("Initial PSR range","Rango inicial según PSR"),likelihoodRange:p("Applicable likelihood range","Rango de probabilidad aplicable"),likelihoodShift:p("Adjustment for ≥2 unfavorable factors: +1 category","Ajuste por ≥2 factores desfavorables: +1 categoría"),singleLikelihood:p("The upward adjustment reaches the top of the scale; this is the only valid likelihood.","El ajuste ascendente alcanza el máximo de la escala; esta es la única probabilidad válida."),selectedLikelihood:p("Selected likelihood","Probabilidad seleccionada"),likelihoodJust:p("Professional justification for likelihood selection","Justificación profesional de la probabilidad seleccionada"),selectRequired:p("Select and justify a likelihood within the applicable range.","Seleccione y justifique una probabilidad dentro del rango aplicable."),overallRisk:p("Overall risk level","Nivel de riesgo global"),
   s6t:p("Step 6: BSL assignment","Paso 6: Asignación de NCB"),s6s:p("Final biosafety level determination.","Determinación final del nivel de contención biológica."),
-  assignedBSL:p("Assigned biosafety level","Nivel de contención biológica asignado"),
-  bsl2plusLbl:p("BSL-2+ for RG3*:","NCB-2+ para GR3*:"),
-  bsl2plusBody:p(" requires (1) documented risk assessment, (2) IBC approval, (3) Class II BSC + double gloves + eye protection, (4) personnel competency. Default BSL-3 if uncertain."," requiere (1) evaluación de riesgos documentada, (2) aprobación del CBS, (3) CSB Clase II + doble guante + protección ocular, (4) competencia del personal. NCB-3 por defecto si hay incertidumbre."),
-  justNarr:p("Justification narrative","Narrativa de justificación"),justPh:p("Written rationale for this BSL assignment...","Justificación escrita de esta asignación de NCB..."),
+  assignedBSL:p("Assigned biosafety level","Nivel de contención biológica asignado"),matrixBsl:p("Deterministic Table 8 output","Salida determinista de la Tabla 8"),finalBsl:p("Final proposed BSL (professional decision)","NCB final propuesto (decisión profesional)"),overrideReason:p("Professional justification for selecting within/overriding the matrix branch","Justificación profesional para seleccionar dentro de la rama o apartarse de la matriz"),decisionRequired:p("Select and document the final professional containment proposal.","Seleccione y documente la propuesta profesional final de contención."),pauseTitle:p("PAUSE POINT — Expert/IBC review required","PUNTO DE PAUSA — Se requiere revisión experta/CBS"),pauseRG:p("Risk Group is not established.","El Grupo de Riesgo no está establecido."),pauseAerosol:p("Aerosol potential cannot be characterized.","El potencial de aerosoles no puede caracterizarse."),pauseReview:p("BSL-3/4 matrix output or Very High/Critical overall risk requires full institutional review and regulatory review/notification where applicable.","Una salida matricial NCB-3/4 o riesgo global Muy Alto/Crítico requiere revisión institucional completa y revisión/notificación regulatoria cuando proceda."),bsl2RiskAssessment:p("Documented risk assessment with explicit justification","Evaluación de riesgos documentada con justificación explícita"),bsl2Status:p("Institutional biosafety status","Estado institucional de bioseguridad"),bsl2Controls:p("Enhanced containment controls documented","Controles de contención reforzada documentados"),bsl2Competency:p("Procedure-specific operator competency documented","Competencia del operador específica del procedimiento documentada"),
+  bsl2plusLbl:p("BSL-2+ when the RG3* Table 8 condition applies:","NCB-2+ cuando resulta aplicable la condición GR3* de la Tabla 8:"),
+  bsl2plusBody:p(" requires (1) documented risk assessment, (2) IBC approval, (3) Class II BSC + double gloves + eye protection + respiratory protection, (4) personnel competency. Default BSL-3 if uncertain."," requiere (1) evaluación de riesgos documentada, (2) aprobación del CBS, (3) CSB Clase II + doble guante + protección ocular + protección respiratoria, (4) competencia del personal. NCB-3 por defecto si hay incertidumbre."),
+  justNarr:p("Justification narrative","Narrativa de justificación"),justPh:p("Written rationale for this BSL assignment...","Justificación escrita de esta asignación de NCB..."),justRequired:p("Written professional justification is required when containment escalation consideration is triggered.","Se requiere justificación profesional escrita cuando se activa la consideración de escalación de la contención."),
+  bsl2ConditionsRequired:p('Cannot finalize/export: the final proposed BSL is BSL-2+, and Table 8 requires ALL FOUR conditions to be simultaneously documented (risk assessment, institutional status beyond "conditions pending", enhanced controls, operator competency). Complete them in Step 6, or change the final BSL if they are not actually met.','No se puede finalizar/exportar: el NCB final propuesto es NCB-2+, y la Tabla 8 exige que las CUATRO condiciones estén documentadas simultáneamente (evaluación de riesgo, estado institucional más allá de "condiciones pendientes", controles reforzados, competencia del operador). Complételas en el Paso 6, o cambie el NCB final si realmente no se cumplen.'),
   s7t:p("Step 7: Control selection","Paso 7: Selección de controles"),recFor:p("Recommended controls for","Controles recomendados para"),
   engControls:p("Engineering controls","Controles de ingeniería"),ppe:p("PPE","EPI"),adminControls:p("Administrative controls","Controles administrativos"),
   deconControls:p("Decontamination & waste inactivation","Descontaminación e inactivación de residuos"),
@@ -114,7 +133,7 @@ const T={
   assessor:p("Assessor","Evaluador"),dateL:p("Date","Fecha"),reviewTriggers:p("Review triggers","Desencadenantes de revisión"),
   triggersPh:p("Agent change, procedure modification, incident, annual review...","Cambio de agente, modificación del procedimiento, incidente, revisión anual..."),
   assessSummary:p("Assessment summary","Resumen de la evaluación"),
-  lblAgent:p("Agent:","Agente:"),lblRG:p("RG:","GR:"),lblMaxPSR:p("Max PSR:","PSR máx.:"),lblAdjusted:p("Adjusted:","Ajustado:"),
+  lblAgent:p("Agent:","Agente:"),lblRG:p("RG:","GR:"),lblMaxPSR:p("Max PSR:","PSR máx.:"),lblPSRLevel:p("Step 3 PSR:","PSR del Paso 3:"),
   lblBSL:p("BSL:","NCB:"),lblUnfav:p("Unfavorable:","Desfavorables:"),lblStatus:p("Status:","Estado:"),lblAssessor:p("Assessor:","Evaluador:"),
   exportReport:p("Export report","Exportar informe"),printPDF:p("Print PDF","Imprimir PDF"),
   irrTitle:p("Inter-rater reliability analysis","Análisis de fiabilidad entre evaluadores"),
@@ -129,10 +148,45 @@ const T={
   deconWarn:p("⚠ Environmentally stable / non-enveloped agent detected: use a validated sporicidal/virucidal disinfectant (≥0.5–1% sodium hypochlorite); plain ethanol is INSUFFICIENT.","⚠ Agente ambientalmente estable / no envuelto detectado: utilice un desinfectante esporicida/virucida validado (hipoclorito sódico ≥0,5–1%); el etanol por sí solo es INSUFICIENTE."),
   deconEnv:p("Enveloped agent: 70% ethanol or quaternary ammonium adequate; verify against agent safety data sheet.","Agente envuelto: etanol al 70% o amonio cuaternario adecuados; verifique con la ficha de seguridad del agente."),
   respNote:p("Respiratory protection is specified as a protection level; the certified device follows the applicable regional standard — NIOSH N95/N99/N100 (US/Canada) and EN 149 FFP2/FFP3 (EU). N95 ≈ FFP2; FFP3 (≥99%) is recommended for the highest-risk aerosol-generating procedures.","La protección respiratoria se indica como nivel de protección; el dispositivo certificado sigue el estándar regional aplicable — NIOSH N95/N99/N100 (EE.UU./Canadá) y EN 149 FFP2/FFP3 (UE). N95 ≈ FFP2; FFP3 (≥99%) se recomienda para los procedimientos generadores de aerosoles de mayor riesgo."),
+  metaDetails:p("Assessment metadata","Metadatos de la evaluación"),
+  dataOrigin:p("Data origin","Origen de datos"),
+  dataOriginIndividual:p("Individual assessment","Evaluación individual"),
+  dataOriginStudy:p("Formal study","Estudio formal"),
+  studyIdLabel:p("Study ID","ID del estudio"),
+  scenarioIdLabel:p("Scenario ID","ID del escenario"),
+  scenarioVersionLabel:p("Scenario version","Versión del escenario"),
+  raterIdLabel:p("Rater ID","ID del evaluador"),
+  institutionIdLabel:p("Institution ID","ID de la institución"),
+  nextReviewDate:p("Next review date","Próxima fecha de revisión"),
+  workflowStatus:p("Workflow status","Estado del flujo"),
+  wfDraft:p("Draft","Borrador"),
+  wfFinalized:p("Finalized by assessor","Finalizado por el evaluador"),
+  wfBso:p("BSO reviewed","Revisado por el Responsable de Bioseguridad"),
+  wfInstPending:p("Institutional/IBC review pending","Revisión institucional/CBS pendiente"),
+  wfApproved:p("Institutionally approved — user-recorded","Aprobado institucionalmente — registrado por el usuario"),
+  wfRejected:p("Rejected / revision requested","Rechazado / revisión solicitada"),
+  wfSuperseded:p("Superseded","Sustituido"),
+  workflowNote:p("Statuses are recorded by the user; the software does not grant institutional approval.","Los estados los registra el usuario; el programa no otorga la aprobación institucional."),
+  institApprovalStatus:p("Institutional approval status: User-recorded as approved.","Estado de aprobación institucional: registrado por el usuario como aprobado."),
+  approvalReference:p("Approval reference","Referencia de aprobación"),
+  approvingBody:p("Approving body","Órgano que aprueba"),
+  approvalDate:p("Approval date","Fecha de aprobación"),
+  escalationDecisionLabel:p("Escalation decision","Decisión de escalada"),
+  escalationRationaleLabel:p("Escalation rationale","Justificación de escalada"),
+  escRetained:p("Retained","Mantener"),
+  escEscalated:p("Escalated","Escalar"),
+  escPending:p("Pending review","Pendiente de revisión"),
+  bsl2CondPending:p("Conditions pending","Condiciones pendientes"),
+  bsl2CondEligible:p("Eligible subject to institutional approval","Elegible sujeto a aprobación institucional"),
+  bsl2CondApproved:p("User-recorded as institutionally approved","Registrado por el usuario como aprobado institucionalmente"),
+  table8NoteRg1Mod:p("Table 8 *: standard BSL-1 practices; enhanced documentation is recommended when working at scale.","Tabla 8 *: prácticas NCB-1 estándar; se recomienda documentación reforzada cuando se trabaje a escala."),
+  table8NoteRg1High:p("Table 8 **: BSL-2 practices apply only to the high-aerosol-generating step; all other steps remain BSL-1.","Tabla 8 **: las prácticas NCB-2 se aplican solo al paso generador de aerosoles de alto riesgo; los demás pasos permanecen en NCB-1."),
+  volumeUnit:p("Unit","Unidad"),
+  concUnit:p("Unit","Unidad"),
 };
 const t=(k)=>L(T[k])||k;
 function langToggle(){lang=lang==="en"?"es":"en";localStorage.setItem("psr:lang",lang);const b=document.getElementById("langBtn");if(b)b.textContent=lang==="en"?"ES":"EN";R();}
-const BSL={RG1:{Low:"BSL-1",Moderate:"BSL-1*",High:"BSL-2**"},RG2:{Low:"BSL-2",Moderate:"BSL-2",High:"BSL-2+"},RG3:{Low:"BSL-2+",Moderate:"BSL-3",High:"BSL-3"},"RG3*":{Low:"BSL-2+",Moderate:"BSL-2+/BSL-3",High:"BSL-3"},RG4:{Low:"BSL-4",Moderate:"BSL-4",High:"BSL-4"}};
+const BSL=PSRCore.TABLE8;
 const MF=[
   {id:"volume",l:p("Volume","Volumen"),inc:p(">100 mL",">100 mL"),dec:p("<10 mL","<10 mL"),neu:p("10–100 mL","10–100 mL")},
   {id:"concentration",l:p("Concentration","Concentración"),inc:p(">10⁸ CFU/PFU",">10⁸ UFC/UFP"),dec:p("<10⁶ CFU/PFU","<10⁶ UFC/UFP"),neu:p("10⁶–10⁸","10⁶–10⁸")},
@@ -146,10 +200,10 @@ const MF=[
 ];
 const CTRL={
   "BSL-1":{e:[p("Open bench","Mesa de trabajo abierta"),p("Handwashing sink","Lavabo para lavado de manos")],p:[p("Lab coat","Bata de laboratorio"),p("Gloves","Guantes"),p("Eye protection if splash","Protección ocular si hay salpicaduras")],a:[p("Standard practices","Prácticas estándar"),p("Biohazard signage","Señalización de riesgo biológico")],d:[p("70% ethanol or quaternary ammonium for surfaces","Etanol al 70% o amonio cuaternario para superficies"),p("Autoclave or validated chemical inactivation of waste before disposal","Autoclave o inactivación química validada de los residuos antes de su eliminación")]},
-  "BSL-1*":{e:[p("BSC for aerosol steps","CSB para pasos con aerosoles"),p("Contained sonicator","Sonicador confinado")],p:[p("Lab coat","Bata de laboratorio"),p("Gloves","Guantes"),p("Eye protection","Protección ocular"),p("N95 / FFP2 for aerosol","N95 / FFP2 para aerosoles")],a:[p("Aerosol training","Formación en aerosoles"),p("SOPs for high-aerosol","PNT para alta generación de aerosoles")],d:[p("70% ethanol or quaternary ammonium for surfaces","Etanol al 70% o amonio cuaternario para superficies"),p("Autoclave aerosol-contaminated waste before disposal","Autoclavar los residuos contaminados por aerosoles antes de su eliminación")]},
+  "RG1_MODERATE":{e:[p("Open bench","Mesa de trabajo abierta"),p("Handwashing sink","Lavabo para lavado de manos")],p:[p("Lab coat","Bata de laboratorio"),p("Gloves","Guantes"),p("Eye protection if splash","Protección ocular si hay salpicaduras")],a:[p("Standard BSL-1 practices","Prácticas NCB-1 estándar"),p("Enhanced documentation when working at scale","Documentación reforzada cuando se trabaje a escala")],d:[p("70% ethanol or quaternary ammonium for surfaces","Etanol al 70% o amonio cuaternario para superficies"),p("Autoclave or validated chemical inactivation of waste","Autoclave o inactivación química validada de residuos")]},
   "BSL-2":{e:[p("Class II BSC for aerosol","CSB Clase II para aerosoles"),p("Autoclave","Autoclave")],p:[p("Lab coat","Bata de laboratorio"),p("Gloves","Guantes"),p("Eye protection","Protección ocular"),p("Face shield","Pantalla facial")],a:[p("Restricted access","Acceso restringido"),p("Biohazard signage","Señalización de riesgo biológico"),p("SOPs","PNT"),p("Spill response","Respuesta ante derrames")],d:[p("Validated surface disinfectant matched to agent (70% ethanol / quaternary ammonium for enveloped agents)","Desinfectante de superficies validado y adecuado al agente (etanol al 70% / amonio cuaternario para agentes envueltos)"),p("Spill kit with appropriate disinfectant","Kit de derrames con desinfectante adecuado"),p("Autoclave or validated chemical treatment of all biological waste","Autoclave o tratamiento químico validado de todos los residuos biológicos")]},
   "BSL-2+":{e:[p("Mandatory Class II BSC","CSB Clase II obligatoria"),p("Sealed centrifuge buckets","Cubetas de centrífuga selladas"),p("Dedicated lab area","Área de laboratorio dedicada")],p:[p("Double gloves","Doble guante"),p("Goggles/face shield","Gafas/pantalla facial"),p("Gown","Bata"),p("N95 / FFP2 if aerosol","N95 / FFP2 si hay aerosoles")],a:[p("Documented risk assessment","Evaluación de riesgos documentada"),p("IBC approval","Aprobación del CBS"),p("Competency verification","Verificación de competencia"),p("Supervised new operators","Supervisión de operadores nuevos"),p("Training program","Programa de formación")],d:[p("Agent-matched disinfectant with defined contact time","Desinfectante adecuado al agente con tiempo de contacto definido"),p("For non-enveloped viruses (e.g., AAV) or spores: ≥0.5% sodium hypochlorite or validated sporicidal/virucidal agent","Para virus no envueltos (p. ej., AAV) o esporas: hipoclorito sódico ≥0,5% o agente esporicida/virucida validado"),p("Decontaminate BSC surfaces after each session","Descontaminar las superficies de la CSB tras cada sesión"),p("Autoclave waste on-site before disposal","Autoclavar los residuos in situ antes de su eliminación")]},
-  "BSL-2**":{e:[p("Class II BSC mandatory","CSB Clase II obligatoria"),p("Contained aerosol equipment","Equipo confinado para aerosoles")],p:[p("Double gloves","Doble guante"),p("Eye protection","Protección ocular"),p("Lab coat","Bata de laboratorio")],a:[p("Documented justification","Justificación documentada"),p("Aerosol SOP","PNT de aerosoles")],d:[p("70% ethanol or quaternary ammonium for surfaces","Etanol al 70% o amonio cuaternario para superficies"),p("Autoclave aerosol-contaminated waste before disposal","Autoclavar los residuos contaminados por aerosoles antes de su eliminación")]},
+  "RG1_HIGH_STEP":{e:[p("Class II BSC for the high-aerosol step","CSB Clase II para el paso de alto aerosol"),p("Contained aerosol equipment","Equipo de aerosoles confinado")],p:[p("Lab coat","Bata de laboratorio"),p("Gloves","Guantes"),p("Eye/face protection as indicated","Protección ocular/facial según proceda")],a:[p("Documented procedure-specific risk assessment","Evaluación de riesgos específica del procedimiento documentada"),p("BSL-2 practices only for the high-aerosol step; all other steps remain BSL-1","Prácticas NCB-2 solo para el paso de alto aerosol; los demás pasos permanecen en NCB-1")],d:[p("Agent-matched validated disinfectant","Desinfectante validado y adecuado al agente"),p("Autoclave or validated treatment of aerosol-contaminated waste","Autoclave o tratamiento validado de residuos contaminados por aerosoles")]},
   "BSL-2+/BSL-3":{e:[p("Class II BSC or BSL-3","CSB Clase II o NCB-3"),p("Sealed buckets","Cubetas selladas"),p("HEPA exhaust","Extracción HEPA")],p:[p("Double gloves","Doble guante"),p("Eye protection","Protección ocular"),p("Respiratory (FFP3 / N99–N100)","Respiratoria (FFP3 / N99–N100)"),p("Gown","Bata")],a:[p("IBC approval","Aprobación del CBS"),p("Risk assessment","Evaluación de riesgos"),p("Consider BSL-3 if ≥2 unfavorable","Considerar NCB-3 si ≥2 desfavorables")],d:[p("Agent-matched disinfectant with validated contact time","Desinfectante adecuado al agente con tiempo de contacto validado"),p("≥0.5% sodium hypochlorite or sporicidal agent for non-enveloped viruses / spores","Hipoclorito sódico ≥0,5% o agente esporicida para virus no envueltos / esporas"),p("Autoclave all waste on-site before removal","Autoclavar todos los residuos in situ antes de retirarlos")]},
   "BSL-3":{e:[p("BSL-3 directional airflow","Flujo de aire direccional NCB-3"),p("HEPA exhaust","Extracción HEPA"),p("Double-door","Doble puerta"),p("Class II/III BSC","CSB Clase II/III")],p:[p("Dedicated clothing","Ropa dedicada"),p("Double gloves","Doble guante"),p("Respiratory (FFP3 / N99–N100)","Respiratoria (FFP3 / N99–N100)"),p("Full face shield","Pantalla facial completa")],a:[p("Controlled entry","Entrada controlada"),p("Medical surveillance","Vigilancia médica"),p("Training","Formación"),p("Emergency plan","Plan de emergencia"),p("Incident reporting","Notificación de incidentes")],d:[p("Validated surface disinfectant with documented contact time (e.g., 1% sodium hypochlorite, freshly prepared)","Desinfectante de superficies validado con tiempo de contacto documentado (p. ej., hipoclorito sódico al 1%, recién preparado)"),p("Sporicidal/virucidal agent for non-enveloped viruses and spores","Agente esporicida/virucida para virus no envueltos y esporas"),p("On-site autoclave; all waste inactivated before leaving containment","Autoclave in situ; todos los residuos inactivados antes de salir de la contención"),p("Periodic room/space decontamination per SOP","Descontaminación periódica de la sala/espacio según PNT")]},
   "BSL-4":{e:[p("Maximum containment","Contención máxima"),p("Class III BSC/suit","CSB Clase III/traje"),p("Chemical shower","Ducha química"),p("Double HEPA","Doble HEPA")],p:[p("Positive-pressure suit","Traje de presión positiva"),p("Full decontamination","Descontaminación completa")],a:[p("National authorization","Autorización nacional"),p("Dedicated team","Equipo dedicado"),p("Continuous monitoring","Monitorización continua"),p("Emergency protocols","Protocolos de emergencia")],d:[p("Chemical shower for suit decontamination","Ducha química para descontaminación del traje"),p("Effluent decontamination system","Sistema de descontaminación de efluentes"),p("Double-door autoclave for all materials leaving containment","Autoclave de doble puerta para todo el material que sale de la contención")]},
@@ -167,24 +221,26 @@ function getDeconP(bsl){
 
 // Storage
 const LS={
-  save(a){const id=a.id||`psr_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;const r={...a,id,updatedAt:new Date().toISOString(),version:V};localStorage.setItem(`psr:${id}`,JSON.stringify(r));const idx=JSON.parse(localStorage.getItem("psr:index")||"[]");if(!idx.includes(id)){idx.push(id);localStorage.setItem("psr:index",JSON.stringify(idx))}return r},
-  loadAll(){const idx=JSON.parse(localStorage.getItem("psr:index")||"[]");return idx.map(id=>{try{return JSON.parse(localStorage.getItem(`psr:${id}`))}catch{return null}}).filter(Boolean).sort((a,b)=>(b.updatedAt||"").localeCompare(a.updatedAt||""))},
+  save(a){const id=a.id||a.assessmentId||`psr_${Date.now()}_${Math.random().toString(36).slice(2,6)}`;const flat={...a,id,assessmentId:id};const r=PSRData.toCanonical(flat,compute(flat));localStorage.setItem(`psr:${id}`,JSON.stringify(r));const idx=JSON.parse(localStorage.getItem("psr:index")||"[]");if(!idx.includes(id)){idx.push(id);localStorage.setItem("psr:index",JSON.stringify(idx))}return PSRData.toFlat(r)},
+  loadAll(){const idx=JSON.parse(localStorage.getItem("psr:index")||"[]");return idx.map(id=>{try{return PSRData.toFlat(JSON.parse(localStorage.getItem(`psr:${id}`)))}catch{return null}}).filter(Boolean).sort((a,b)=>(b.createdAt||"").localeCompare(a.createdAt||""))},
   del(id){localStorage.removeItem(`psr:${id}`);const idx=JSON.parse(localStorage.getItem("psr:index")||"[]").filter(i=>i!==id);localStorage.setItem("psr:index",JSON.stringify(idx))},
   profile(p){if(p)localStorage.setItem("psr:profile",JSON.stringify(p));try{return JSON.parse(localStorage.getItem("psr:profile"))}catch{return null}},
 };
 
 // Algorithm
-function cPSR(ae,vo,co){const s={l:0,m:0,h:0};[ae,vo,co].forEach(v=>{if(v==="low")s.l++;else if(v==="moderate")s.m++;else if(v==="high")s.h++});if(s.h>=2||(s.h>=1&&s.m>=1))return"High";if(s.m>=2||(s.h===1&&s.l>=2))return"Moderate";return"Low"}
+const cPSR=PSRCore.classifyPSR;
 function compute(d){
-  const erg=d.rgOverride||((d.isGMO&&d.replComp==="no"&&d.riskGroup==="RG3")?"RG3*":d.riskGroup);
+  const agent={...d,rg3StarApplicable:!!d.rg3StarBasis};
   const pp=(d.procedures||[]).map(p=>p.aerosol&&p.volume&&p.concentration?cPSR(p.aerosol,p.volume,p.concentration):null);
   const O={Low:0,Moderate:1,High:2};
   const mx=pp.reduce((m,p)=>p&&O[p]>O[m]?p:m,"Low");
-  const u=Object.values(d.modFactors||{}).filter(v=>v==="increase").length;
-  const f=Object.values(d.modFactors||{}).filter(v=>v==="decrease").length;
-  let ap=mx;if(u>=2&&mx==="Low")ap="Moderate";if(u>=2&&mx==="Moderate")ap="High";
-  const bsl=erg?(BSL[erg]?.[ap]||"—"):"—";
-  return{erg,pp,mx,ap,u,f,bsl};
+  const modulation=PSRCore.evaluateModulatingFactors(d.modFactors);
+  const u=modulation.unfavorableFactorCount,f=modulation.favorableFactorCount;
+  const psrLevel=mx;
+  const decision=PSRCore.evaluateContainmentDecision({agent,psrLevel,escalationConsideration:modulation.escalationConsideration,escalationDecision:d.escalationDecision,escalationRationale:d.escalationRationale,finalProposedBsl:d.finalProposedBsl,bslOverrideReason:d.bslOverrideReason,bsl2Conditions:{riskAssessmentDocumented:d.bsl2RiskAssessmentDocumented,institutionalStatus:d.bsl2InstitutionalStatus,enhancedControlsDocumented:d.bsl2EnhancedControlsDocumented,operatorCompetencyDocumented:d.bsl2OperatorCompetencyDocumented}}),erg=decision.table8Notation,bsl=decision.matrixBsl||"—";
+  const step5=PSRCore.evaluateStep5({riskGroup:d.riskGroup,psrLevel,modulatingFactors:d.modFactors,severityModification:d.severityModification,effectiveSeverity:d.effectiveSeverity,severityBasis:d.severityBasis,severityBasisOther:d.severityBasisOther,severityJustification:d.severityJustification,severityEvidence:d.severityEvidence,selectedLikelihood:d.selectedLikelihood,likelihoodJustification:d.likelihoodJustification});
+  const pausePoints=PSRCore.evaluatePausePoints({riskGroup:d.riskGroup,aerosolUncharacterized:(d.procedures||[]).some(p=>p.aerosol==="unknown"),matrixBsl:decision.matrixBsl,overallRiskLevel:step5.overallRiskLevel});
+  return{riskGroup:d.riskGroup,table8Notation:erg,erg,pp,mx,psrLevel,u,f,escalationConsideration:modulation.escalationConsideration,bsl,matrixBsl:decision.matrixBsl,...decision,...step5,pausePoints};
 }
 
 // Supplementary Examples S3 & S4
@@ -192,15 +248,17 @@ const EXAMPLES=[
   {
     id:"example_s3_lentiviral",
     agentName:p("Third-generation SIN lentiviral vector (pLenti-CRISPR, HIV-1 backbone)","Vector lentiviral SIN de tercera generación (pLenti-CRISPR, esqueleto VIH-1)"),
-    riskGroup:"RG3",
+    riskGroup:"RG2",
     isGMO:true,
     parentalOrg:"HIV-1",
     geneticMod:p("Third-generation self-inactivating lentiviral vector. Split-genome packaging (4-plasmid system). Deletions: gag, pol, env, tat, rev, vif, vpr, vpu, nef. Replication-incompetent. Max recombination risk <10⁻⁸.","Vector lentiviral autoinactivante de tercera generación. Empaquetamiento de genoma dividido (sistema de 4 plásmidos). Deleciones: gag, pol, env, tat, rev, vif, vpr, vpu, nef. Incompetente para la replicación. Riesgo máximo de recombinación <10⁻⁸."),
     replComp:"no",
+    regulatoryNotation:null,regulatoryClassificationSource:"BMBL Appendix B",regulatoryNotationDocumented:false,
+    rg3StarBasis:null,rg3StarDocumented:false,rg3StarEvidence:"",
     procedures:[
-      {name:p("HEK293T transfection (T-175 flasks in BSC-II)","Transfección de HEK293T (frascos T-175 en CSB-II)"),aerosol:"low",volume:"high",concentration:"low"},
+      {name:p("HEK293T transfection (T-175 flasks in BSC-II, ~95 mL)","Transfección de HEK293T (frascos T-175 en CSB-II, ~95 mL)"),aerosol:"low",volume:"moderate",concentration:"low"},
       {name:p("Viral supernatant harvest (~120 mL, aspiration in BSC)","Recolección de sobrenadante viral (~120 mL, aspiración en CSB)"),aerosol:"low",volume:"high",concentration:"low"},
-      {name:p("Filtration 0.45 µm (syringe filter in BSC)","Filtración 0,45 µm (filtro de jeringa en CSB)"),aerosol:"low",volume:"high",concentration:"low"},
+      {name:p("Filtration 0.45 µm (syringe filter in BSC, ~95 mL)","Filtración 0,45 µm (filtro de jeringa en CSB, ~95 mL)"),aerosol:"low",volume:"moderate",concentration:"low"},
       {name:p("Ultracentrifugation (SW32Ti, 25,000 rpm, 90 min, non-sealed rotor)","Ultracentrifugación (SW32Ti, 25.000 rpm, 90 min, rotor no sellado)"),aerosol:"high",volume:"moderate",concentration:"high"},
       {name:p("Viral pellet resuspension (500 µL, high titer 10⁸ TU/mL in BSC)","Resuspensión del pellet viral (500 µL, título alto 10⁸ UT/mL en CSB)"),aerosol:"moderate",volume:"low",concentration:"high"},
       {name:p("Aliquoting (50 µL, multichannel pipette, 10⁸ TU/mL)","Alicuotado (50 µL, pipeta multicanal, 10⁸ UT/mL)"),aerosol:"low",volume:"low",concentration:"high"}
@@ -209,14 +267,14 @@ const EXAMPLES=[
       volume:"increase",
       concentration:"increase",
       frequency:"increase",
-      aerosol:"increase",
+      aerosol:"neutral",
       stability:"decrease",
       experience:"decrease",
       supervision:"decrease",
       infrastructure:"increase",
-      incidents:"decrease"
+      incidents:"neutral"
     },
-    justification:p("Although the lentiviral vector is classified as Risk Group 2 (RG3* due to replication-defective GMO derived from HIV-1 RG3), the specific procedures employed elevate exposure risk substantially beyond standard BSL-2 practices. The critical risk driver is high-speed ultracentrifugation (25,000 rpm for 90 minutes) of large volumes (4 × 30 mL) without sealed safety cups, generating significant aerosol potential. This is compounded by a final titer of 10⁸ TU/mL representing 1000-fold concentration.\n\nFour unfavorable modulating factors were identified: (1) procedural frequency (2×/week), (2) scale of operation (120–150 mL per run), (3) suboptimal infrastructure (no sealed rotor system), and (4) high titer final product (10⁸ TU/mL). Under the ≥2 factor escalation rule, containment enhancement is warranted.\n\nBSL-2+ assignment with respiratory protection during centrifugation, sealed rotors when available, and negative pressure is proportionate. Standard BSL-2 is insufficient due to aerosol risk; BSL-3 is disproportionate given replication-defective status and low environmental persistence.","Aunque el vector lentiviral se clasifica como GR3* (OMG defectivo en replicación derivado del VIH-1 GR3), los procedimientos empleados elevan el riesgo de exposición sustancialmente por encima de las prácticas estándar de NCB-2. El factor crítico es la ultracentrifugación a alta velocidad (25.000 rpm durante 90 minutos) de grandes volúmenes (4 × 30 mL) sin cubetas de seguridad selladas, que genera un potencial de aerosoles significativo. A ello se suma un título final de 10⁸ UT/mL, que representa una concentración 1000×.\n\nSe identificaron cuatro factores moduladores desfavorables: (1) frecuencia procedimental (2×/semana), (2) escala de operación (120–150 mL por tanda), (3) infraestructura subóptima (sin sistema de rotor sellado) y (4) producto final de título alto (10⁸ UT/mL). Bajo la regla de escalación de ≥2 factores, se justifica reforzar la contención.\n\nLa asignación NCB-2+ con protección respiratoria durante la centrifugación, rotores sellados cuando estén disponibles y presión negativa es proporcionada. El NCB-2 estándar es insuficiente por el riesgo de aerosoles; el NCB-3 es desproporcionado dado el carácter defectivo en replicación y la baja persistencia ambiental."),
+    justification:p("Classification: RG2 (documented attenuation per BMBL Appendix B), consistent with the third-generation split-genome replication-incompetent design (recombination risk <10⁻⁸). Because at least one procedural parameter is High, Step 3 PSR is High. Table 8 therefore assigns BSL-2+ for RG2 + High PSR. Four unfavorable procedural modulating factors (volume, concentration, frequency, infrastructure) trigger additional professional consideration for escalation but do not change the Step 3 PSR level.","Clasificación: GR2 (atenuación documentada según el Apéndice B de BMBL), coherente con el diseño de tercera generación de genoma dividido incompetente para la replicación (riesgo de recombinación <10⁻⁸). Como al menos un parámetro procedimental es Alto, el PSR del Paso 3 es Alto. Por tanto, la Tabla 8 asigna NCB-2+ para GR2 + PSR Alto. Cuatro factores moduladores procedimentales desfavorables (volumen, concentración, frecuencia, infraestructura) requieren consideración profesional adicional para la escalación, pero no cambian el nivel de PSR del Paso 3."),
     reviewer:p("Dr. John Doe (Biosafety Officer)","Dr. John Doe (Responsable de Bioseguridad)"),
     institution:"University Research Institute, Molecular Biology Dept.",
     reviewDate:"2025-01-15",
@@ -235,6 +293,9 @@ const EXAMPLES=[
     parentalOrg:"",
     geneticMod:"",
     replComp:"",
+    regulatoryNotation:null,regulatoryClassificationSource:"",regulatoryNotationDocumented:false,
+    rg3StarBasis:"validated_inactivation",rg3StarDocumented:true,rg3StarEvidence:"Validated heat inactivation (56°C, 30 min) with culture-negative confirmation",
+    bsl2RiskAssessmentDocumented:true,bsl2InstitutionalStatus:"user_recorded_approved",bsl2EnhancedControlsDocumented:true,bsl2OperatorCompetencyDocumented:true,
     procedures:[
       {name:p("Receipt of heat-inactivated specimens (2–5 mL, sealed tubes, biohazard bags)","Recepción de muestras inactivadas por calor (2–5 mL, tubos sellados, bolsas de bioriesgo)"),aerosol:"low",volume:"low",concentration:"low"},
       {name:p("Automated DNA extraction (QIAcube in BSC, 200 µL input, closed system)","Extracción automatizada de ADN (QIAcube en CSB, 200 µL de entrada, sistema cerrado)"),aerosol:"low",volume:"low",concentration:"low"},
@@ -265,13 +326,14 @@ const EXAMPLES=[
     version:V
   }
 ];
+EXAMPLES.forEach((example,index)=>{example.dataOrigin="demonstration";example.reviewer=p(`Example assessor ${String(index+1).padStart(2,"0")}`,`Evaluador de ejemplo ${String(index+1).padStart(2,"0")}`);example.institution=`Example institution ${String.fromCharCode(65+index)}`});
 
 window.loadExamples=function(){
   if(!confirm(t("loadExConfirm")))return;
   let added=0;
   EXAMPLES.forEach(ex=>{
     if(!localStorage.getItem(`psr:${ex.id}`)){
-      const o=JSON.parse(JSON.stringify(ex));
+      const o={...JSON.parse(JSON.stringify(ex)),schemaVersion:PSRData.SCHEMA_VERSION,algorithmVersion:PSRData.ALGORITHM_VERSION,dataOrigin:"demonstration"};
       ["agentName","geneticMod","justification","triggers","addCtrl","reviewer"].forEach(k=>{o[k]=L(o[k]);});
       if(Array.isArray(o.procedures))o.procedures=o.procedures.map(pr=>({...pr,name:L(pr.name)}));
       LS.save(o);
@@ -286,7 +348,7 @@ window.loadExamples=function(){
 
 // State
 let view="loading",profile=null,assessments=[],cur=null,stp=0,toastTimer=null;
-function blank(){return{id:null,agentName:"",riskGroup:"",isGMO:false,parentalOrg:"",geneticMod:"",replComp:"",procedures:[{name:"",aerosol:"",volume:"",concentration:""}],modFactors:Object.fromEntries(MF.map(f=>[f.id,"neutral"])),justification:"",reviewer:"",institution:"",reviewDate:new Date().toISOString().slice(0,10),triggers:"",addCtrl:"",status:"draft",createdAt:new Date().toISOString()}}
+function blank(){return{id:null,schemaVersion:PSRData.SCHEMA_VERSION,algorithmVersion:PSRData.ALGORITHM_VERSION,dataOrigin:"individual",studyId:"",scenarioId:"",scenarioVersion:"",raterId:"",institutionId:"",agentName:"",riskGroup:"",classificationSource:"",classificationSourceOther:"",transmissionRoute:"",environmentalStability:"",infectiousDose:"",treatmentAvailable:"",additionalHazards:"",isGMO:false,parentalOrg:"",geneticMod:"",replComp:"",regulatoryNotation:null,regulatoryClassificationSource:"",regulatoryNotationDocumented:false,rg3StarBasis:null,rg3StarDocumented:false,rg3StarEvidence:"",severityModification:false,effectiveSeverity:"",severityBasis:"",severityBasisOther:"",severityJustification:"",severityEvidence:"",selectedLikelihood:"",likelihoodJustification:"",finalProposedBsl:"",bslOverrideReason:"",escalationDecision:"",escalationRationale:"",bsl2RiskAssessmentDocumented:false,bsl2InstitutionalStatus:"conditions_pending",bsl2EnhancedControlsDocumented:false,bsl2OperatorCompetencyDocumented:false,procedures:[{name:"",aerosol:"",volume:"",concentration:""}],modFactors:Object.fromEntries(MF.map(f=>[f.id,"neutral"])),individualSusceptibility:"none",individualSusceptibilityOther:"",occupationalHealthAction:"",justification:"",reviewer:"",institution:"",reviewDate:new Date().toISOString().slice(0,10),nextReviewDate:"",triggers:"",addCtrl:"",workflowStatus:"draft",bsoReview:"",institutionalReview:"",approvalReference:"",approvingBody:"",approvalDate:"",status:"draft",createdAt:new Date().toISOString()}}
 
 // Pills
 function pp(l){const c=l==="Low"?"green":l==="Moderate"?"amber":"red";const m={Low:t("psrLow"),Moderate:t("psrMod"),High:t("psrHigh")};return`<span class="pill p-${c}">${m[l]||l} PSR</span>`}
@@ -306,6 +368,7 @@ function R(){
   else if(view==="irr")h=rIRR();
   else h=`<p>${t("loading")}</p>`;
   document.getElementById("app").innerHTML=h;
+  PSRA11y.enhance(document.getElementById("app"),lang);
   if(!document.getElementById("langBtn")){const b=document.createElement("button");b.id="langBtn";b.textContent=lang==="en"?"ES":"EN";b.onclick=langToggle;b.style.cssText="position:fixed;top:16px;left:16px;z-index:200;padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--card);color:var(--text2);cursor:pointer;font-size:12px";document.body.appendChild(b);}
 }
 
@@ -339,7 +402,7 @@ function rDash(){
     const c=compute(a);
     h+=`<div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg2);border-radius:var(--r);margin-bottom:8px;cursor:pointer" onclick="editA('${a.id}')">
       <div style="flex:1"><div style="font-weight:500;font-size:14px">${esc(a.agentName)||t("untitled")}</div><div style="font-size:11px;color:var(--text2)">${(a.updatedAt||"").slice(0,10)} · ${esc(a.institution||"—")}</div></div>
-      ${sp(a.status)} ${pp(c.ap)} ${bp(c.bsl)}
+      ${sp(a.status)} ${pp(c.psrLevel)} ${bp(c.bsl)}
       <button onclick="event.stopPropagation();delA('${a.id}')" style="background:none;border:none;cursor:pointer;font-size:16px;color:var(--text3)">×</button>
     </div>`;
   });
@@ -347,11 +410,11 @@ function rDash(){
 
   // Export all as CSV for external analysis
   if(assessments.length>0){
-    h+=`<button class="btn bo" style="width:100%;margin-bottom:16px" onclick="exportCSV()">${t("exportCsvBtn")}</button>`;
+    h+=`<button class="btn bp" style="width:100%;margin-bottom:8px" onclick="exportJSON()">Export canonical JSON / Exportar JSON canónico</button><button class="btn bo" style="width:100%;margin-bottom:8px" onclick="document.getElementById('jsonImport').click()">Import canonical JSON / Importar JSON canónico</button><input id="jsonImport" type="file" accept=".json,application/json" hidden onchange="importJSON(this)"><button class="btn bo" style="width:100%;margin-bottom:16px" onclick="exportCSV()">${t("exportCsvBtn")}</button>`;
   }
   return h;
 }
-window.startNew=function(){cur=blank();cur.reviewer=profile.name;cur.institution=profile.institution;stp=0;view="assess";R()};
+window.startNew=function(){alert(lang==='es'?'PSR es un marco profesional de apoyo a decisiones de bioseguridad. No sustituye la revisión experta, la autorización institucional ni los requisitos regulatorios aplicables. Los umbrales cuantitativos son heurísticas operativas descritas en el marco publicado.':'PSR is a professional biosafety decision-support framework. It does not replace expert biosafety review, institutional authorization, or applicable regulatory requirements. Quantitative thresholds are operational heuristics as described in the published framework.');cur=blank();cur.reviewer=profile.name;cur.institution=profile.institution;stp=0;view="assess";R()};
 window.editA=function(id){const a=assessments.find(x=>x.id===id);if(a){cur={...a,procedures:[...a.procedures.map(p=>({...p}))],modFactors:{...a.modFactors}};stp=0;view="assess";R()}};
 window.delA=function(id){if(!confirm(t("delConfirm")))return;LS.del(id);assessments=LS.loadAll();R();toast(t("deleted"))};
 
@@ -393,18 +456,32 @@ window.UM=function(id,v){cur.modFactors[id]=v;R()};
 window.setRG=function(v){cur.riskGroup=v;R()};
 window.setGMO=function(el){cur.isGMO=el.checked;R()};
 window.setRepl=function(v){cur.replComp=v;R()};
-window.addProc=function(){cur.procedures.push({name:"",aerosol:"",volume:"",concentration:""});R()};
+window.addProc=function(){cur.procedures.push({name:"",aerosol:"",volume:"",volumeValue:"",volumeUnit:"mL",concentration:"",concentrationValue:"",concentrationUnit:""});R()};
 window.rmProc=function(i){cur.procedures.splice(i,1);R()};
 window.setPA=function(i,k,v){cur.procedures[i][k]=v;R()};
 
 function rS1(){
   let h=`<h2>${t("s1t")}</h2><p class="sub">${t("s1s")}</p>`;
+  h+=`<details style="margin-bottom:16px"><summary style="cursor:pointer;font-weight:600">${t("metaDetails")}</summary><div style="padding-top:10px">`;
+  h+=`<div class="fl"><label>${t("dataOrigin")}</label><select onchange="U('dataOrigin',this.value)"><option value="individual" ${cur.dataOrigin==='individual'?'selected':''}>${t("dataOriginIndividual")}</option><option value="study" ${cur.dataOrigin==='study'?'selected':''}>${t("dataOriginStudy")}</option></select></div>`;
+  if(cur.dataOrigin==='study')h+=`<div class="grid2"><div class="fl"><label>${t("studyIdLabel")}</label><input value="${esc(cur.studyId)}" onchange="U('studyId',this.value)"></div><div class="fl"><label>${t("scenarioIdLabel")}</label><input value="${esc(cur.scenarioId)}" onchange="U('scenarioId',this.value)"></div><div class="fl"><label>${t("scenarioVersionLabel")}</label><input value="${esc(cur.scenarioVersion)}" onchange="U('scenarioVersion',this.value)"></div><div class="fl"><label>${t("raterIdLabel")}</label><input value="${esc(cur.raterId)}" onchange="U('raterId',this.value)"></div><div class="fl"><label>${t("institutionIdLabel")}</label><input value="${esc(cur.institutionId)}" onchange="U('institutionId',this.value)"></div></div>`;
+  h+=`</div></details>`;
   h+=`<div class="fl"><label>${t("bioAgent")}</label><input type="text" value="${esc(cur.agentName)}" onchange="U('agentName',this.value)" placeholder="${t("agentPh")}"></div>`;
+  h+=`<div class="fl"><label>${t("classificationSourceLabel")}</label><select onchange="U('classificationSource',this.value)"><option value="">${t("classificationSourceSelect")}</option><option value="WHO" ${cur.classificationSource==="WHO"?"selected":""}>${t("classSrcWHO")}</option><option value="BMBL" ${cur.classificationSource==="BMBL"?"selected":""}>${t("classSrcBMBL")}</option><option value="EU_Directive_2000_54_EC" ${cur.classificationSource==="EU_Directive_2000_54_EC"?"selected":""}>${t("classSrcEU")}</option><option value="INSST" ${cur.classificationSource==="INSST"?"selected":""}>${t("classSrcINSST")}</option><option value="Other" ${cur.classificationSource==="Other"?"selected":""}>${t("classSrcOther")}</option></select></div>`;
+  if(cur.classificationSource==="Other")h+=`<div class="fl"><label>${t("classSrcOtherLabel")}</label><input value="${esc(cur.classificationSourceOther)}" onchange="U('classificationSourceOther',this.value)"></div>`;
   h+=`<div class="fl"><label>${t("riskGroup")}</label><div class="opt-g c2">`;
   [{v:"RG1",d:t("rg1d")},{v:"RG2",d:t("rg2d")},{v:"RG3",d:t("rg3d")},{v:"RG4",d:t("rg4d")}].forEach(r=>{
     h+=`<button class="opt ${cur.riskGroup===r.v?"sel":""}" onclick="setRG('${r.v}')"><b>${r.v}</b><small>${r.d}</small></button>`;
   });
   h+=`</div></div>`;
+  if(cur.riskGroup==="RG3"){
+    h+=`<div class="note n-teal">${t("rg3starNote")}</div>`;
+    h+=`<label style="display:flex;gap:8px;font-size:13px;cursor:pointer;margin:12px 0"><input type="checkbox" ${cur.regulatoryNotationDocumented?"checked":""} onchange="cur.regulatoryNotationDocumented=this.checked;cur.regulatoryNotation=this.checked?'RG3**':null;R()"> ${t("rg3RegCheck")}</label>`;
+    if(cur.regulatoryNotationDocumented)h+=`<div class="fl"><label>${t("rg3RegSource")}</label><input value="${esc(cur.regulatoryClassificationSource)}" onchange="U('regulatoryClassificationSource',this.value)"></div>`;
+    h+=`<div class="fl"><label>${t("rg3StarBasis")}</label><select onchange="cur.rg3StarBasis=this.value||null;cur.rg3StarDocumented=!!this.value;R()"><option value="">${t("rg3None")}</option><option value="replication_incompetence" ${cur.rg3StarBasis==="replication_incompetence"?"selected":""}>${t("rg3Repl")}</option><option value="confirmed_absence_airborne_transmissibility" ${cur.rg3StarBasis==="confirmed_absence_airborne_transmissibility"?"selected":""}>${t("rg3Air")}</option><option value="validated_inactivation" ${cur.rg3StarBasis==="validated_inactivation"?"selected":""}>${t("rg3Inactive")}</option></select></div>`;
+    if(cur.rg3StarBasis)h+=`<div class="fl"><label>${t("rg3Evidence")}</label><input value="${esc(cur.rg3StarEvidence)}" onchange="U('rg3StarEvidence',this.value)"></div>`;
+  }
+  h+=`<details style="margin-top:18px"><summary style="cursor:pointer;font-weight:600">Additional characterization / Caracterización adicional</summary><div style="padding-top:12px">`;
   h+=`<label style="display:flex;gap:8px;font-size:13px;cursor:pointer;margin-bottom:14px"><input type="checkbox" ${cur.isGMO?"checked":""} onchange="setGMO(this)"> ${t("gmoLabel")}</label>`;
   if(cur.isGMO){
     h+=`<div style="padding:14px;background:var(--bg2);border-radius:var(--r)">`;
@@ -416,9 +493,18 @@ function rS1(){
     if(cur.replComp==="no"&&cur.riskGroup==="RG3")h+=`<div class="note n-teal">${t("rg3starNote")}</div>`;
     h+=`</div>`;
   }
+  h+=`<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--bd)"><div style="font-weight:600;font-size:13px">${t("agentTraitsTitle")}</div>`;
+  h+=`<div class="fl"><label>${t("transmissionRoute")}</label><input value="${esc(cur.transmissionRoute)}" onchange="U('transmissionRoute',this.value)"></div>`;
+  h+=`<div class="fl"><label>${t("environmentalStability")}</label><input value="${esc(cur.environmentalStability)}" onchange="U('environmentalStability',this.value)"></div>`;
+  h+=`<div class="fl"><label>${t("infectiousDose")}</label><input value="${esc(cur.infectiousDose)}" onchange="U('infectiousDose',this.value)"></div>`;
+  h+=`<div class="fl"><label>${t("treatmentAvailable")}</label><input value="${esc(cur.treatmentAvailable)}" onchange="U('treatmentAvailable',this.value)"></div>`;
+  h+=`<div class="fl"><label>${t("additionalHazards")}</label><input value="${esc(cur.additionalHazards)}" onchange="U('additionalHazards',this.value)"></div>`;
+  h+=`</div>`;
+  h+=`</div></details>`;
   return h;
 }
 
+function expectedNumericCategory(v,type){v=Number(v);if(!Number.isFinite(v)||v<0)return null;if(type==='volume')return v<10?'low':v<=100?'moderate':'high';return v<1e6?'low':v<=1e8?'moderate':'high';}
 function rS2(){
   let h=`<h2>${t("s2t")}</h2><p class="sub">${t("s2s")}</p>`;
   cur.procedures.forEach((p,i)=>{
@@ -427,9 +513,14 @@ function rS2(){
     if(cur.procedures.length>1)h+=`<button style="font-size:12px;color:var(--red-text);background:none;border:none;cursor:pointer" onclick="rmProc(${i})">${t("remove")}</button>`;
     h+=`</div>`;
     h+=`<div class="fl"><label>${t("name")}</label><input type="text" value="${esc(p.name)}" onchange="UP(${i},'name',this.value)"></div>`;
-    h+=rOpts(t("aerosol"),["low:"+t("minimal"),"moderate:"+t("moderate"),"high:"+t("high")],p.aerosol,i,"aerosol",3);
+    h+=rOpts(t("aerosol"),["low:"+t("minimal"),"moderate:"+t("moderate"),"high:"+t("high"),"unknown:"+t("aeroUnknown")],p.aerosol,i,"aerosol",2);
+    h+=`<div class="grid2"><div class="fl"><label>${t("volumeValue")}</label><input type="number" min="0" step="any" value="${esc(p.volumeValue??"")}" onchange="UP(${i},'volumeValue',this.value)"></div><div class="fl"><label>${t("volumeUnit")}</label><select onchange="UP(${i},'volumeUnit',this.value)"><option value="mL" ${(p.volumeUnit||"mL")==="mL"?"selected":""}>mL</option><option value="µL" ${p.volumeUnit==="µL"?"selected":""}>µL</option><option value="L" ${p.volumeUnit==="L"?"selected":""}>L</option></select></div></div>`;
     h+=rOpts(t("volume"),["low:<10 mL","moderate:10–100 mL","high:>100 mL"],p.volume,i,"volume",3);
+    if(p.volumeValue!=="" && (p.volumeUnit||"mL")==="mL" && p.volume && expectedNumericCategory(p.volumeValue,"volume")!==p.volume)h+=`<div class="note n-red">${t("categoryMismatch")}</div>`;
+    h+=`<div class="grid2"><div class="fl"><label>${t("concValue")}</label><input type="number" min="0" step="any" value="${esc(p.concentrationValue??"")}" onchange="UP(${i},'concentrationValue',this.value)"></div><div class="fl"><label>${t("concUnit")}</label><input value="${esc(p.concentrationUnit||"")}" placeholder="PFU/mL, CFU/mL, TCID₅₀/mL…" onchange="UP(${i},'concentrationUnit',this.value)"></div></div>`;
     h+=rOpts(t("concentration"),["low:<10⁶","moderate:10⁶–10⁸","high:>10⁸"],p.concentration,i,"concentration",3);
+    if(p.concentrationValue!=="" && p.concentration && expectedNumericCategory(p.concentrationValue,"concentration")!==p.concentration)h+=`<div class="note n-red">${t("categoryMismatch")}</div>`;
+    h+=`<div class="note" style="font-size:10px">${t("quantitativeNote")}</div>`;
     h+=`</div>`;
   });
   h+=`<button class="btn bo" style="width:100%;border-style:dashed" onclick="addProc()">${t("addProc")}</button>`;
@@ -462,32 +553,56 @@ function rS4(c){
   h+=`<div style="display:flex;gap:12px;margin-top:14px">`;
   h+=`<div class="metric ${c.u>=2?"alert-metric":""}"><div class="mv">${c.u}</div><div class="ml">${t("unfavorable")}</div></div>`;
   h+=`<div class="metric"><div class="mv">${c.f}</div><div class="ml">${t("favorable")}</div></div></div>`;
-  if(c.u>=2)h+=`<div class="note n-red">${t("s4esc")} ${c.mx} → ${c.ap}</div>`;
+  if(c.u>=2)h+=`<div class="note n-red">${t("s4esc")}</div>`;
+  h+=`<div style="margin-top:20px;padding-top:14px;border-top:1px solid var(--bd)"><div style="font-weight:600;font-size:13px">${t("indivSuscTitle")}</div><div class="note" style="margin:6px 0 10px;font-size:11px">${t("indivSuscNote")}</div>`;
+  h+=`<select onchange="cur.individualSusceptibility=this.value;R()"><option value="none" ${cur.individualSusceptibility==="none"?"selected":""}>${t("indivSuscNone")}</option><option value="immunocompromised" ${cur.individualSusceptibility==="immunocompromised"?"selected":""}>${t("indivSuscImmuno")}</option><option value="vaccination_unavailable" ${cur.individualSusceptibility==="vaccination_unavailable"?"selected":""}>${t("indivSuscVaccine")}</option><option value="other" ${cur.individualSusceptibility==="other"?"selected":""}>${t("indivSuscOther")}</option></select>`;
+  if(cur.individualSusceptibility==="other")h+=`<div style="margin-top:8px"><label style="font-size:12px;display:block;margin-bottom:4px">${t("indivSuscOtherLabel")}</label><input value="${esc(cur.individualSusceptibilityOther||"")}" onchange="cur.individualSusceptibilityOther=this.value;R()"></div>`;
+  if(cur.individualSusceptibility!=="none")h+=`<div style="margin-top:8px"><label style="font-size:12px;display:block;margin-bottom:4px">${t("occHealthAction")}</label><textarea onchange="cur.occupationalHealthAction=this.value;R()">${esc(cur.occupationalHealthAction||"")}</textarea></div>`;
+  h+=`</div>`;
   return h;
 }
 
 function rS5(c){
-  let h=`<h2>${t("s5t")}</h2><p class="sub">${t("s5s")}</p>`;
-  h+=`<table class="matrix"><thead><tr><th style="text-align:left">${t('rgAbbr')}</th><th>${t('psrLow')}</th><th>${t('psrMod')}</th><th>${t('psrHigh')}</th></tr></thead><tbody>`;
-  Object.entries(BSL).forEach(([rg,ps])=>{h+=`<tr><td style="font-weight:500">${rg}</td>`;["Low","Moderate","High"].forEach(p=>{h+=`<td style="text-align:center" ${rg===c.erg&&p===c.ap?'class="hi"':''}>${ps[p]}</td>`});h+=`</tr>`});
-  h+=`</tbody></table>`;
-  h+=`<div style="text-align:center;padding:14px;background:var(--accent-bg);border-radius:var(--r);margin-top:12px"><div style="font-size:15px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap">
-    <span class="pill p-gray">${c.erg||"—"}</span> × ${pp(c.ap)} = ${bp(c.bsl)}</div></div>`;
+  const base=c.baseLikelihoodRange||[],range=c.likelihoodRange||[];let h=`<h2>${t("s5t")}</h2><p class="sub">${t("s5s")}</p>`;
+  h+=`<div class="metric-grid"><div class="metric"><div class="mv">${c.baselineSeverity||"—"}</div><div class="ml">${t("baselineSeverity")}</div></div><div class="metric"><div class="mv">${c.effectiveSeverity||"—"}</div><div class="ml">${t("effectiveSeverity")}</div></div><div class="metric"><div class="mv">${base.join(" – ")||"—"}</div><div class="ml">${t("baseLikelihoodRange")}</div></div><div class="metric"><div class="mv">${range.join(" – ")||"—"}</div><div class="ml">${t("likelihoodRange")}</div></div></div>`;
+  if(c.likelihoodShiftApplied)h+=`<div class="note n-amb">${t("likelihoodShift")}${range.length===1?`<br><strong>${t("singleLikelihood")}</strong>`:""}</div>`;
+  h+=`<label style="display:flex;gap:8px;font-size:13px;cursor:pointer;margin:14px 0"><input type="checkbox" ${cur.severityModification?"checked":""} onchange="cur.severityModification=this.checked;R()"> ${t("severityModify")}</label>`;
+  if(cur.severityModification){
+    const baseIdx=PSRCore.SEVERITY_ORDER.indexOf(c.baselineSeverity),allowedLevels=PSRCore.SEVERITY_ORDER.filter((v,i)=>i<=baseIdx);
+    const requestedIdx=PSRCore.SEVERITY_ORDER.indexOf(cur.effectiveSeverity);
+    h+=`<div class="fl"><label>${t("effectiveSeverity")}</label><select onchange="U('effectiveSeverity',this.value)"><option value="">—</option>${allowedLevels.map(v=>`<option ${cur.effectiveSeverity===v?"selected":""}>${v}</option>`).join("")}</select></div>`;
+    h+=`<div class="fl"><label>${t("severityBasis")}</label><select onchange="U('severityBasis',this.value)"><option value="">${t("severityBasisSelect")}</option><option value="confirmed_non_airborne_transmission" ${cur.severityBasis==="confirmed_non_airborne_transmission"?"selected":""}>${t("severityBasisAirborne")}</option><option value="effective_treatment_or_pep_available" ${cur.severityBasis==="effective_treatment_or_pep_available"?"selected":""}>${t("severityBasisTreatment")}</option><option value="validated_agent_inactivation" ${cur.severityBasis==="validated_agent_inactivation"?"selected":""}>${t("severityBasisInactivation")}</option><option value="other" ${cur.severityBasis==="other"?"selected":""}>${t("severityBasisOtherOpt")}</option></select></div>`;
+    if(cur.severityBasis==="other")h+=`<div class="fl"><label>${t("severityBasisOtherLabel")}</label><input value="${esc(cur.severityBasisOther)}" onchange="U('severityBasisOther',this.value)"></div>`;
+    h+=`<div class="fl"><label>${t("severityJust")}</label><textarea onchange="U('severityJustification',this.value)">${esc(cur.severityJustification)}</textarea></div><div class="fl"><label>${t("severityEvidence")}</label><input value="${esc(cur.severityEvidence)}" onchange="U('severityEvidence',this.value)"></div>`;
+    if(requestedIdx>baseIdx)h+=`<div class="note n-red">${t("severityNotMoreSevere")}</div>`;
+  }
+  h+=`<div class="fl"><label>${t("selectedLikelihood")}</label><select onchange="U('selectedLikelihood',this.value)"><option value="">—</option>${range.map(v=>`<option value="${v}" ${cur.selectedLikelihood===v?"selected":""}>${v}</option>`).join("")}</select></div>`;
+  if(range.length>1)h+=`<div class="fl"><label>${t("likelihoodJust")}</label><textarea onchange="U('likelihoodJustification',this.value)">${esc(cur.likelihoodJustification)}</textarea></div>`;
+  h+=`<div style="text-align:center;padding:14px;background:var(--accent-bg);border-radius:var(--r);margin-top:12px"><span class="pill p-gray">${c.effectiveSeverity||"—"}</span> × <span class="pill p-gray">${c.selectedLikelihood||"—"}</span> = <span class="pill p-gray">${c.overallRiskLevel||"—"}</span></div>`;
+  if(!c.likelihoodSelectionDocumented)h+=`<div class="note n-amb">${t("selectRequired")}</div>`;
   return h;
 }
 
 function rS6(c){
   let h=`<h2>${t("s6t")}</h2><p class="sub">${t("s6s")}</p>`;
-  h+=`<div style="text-align:center;padding:20px 0"><div style="font-size:14px;color:var(--text2);margin-bottom:6px">${t("assignedBSL")}</div>
-    <div style="font-size:36px;font-weight:600">${c.bsl}</div>
-    <div style="margin-top:10px"><span class="pill p-gray">${esc(cur.agentName)||"—"}</span> · <span class="pill p-gray">${c.erg}</span> · ${pp(c.ap)}</div></div>`;
+  h+=`<div style="text-align:center;padding:20px 0"><div style="font-size:14px;color:var(--text2);margin-bottom:6px">${t("matrixBsl")}</div>
+    <div style="font-size:36px;font-weight:600">${c.matrixBsl||"—"}</div>
+    <div style="margin-top:10px"><span class="pill p-gray">${esc(cur.agentName)||"—"}</span> · <span class="pill p-gray">${c.erg}</span> · ${pp(c.psrLevel)}</div></div>`;
+  if(c.pausePoints.paused)h+=`<div class="note n-red"><b>${t("pauseTitle")}</b><br>${c.pausePoints.reasons.map(r=>r==="risk_group_not_established"?t("pauseRG"):r==="aerosol_uncharacterized"?t("pauseAerosol"):t("pauseReview")).join("<br>")}</div>`;
   if(c.erg==="RG3*"&&c.bsl.includes("BSL-2+"))h+=`<div class="note n-amb"><b>${t("bsl2plusLbl")}</b>${t("bsl2plusBody")}</div>`;
+  if(c.matrixCondition==="rg1_moderate_standard_bsl1")h+=`<div class="note n-amb">${t("table8NoteRg1Mod")}</div>`;
+  if(c.matrixCondition==="rg1_high_step_only_bsl2")h+=`<div class="note n-amb">${t("table8NoteRg1High")}</div>`;
+  h+=`<div class="fl"><label>${t("finalBsl")}</label><select onchange="U('finalProposedBsl',this.value)"><option value="">—</option>${c.allowedFinalBslOptions.map(v=>`<option value="${v}" ${cur.finalProposedBsl===v?"selected":""}>${v}</option>`).join("")}</select></div>`;
+  if(c.escalationConsideration)h+=`<div class="fl"><label>${t("escalationDecisionLabel")}</label><select onchange="U('escalationDecision',this.value)"><option value="">—</option><option value="retained" ${cur.escalationDecision==="retained"?"selected":""}>${t("escRetained")}</option><option value="escalated" ${cur.escalationDecision==="escalated"?"selected":""}>${t("escEscalated")}</option><option value="pending_review" ${cur.escalationDecision==="pending_review"?"selected":""}>${t("escPending")}</option></select></div><div class="fl"><label>${t("escalationRationaleLabel")}</label><textarea onchange="U('escalationRationale',this.value)">${esc(cur.escalationRationale||"")}</textarea></div>`;
+  if(cur.finalProposedBsl&&(cur.finalProposedBsl!==c.matrixBsl||c.allowedFinalBslOptions.length>1))h+=`<div class="fl"><label>${t("overrideReason")}</label><textarea onchange="U('bslOverrideReason',this.value)">${esc(cur.bslOverrideReason)}</textarea></div>`;
+  if(c.requiresRg3LowBsl2Conditions)h+=`<label><input type="checkbox" ${cur.bsl2RiskAssessmentDocumented?"checked":""} onchange="cur.bsl2RiskAssessmentDocumented=this.checked"> ${t("bsl2RiskAssessment")}</label><div class="fl"><label>${t("bsl2Status")}</label><select onchange="U('bsl2InstitutionalStatus',this.value)"><option value="conditions_pending">${t("bsl2CondPending")}</option><option value="eligible_pending_approval">${t("bsl2CondEligible")}</option><option value="user_recorded_approved">${t("bsl2CondApproved")}</option></select></div><label><input type="checkbox" ${cur.bsl2EnhancedControlsDocumented?"checked":""} onchange="cur.bsl2EnhancedControlsDocumented=this.checked"> ${t("bsl2Controls")}</label><br><label><input type="checkbox" ${cur.bsl2OperatorCompetencyDocumented?"checked":""} onchange="cur.bsl2OperatorCompetencyDocumented=this.checked"> ${t("bsl2Competency")}</label>`;
+  if(!c.decisionDocumented)h+=`<div class="note n-amb">${t("decisionRequired")}</div>`;
   h+=`<div class="fl" style="margin-top:14px"><label>${t("justNarr")}</label><textarea rows="5" onchange="U('justification',this.value)" placeholder="${t("justPh")}">${esc(cur.justification)}</textarea></div>`;
   return h;
 }
 
 function rS7(c){
-  const ctrl=CTRL[c.bsl]||CTRL["BSL-2"];
+  const profile=c.controlProfile||c.bsl,ctrl=CTRL[profile]||CTRL["BSL-2"];
   let h=`<h2>${t("s7t")}</h2><p class="sub">${t("recFor")} ${bp(c.bsl)}</p>`;
   [{k:"e",t:t("engControls")},{k:"p",t:t("ppe")},{k:"a",t:t("adminControls")}].forEach(s=>{
     h+=`<div style="margin-bottom:14px"><div style="font-size:14px;font-weight:500;margin-bottom:6px">${s.t}</div>`;
@@ -496,7 +611,7 @@ function rS7(c){
     h+=`</div>`;
   });
   h+=`<div style="margin-bottom:14px"><div style="font-size:14px;font-weight:500;margin-bottom:6px">${t("deconControls")}</div>`;
-  getDeconP(c.bsl).forEach(item=>{h+=`<label style="display:flex;gap:8px;font-size:13px;padding:5px 10px;border-radius:6px;background:var(--bg2);margin-bottom:4px;cursor:pointer"><input type="checkbox" checked> ${L(item)}</label>`});
+  getDeconP(profile).forEach(item=>{h+=`<label style="display:flex;gap:8px;font-size:13px;padding:5px 10px;border-radius:6px;background:var(--bg2);margin-bottom:4px;cursor:pointer"><input type="checkbox" checked> ${L(item)}</label>`});
   h+=`</div>`;
   h+=`<div class="fl"><label>${t("addControls")}</label><textarea rows="3" onchange="U('addCtrl',this.value)" placeholder="${t("addCtrlPh")}">${esc(cur.addCtrl)}</textarea></div>`;
   return h;
@@ -507,6 +622,9 @@ function rS8(c){
   h+=`<div class="fl"><label>${t("assessor")}</label><input type="text" value="${esc(cur.reviewer||profile.name)}" onchange="U('reviewer',this.value)"></div>`;
   h+=`<div class="fl"><label>${t("institution")}</label><input type="text" value="${esc(cur.institution||profile.institution)}" onchange="U('institution',this.value)"></div>`;
   h+=`<div class="fl"><label>${t("dateL")}</label><input type="date" value="${esc(cur.reviewDate)}" onchange="U('reviewDate',this.value)"></div>`;
+  h+=`<div class="fl"><label>${t("workflowStatus")}</label><select onchange="U('workflowStatus',this.value)">${[['draft','wfDraft'],['finalized_by_assessor','wfFinalized'],['bso_reviewed','wfBso'],['institutional_review_pending','wfInstPending'],['institutionally_approved','wfApproved'],['rejected_revision_requested','wfRejected'],['superseded','wfSuperseded']].map(([v,l])=>`<option value="${v}" ${cur.workflowStatus===v?'selected':''}>${t(l)}</option>`).join('')}</select><small>${t("workflowNote")}</small></div>`;
+  h+=`<div class="fl"><label>${t("nextReviewDate")}</label><input type="date" value="${esc(cur.nextReviewDate)}" onchange="U('nextReviewDate',this.value)"></div>`;
+  if(cur.workflowStatus==='institutionally_approved')h+=`<div class="note">${t("institApprovalStatus")}</div><div class="grid2"><div class="fl"><label>${t("approvalReference")}</label><input value="${esc(cur.approvalReference)}" onchange="U('approvalReference',this.value)"></div><div class="fl"><label>${t("approvingBody")}</label><input value="${esc(cur.approvingBody)}" onchange="U('approvingBody',this.value)"></div><div class="fl"><label>${t("approvalDate")}</label><input type="date" value="${esc(cur.approvalDate)}" onchange="U('approvalDate',this.value)"></div></div>`;
   h+=`<div class="fl"><label>${t("reviewTriggers")}</label><textarea rows="2" onchange="U('triggers',this.value)" placeholder="${t("triggersPh")}">${esc(cur.triggers)}</textarea></div>`;
 
   h+=`<div style="margin-top:16px;padding:18px;background:var(--bg2);border-radius:var(--rl)">
@@ -515,7 +633,7 @@ function rS8(c){
       <div><span style="color:var(--text2)">${t("lblAgent")}</span> ${esc(cur.agentName)||"—"}</div>
       <div><span style="color:var(--text2)">${t("lblRG")}</span> ${c.erg||"—"}</div>
       <div><span style="color:var(--text2)">${t("lblMaxPSR")}</span> ${pp(c.mx)}</div>
-      <div><span style="color:var(--text2)">${t("lblAdjusted")}</span> ${pp(c.ap)}</div>
+      <div><span style="color:var(--text2)">${t("lblPSRLevel")}</span> ${pp(c.psrLevel)}</div>
       <div><span style="color:var(--text2)">${t("lblBSL")}</span> ${bp(c.bsl)}</div>
       <div><span style="color:var(--text2)">${t("lblUnfav")}</span> ${c.u}</div>
       <div><span style="color:var(--text2)">${t("lblStatus")}</span> ${sp(cur.status)}</div>
@@ -560,7 +678,7 @@ function rIRR(){
     g.forEach(a=>{const c=compute(a);
       h+=`<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:var(--bg2);border-radius:var(--r);margin-bottom:6px;font-size:13px">
         <div style="flex:1"><b>${esc(a.reviewer||t("anon"))}</b><div style="font-size:11px;color:var(--text2)">${esc(a.institution)} · ${(a.updatedAt||"").slice(0,10)}</div></div>
-        <span class="pill p-gray">${c.erg}</span> ${pp(c.ap)} ${bp(c.bsl)}</div>`;
+        <span class="pill p-gray">${c.erg}</span> ${pp(c.psrLevel)} ${bp(c.bsl)}</div>`;
     });
     const bsls=g.map(a=>compute(a).bsl);const ok=bsls.every(b=>b===bsls[0]);
     h+=`<div class="note ${ok?"n-teal":"n-red"}">${ok?`${t("fullAgreement")} ${bsls[0]}`:`${t("discrepancy")} ${[...new Set(bsls)].join(" vs ")}`}</div></div>`;
@@ -570,15 +688,15 @@ function rIRR(){
 
 // Save/Export
 window.saveDraft=function(){cur.reviewer=cur.reviewer||profile.name;cur.institution=cur.institution||profile.institution;cur=LS.save({...cur,status:"draft"});assessments=LS.loadAll();toast(t("draftSaved"),"success");R()};
-window.saveFinal=function(){cur.reviewer=cur.reviewer||profile.name;cur.institution=cur.institution||profile.institution;cur=LS.save({...cur,status:"final"});assessments=LS.loadAll();toast(t("finalizedT"),"success");R()};
+window.saveFinal=function(){const c=compute(cur),today=new Date(),limit=new Date(today);limit.setFullYear(limit.getFullYear()+1);if(!cur.nextReviewDate||new Date(cur.nextReviewDate)>limit){toast('Next review date is required and must be within 12 months.',"error");stp=7;R();return}if(cur.dataOrigin==='study'){const missing=PSRData.studyMetadataMissing(cur);if(missing.length){toast(`Study metadata required: ${missing.join(', ')}`,"error");stp=0;R();return}const duplicate=assessments.find(a=>a.id!==cur.id&&a.dataOrigin==='study'&&a.status==='final'&&['studyId','scenarioId','scenarioVersion','raterId'].every(k=>a[k]===cur[k]));if(duplicate){toast(`Duplicate final study assessment blocked: ${duplicate.id}`,"error");return}}const hardPause=(c.pausePoints.reasons||[]).some(r=>r==='risk_group_not_established'||r==='aerosol_uncharacterized');if(hardPause){toast(t("pauseTitle"),"error");stp=5;R();return}if(!c.decisionDocumented){toast(t("decisionRequired"),"error");stp=5;R();return}if(c.escalationConsideration&&!String(cur.justification||"").trim()){toast(t("justRequired"),"error");stp=5;R();return}cur.reviewer=cur.reviewer||profile.name;cur.institution=cur.institution||profile.institution;const reviewRequired=c.escalationDecision==='pending_review'||(c.pausePoints.reasons||[]).includes('institutional_review_required');const forcedWorkflowStatus=reviewRequired&&cur.workflowStatus!=='institutionally_approved'?'institutional_review_pending':(cur.workflowStatus==='draft'?'finalized_by_assessor':cur.workflowStatus);cur=LS.save({...cur,status:"final",workflowStatus:forcedWorkflowStatus});assessments=LS.loadAll();toast(t("finalizedT"),"success");R()};
 
 // ── Bilingual assessment report (enriched TXT + printable PDF) ──
-const REPORT_VERSION="1.4.0";
+const REPORT_VERSION="2.0.0";
 const LVL=(x)=>({low:p("Low","Bajo"),moderate:p("Moderate","Moderado"),high:p("High","Alto")}[x]||p(x||"—",x||"—"));
 const PSRW=(x)=>({Low:p("Low","Bajo"),Moderate:p("Moderate","Moderado"),High:p("High","Alto")}[x]||p(x||"—",x||"—"));
 const FSTAT=(v)=>v==="increase"?p("Unfavorable","Desfavorable"):v==="decrease"?p("Favorable","Favorable"):p("Neutral","Neutro");
-const RG3STAR=p("RG3* (RG3-derived replication-defective agent). BSL-2+ requires documented risk assessment, IBC approval, Class II BSC + double gloves + eye protection, and demonstrated personnel competency; default to BSL-3 if uncertain.","GR3* (agente defectivo en replicación derivado de GR3). NCB-2+ requiere evaluación de riesgos documentada, aprobación del CBS, CSB Clase II + doble guante + protección ocular y competencia demostrada del personal; NCB-3 por defecto si hay incertidumbre.");
-const CIT="Cena-Diez R. An 8-Step Procedure-Specific Risk Framework Enables Reproducible Biosafety Level Assignment Beyond Agent-Based Classification. Frontiers in Bioengineering and Biotechnology [manuscript submitted].";
+const RG3STAR=p("RG3* is the Table 8 operational designation used when one of the published qualifying bases is documented: attenuation/replication incompetence, confirmed absence of airborne transmissibility, or validated inactivation. These bases are recorded separately because they are not biologically synonymous. RG3* does not constitute a separate Risk Group. BSL-2+ requires documented risk assessment, IBC approval, Class II BSC + double gloves + eye protection + respiratory protection, and demonstrated personnel competency; High PSR requires BSL-3 regardless of the qualifying basis.","GR3* es la designación operativa de la Tabla 8 utilizada cuando se documenta una de las bases publicadas: atenuación/incompetencia para la replicación, ausencia confirmada de transmisibilidad aérea o inactivación validada. Estas bases se registran por separado porque no son biológicamente sinónimas. GR3* no constituye un Grupo de Riesgo diferente. NCB-2+ requiere evaluación de riesgos documentada, aprobación del CBS, CSB Clase II + doble guante + protección ocular + protección respiratoria y competencia demostrada del personal; un PSR Alto exige NCB-3 independientemente de la base que sustente GR3*.");
+const CIT="Cena-Diez R. (2026). An 8-step procedure-specific risk framework enables reproducible biosafety level assignment beyond agent-based classification. Frontiers in Bioengineering and Biotechnology 14:1879247. doi:10.3389/fbioe.2026.1879247.";
 const REGBASIS="WHO Laboratory Biosafety Manual 4th ed. (2020); BMBL 6th ed. (2020); CDC Biological Risk Assessment (2024); INSST (2024); EU Directives 2000/54/EC & 2009/41/EC; EN 149:2001+A1:2009; NIOSH 42 CFR Part 84.";
 const DISC=p("This report supports but does not replace the judgement of the institutional biosafety committee.","Este informe apoya pero no sustituye el criterio del comité de bioseguridad institucional.");
 
@@ -590,22 +708,39 @@ function deconBil(bsl){
 
 function reportModel(){
   const c=compute(cur);
-  const erg=c.erg,bsl=c.bsl,mx=c.mx,adj=c.ap,u=c.u,f=c.f,psrs=c.pp;
-  const ctrl=CTRL[bsl]||CTRL["BSL-2"];
+  const erg=cur.riskGroup,table8Notation=c.table8Notation,bsl=c.matrixBsl||"—",mx=c.mx,u=c.u,f=c.f,psrs=c.pp;
+  const profile=c.controlProfile||bsl,ctrl=CTRL[profile]||CTRL["BSL-2"];
   const now=new Date();
   const rid="PSR-"+(cur.reviewDate||now.toISOString().slice(0,10))+"-"+Math.random().toString(36).slice(2,6).toUpperCase();
   const S=[];
 
+  const classSrcLabel=cur.classificationSource==="WHO"?T.classSrcWHO.en+" / "+T.classSrcWHO.es
+    :cur.classificationSource==="BMBL"?T.classSrcBMBL.en+" / "+T.classSrcBMBL.es
+    :cur.classificationSource==="EU_Directive_2000_54_EC"?T.classSrcEU.en+" / "+T.classSrcEU.es
+    :cur.classificationSource==="INSST"?T.classSrcINSST.en+" / "+T.classSrcINSST.es
+    :cur.classificationSource==="Other"?(cur.classificationSourceOther||T.classSrcOther.en+" / "+T.classSrcOther.es)
+    :"—";
   const b1=[{type:"kv",k:p("Biological agent","Agente biológico"),v:cur.agentName||"—"},
             {type:"kv",k:p("Risk Group","Grupo de Riesgo"),v:cur.riskGroup||"—"},
-            {type:"kv",k:p("Effective RG","GR efectivo"),v:erg||"—"}];
+            {type:"kv",k:p("Classification source","Fuente de clasificación"),v:classSrcLabel},
+            {type:"kv",k:p("EU regulatory notation","Notación regulatoria UE"),v:cur.regulatoryNotationDocumented&&cur.regulatoryClassificationSource?cur.regulatoryNotation||"—":"—"},
+            {type:"kv",k:p("Regulatory source","Fuente regulatoria"),v:cur.regulatoryClassificationSource||"—"},
+            {type:"kv",k:p("RG3* Table 8 condition","Condición GR3* de Tabla 8"),v:table8Notation==="RG3*"?"Applicable / Aplicable":"Not established / No establecida"},
+            {type:"kv",k:p("RG3* basis","Base de GR3*"),v:cur.rg3StarBasis||"—"},
+            {type:"kv",k:p("Supporting evidence","Evidencia de apoyo"),v:cur.rg3StarEvidence||"—"}];
   if(cur.isGMO){
     b1.push({type:"kv",k:p("GMO","OMG"),v:"Yes / Sí"});
     b1.push({type:"kv",k:p("Parental organism","Organismo parental"),v:cur.parentalOrg||"—"});
     b1.push({type:"kv",k:p("Genetic modification","Modificación genética"),v:cur.geneticMod||"—"});
     b1.push({type:"kv",k:p("Replication competent","Competente para replicación"),v:cur.replComp==="no"?"No":(cur.replComp==="yes"?"Yes / Sí":"—")});
   } else b1.push({type:"kv",k:p("GMO","OMG"),v:"No"});
-  if(erg==="RG3*")b1.push({type:"note",en:RG3STAR.en,es:RG3STAR.es});
+  if(table8Notation==="RG3*")b1.push({type:"note",en:RG3STAR.en,es:RG3STAR.es});
+  b1.push({type:"sub",k:p("Agent characterization (Supplementary Appendix S1, Section 2)","Caracterización del agente (Apéndice S1, Sección 2)")});
+  b1.push({type:"kv",k:p("Route of transmission","Vía de transmisión"),v:cur.transmissionRoute||"—"});
+  b1.push({type:"kv",k:p("Environmental stability","Estabilidad ambiental"),v:cur.environmentalStability||"—"});
+  b1.push({type:"kv",k:p("Infectious dose","Dosis infecciosa"),v:cur.infectiousDose||"—"});
+  b1.push({type:"kv",k:p("Treatment available","Tratamiento disponible"),v:cur.treatmentAvailable||"—"});
+  b1.push({type:"kv",k:p("Additional hazards","Peligros adicionales"),v:cur.additionalHazards||"—"});
   S.push({title:p("1. Agent & classification","1. Agente y clasificación"),body:b1});
 
   const procs=[];
@@ -613,36 +748,67 @@ function reportModel(){
   S.push({title:p("2. Procedures","2. Procedimientos"),body:[{type:"procs",items:procs.length?procs:null}]});
 
   const factors=MF.map(fc=>{const v=cur.modFactors[fc.id];const d=v==="increase"?fc.inc:v==="decrease"?fc.dec:fc.neu;return{label:fc.l,status:FSTAT(v),desc:d};});
-  const escalated=adj!==mx;
-  const escNote=escalated
-    ? p("Escalation rule applied: ≥2 unfavorable factors → PSR escalated from "+mx+" to "+adj+".","Regla de escalación aplicada: ≥2 factores desfavorables → PSR escalado de "+PSRW(mx).es+" a "+PSRW(adj).es+".")
-    : p("No escalation: fewer than 2 unfavorable factors (or maximum PSR already High).","Sin escalación: menos de 2 factores desfavorables (o PSR máximo ya Alto).");
+  const escNote=c.escalationConsideration
+    ? p("Containment escalation requires professional consideration and written justification; Step 3 PSR remains "+mx+".","La escalación de contención requiere consideración profesional y justificación escrita; el PSR del Paso 3 permanece "+PSRW(mx).es+".")
+    : p("Containment-escalation consideration not triggered.","Consideración de escalación de contención no activada.");
   S.push({title:p("3. PSR determination","3. Determinación del PSR"),body:[
     {type:"kv",k:p("Maximum PSR","PSR máximo"),v:PSRW(mx).en+" / "+PSRW(mx).es},
     {type:"factors",items:factors},
     {type:"kv",k:p("Unfavorable factors","Factores desfavorables"),v:String(u)},
     {type:"kv",k:p("Favorable factors","Factores favorables"),v:String(f)},
     {type:"note",en:escNote.en,es:escNote.es},
-    {type:"kv",k:p("Adjusted PSR","PSR ajustado"),v:PSRW(adj).en+" / "+PSRW(adj).es},
+    {type:"kv",k:p("Step 3 PSR (unchanged)","PSR del Paso 3 (sin cambios)"),v:PSRW(mx).en+" / "+PSRW(mx).es},
+    {type:"sub",k:p("Individual susceptibility (documented separately — affects severity, not exposure probability; excluded from the ≥2 factor threshold)","Susceptibilidad individual (documentada por separado — afecta a la severidad, no a la probabilidad de exposición; excluida del umbral de ≥2 factores)")},
+    {type:"kv",k:p("Factor identified","Factor identificado"),v:cur.individualSusceptibility==="none"?T.indivSuscNone.en+" / "+T.indivSuscNone.es:cur.individualSusceptibility==="immunocompromised"?T.indivSuscImmuno.en+" / "+T.indivSuscImmuno.es:cur.individualSusceptibility==="vaccination_unavailable"?T.indivSuscVaccine.en+" / "+T.indivSuscVaccine.es:(cur.individualSusceptibilityOther||T.indivSuscOther.en+" / "+T.indivSuscOther.es)},
+    ...(cur.individualSusceptibility&&cur.individualSusceptibility!=="none"?[{type:"kv",k:p("Occupational health action","Medida de salud laboral"),v:cur.occupationalHealthAction||"—"}]:[]),
   ]});
 
-  const b4=[{type:"kv",k:p("Matrix cell","Celda de la matriz"),v:(erg||"—")+" × "+PSRW(adj).en+"/"+PSRW(adj).es+" PSR"},
-            {type:"kv",k:p("Assigned BSL","NCB asignado"),v:bsl}];
-  if(erg==="RG3*"&&bsl.indexOf("BSL-2+")>-1)b4.push({type:"note",en:RG3STAR.en,es:RG3STAR.es});
-  S.push({title:p("4. BSL assignment","4. Asignación de NCB"),body:b4});
+  const sevBasisLabel=c.severityBasis==="confirmed_non_airborne_transmission"?T.severityBasisAirborne.en+" / "+T.severityBasisAirborne.es
+    :c.severityBasis==="effective_treatment_or_pep_available"?T.severityBasisTreatment.en+" / "+T.severityBasisTreatment.es
+    :c.severityBasis==="validated_agent_inactivation"?T.severityBasisInactivation.en+" / "+T.severityBasisInactivation.es
+    :c.severityBasis==="other"?(c.severityBasisOther||T.severityBasisOtherOpt.en+" / "+T.severityBasisOtherOpt.es)
+    :"—";
+  const b3b=[
+    {type:"kv",k:p("Baseline severity (Risk Group)","Severidad basal (Grupo de Riesgo)"),v:c.baselineSeverity||"—"},
+    {type:"kv",k:p("Effective severity","Severidad efectiva"),v:c.effectiveSeverity||"—"},
+    {type:"kv",k:p("Severity modification applied","Modificación de severidad aplicada"),v:c.severityModification?"Yes / Sí":"No"},
+  ];
+  if(c.severityModification){
+    b3b.push({type:"kv",k:p("Severity-modification basis","Base de modificación de la severidad"),v:sevBasisLabel});
+    b3b.push({type:"kv",k:p("Severity-modification justification","Justificación de la modificación de severidad"),v:c.severityJustification||"—"});
+    b3b.push({type:"kv",k:p("Severity evidence / reference","Evidencia / referencia de severidad"),v:c.severityEvidence||"—"});
+  }
+  b3b.push({type:"kv",k:p("Initial PSR-based likelihood range","Rango inicial de probabilidad según PSR"),v:(c.baseLikelihoodRange||[]).join(" – ")||"—"});
+  b3b.push({type:"kv",k:p("Applicable likelihood range","Rango de probabilidad aplicable"),v:(c.likelihoodRange||[]).join(" – ")||"—"});
+  if(c.likelihoodShiftApplied)b3b.push({type:"note",en:"≥2 unfavorable procedural factors shift the likelihood range one category upward (Table 5).",es:"≥2 factores procedimentales desfavorables desplazan el rango de probabilidad una categoría hacia arriba (Tabla 5)."});
+  b3b.push({type:"kv",k:p("Selected likelihood","Probabilidad seleccionada"),v:c.selectedLikelihood||"—"});
+  if((c.likelihoodRange||[]).length>1)b3b.push({type:"kv",k:p("Likelihood-selection justification","Justificación de la probabilidad seleccionada"),v:c.likelihoodJustification||"—"});
+  b3b.push({type:"kv",k:p("Overall risk level (Severity × Likelihood)","Nivel de riesgo global (Severidad × Probabilidad)"),v:c.overallRiskLevel||"—"});
+  S.push({title:p("4. Likelihood × Severity integration","4. Integración Probabilidad × Severidad"),body:b3b});
 
-  S.push({title:p("5. Recommended controls","5. Controles recomendados"),body:[
+  const b4=[{type:"kv",k:p("Table 8 notation applied","Notación de Tabla 8 aplicada"),v:table8Notation||"—"},
+            {type:"kv",k:p("Matrix cell","Celda de la matriz"),v:(table8Notation||"—")+" × "+PSRW(mx).en+"/"+PSRW(mx).es+" PSR"},
+            {type:"kv",k:p("Deterministic matrix BSL","NCB matricial determinista"),v:bsl},
+            {type:"kv",k:p("Table 8 footnote condition","Condición de nota al pie de la Tabla 8"),v:c.matrixCondition||"—"},
+            {type:"kv",k:p("Final proposed BSL","NCB final propuesto"),v:c.finalProposedBsl||"—"},
+            {type:"kv",k:p("BSL override/branch selection","Selección de rama/excepción de NCB"),v:c.bslOverride?"Yes / Sí":"No"},
+            {type:"kv",k:p("Professional decision reason","Motivo de la decisión profesional"),v:cur.bslOverrideReason||"—"},
+            {type:"kv",k:p("Institutional status","Estado institucional"),v:cur.bsl2InstitutionalStatus||"Not recorded / No registrado"}];
+  if(table8Notation==="RG3*"&&bsl.indexOf("BSL-2+")>-1)b4.push({type:"note",en:RG3STAR.en,es:RG3STAR.es});
+  S.push({title:p("5. BSL assignment","5. Asignación de NCB"),body:b4});
+
+  S.push({title:p("6. Recommended controls","6. Controles recomendados"),body:[
     {type:"sub",k:p("Engineering controls","Controles de ingeniería")},{type:"list",items:(ctrl.e||[])},
     {type:"sub",k:p("Personal protective equipment (PPE)","Equipo de protección individual (EPI)")},{type:"list",items:(ctrl.p||[])},
     {type:"note",en:T.respNote.en,es:T.respNote.es},
     {type:"sub",k:p("Administrative controls","Controles administrativos")},{type:"list",items:(ctrl.a||[])},
-    {type:"sub",k:p("Decontamination & waste inactivation","Descontaminación e inactivación de residuos")},{type:"list",items:deconBil(bsl)},
+    {type:"sub",k:p("Decontamination & waste inactivation","Descontaminación e inactivación de residuos")},{type:"list",items:deconBil(profile)},
     ...(cur.addCtrl?[{type:"sub",k:p("Additional controls","Controles adicionales")},{type:"text",v:cur.addCtrl}]:[]),
   ]});
 
-  S.push({title:p("6. Justification","6. Justificación"),body:[{type:"text",v:cur.justification||"—"}]});
+  S.push({title:p("7. Justification","7. Justificación"),body:[{type:"text",v:cur.justification||"—"}]});
 
-  S.push({title:p("7. Documentation & review","7. Documentación y revisión"),body:[
+  S.push({title:p("8. Documentation & review","8. Documentación y revisión"),body:[
     {type:"kv",k:p("Assessor","Evaluador"),v:cur.reviewer||"—"},
     {type:"kv",k:p("Institution","Institución"),v:cur.institution||"—"},
     {type:"kv",k:p("Date","Fecha"),v:cur.reviewDate||"—"},
@@ -709,11 +875,19 @@ function reportHTML(M){
 }
 
 window.exportTXT=function(){
+  const c=compute(cur);
+  if(c.pausePoints.paused){toast(t("pauseTitle"),"error");stp=5;R();return}
+  if(c.escalationConsideration&&!String(cur.justification||"").trim()){toast(t("justRequired"),"error");stp=5;R();return}
+  if(c.requiresRg3LowBsl2Conditions&&!c.rg3LowConditionsMet){toast(t("bsl2ConditionsRequired"),"error");stp=5;R();return}
   const r=reportTXT(reportModel());
   const b=new Blob([r],{type:"text/plain;charset=utf-8"});const a=document.createElement("a");a.href=URL.createObjectURL(b);
   a.download=`PSR_${(cur.agentName||"report").replace(/\s+/g,"_").slice(0,40)}_${cur.reviewDate||"undated"}.txt`;a.click();URL.revokeObjectURL(a.href)
 };
 window.printReport=function(){
+  const c=compute(cur);
+  if(c.pausePoints.paused){toast(t("pauseTitle"),"error");stp=5;R();return}
+  if(c.escalationConsideration&&!String(cur.justification||"").trim()){toast(t("justRequired"),"error");stp=5;R();return}
+  if(c.requiresRg3LowBsl2Conditions&&!c.rg3LowConditionsMet){toast(t("bsl2ConditionsRequired"),"error");stp=5;R();return}
   const html=reportHTML(reportModel());
   const w=window.open("","_blank");
   if(!w){toast(lang==="es"?"Permita las ventanas emergentes para el PDF":"Allow pop-ups to generate the PDF","error");return;}
@@ -721,10 +895,12 @@ window.printReport=function(){
 };
 
 window.exportCSV=function(){
-  let csv="ID,Agent,RiskGroup,EffectiveRG,MaxPSR,AdjustedPSR,BSL,Unfavorable,Favorable,Status,Reviewer,Institution,Date\n";
-  assessments.forEach(a=>{const c=compute(a);csv+=`"${a.id}","${a.agentName}","${a.riskGroup}","${c.erg}","${c.mx}","${c.ap}","${c.bsl}",${c.u},${c.f},"${a.status}","${a.reviewer}","${a.institution}","${a.reviewDate}"\n`});
+  const columns=["id","agentName","riskGroup","table8Notation","psrLevel","bsl","status","reviewer","institution","reviewDate"];
+  const rows=assessments.map(a=>{const c=compute(a);return{...a,table8Notation:c.table8Notation,psrLevel:c.psrLevel,bsl:c.bsl}});const csv=PSRData.toCSV(rows,columns);
   const b=new Blob([csv],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=`PSR_Assessments_${new Date().toISOString().slice(0,10)}.csv`;a.click();toast(t("csvExported"),"success")
 };
+window.exportJSON=function(){const records=assessments.map(a=>PSRData.toCanonical(a,compute(a)));const b=new Blob([PSRData.exportJSON(records)],{type:"application/json"});const el=document.createElement("a");el.href=URL.createObjectURL(b);el.download=`PSR_Canonical_${new Date().toISOString().slice(0,10)}.json`;el.click();URL.revokeObjectURL(el.href)};
+window.importJSON=function(input){const f=input.files[0];if(!f)return;const reader=new FileReader();reader.onload=e=>{try{const records=PSRData.importJSON(e.target.result);let differences=0;records.forEach(record=>{const flat=PSRData.toFlat(record),current=compute(flat);differences+=PSRData.compareCalculated(record.calculatedResults,{...current,finalProposedBsl:flat.finalProposedBsl}).length;localStorage.setItem(`psr:${record.assessmentId}`,JSON.stringify(record));const idx=JSON.parse(localStorage.getItem("psr:index")||"[]");if(!idx.includes(record.assessmentId)){idx.push(record.assessmentId);localStorage.setItem("psr:index",JSON.stringify(idx))}});assessments=LS.loadAll();R();if(differences)alert(`${differences} stored historical result(s) differ from the current recalculation. Stored results were preserved.`)}catch(err){alert(err.message)}finally{input.value=""}};reader.readAsText(f)};
 
 R();
 </script>

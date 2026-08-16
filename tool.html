@@ -87,6 +87,9 @@ input[type=text]:focus,textarea:focus{outline:none;border-color:var(--accent)}
 <button class="lang-toggle" onclick="toggleLang()" id="langBtn">ES</button>
 <div class="wrap" id="app"></div>
 
+<script src="psr-core.js"></script>
+<script src="psr-data.js"></script>
+<script src="psr-a11y.js"></script>
 <script>
 let lang=(localStorage.getItem('psr:lang')||'en'),step=0;
 const T={
@@ -97,6 +100,20 @@ const T={
   prev:{en:'Previous',es:'Anterior'},next:{en:'Next step',es:'Siguiente paso'},complete:{en:'Complete',es:'Completado'},
   agentName:{en:'Biological agent name',es:'Nombre del agente biológico'},
   agentPh:{en:'e.g., HIV-1 third-generation lentiviral vector',es:'ej., Vector lentiviral de tercera generación basado en HIV-1'},
+  classificationSourceLabel:{en:'Classification source',es:'Fuente de clasificación'},
+  classificationSourceSelect:{en:'— select source —',es:'— seleccione fuente —'},
+  classSrcWHO:{en:'WHO Laboratory Biosafety Manual',es:'Manual de Bioseguridad de Laboratorio de la OMS'},
+  classSrcBMBL:{en:'BMBL (CDC/NIH)',es:'BMBL (CDC/NIH)'},
+  classSrcEU:{en:'EU Directive 2000/54/EC',es:'Directiva UE 2000/54/CE'},
+  classSrcINSST:{en:'INSST',es:'INSST'},
+  classSrcOther:{en:'Other (specify)',es:'Otra (especifique)'},
+  classSrcOtherLabel:{en:'Specify other source',es:'Especifique otra fuente'},
+  agentTraitsTitle:{en:'Agent characterization (Supplementary Appendix S1, Section 2)',es:'Caracterización del agente (Apéndice S1, Sección 2)'},
+  transmissionRoute:{en:'Route of transmission',es:'Vía de transmisión'},
+  environmentalStability:{en:'Environmental stability',es:'Estabilidad ambiental'},
+  infectiousDose:{en:'Infectious dose',es:'Dosis infecciosa'},
+  treatmentAvailable:{en:'Treatment available',es:'Tratamiento disponible'},
+  additionalHazards:{en:'Additional hazards',es:'Peligros adicionales'},
   rgLabel:{en:'Risk Group classification',es:'Clasificación por Grupo de Riesgo'},
   rg1d:{en:'No/low individual or community risk',es:'Sin/bajo riesgo individual o comunitario'},
   rg2d:{en:'Moderate individual risk, low community risk',es:'Riesgo individual moderado, bajo comunitario'},
@@ -109,14 +126,31 @@ const T={
   yes:{en:'Yes',es:'Sí'},no:{en:'No',es:'No'},
   replDefective:{en:'Replication-defective',es:'Defectivo para replicación'},
   replCompetent:{en:'Replication-competent',es:'Competente para replicación'},
-  rg3star:{en:'Replication-defective GMO derived from RG3: classified as RG3* (attenuated). BSL-2+ may be permissible under documented conditions.',
-           es:'OMG defectivo para replicación derivado de GR3: clasificado como GR3* (atenuado). NCB-2+ puede ser permisible bajo condiciones documentadas.'},
+  rg3star:{en:'RG3* is a Table 8 operational designation, not a separate Risk Group. It applies only when one of the published qualifying bases and supporting evidence are documented. The qualifying basis is recorded separately because validated inactivation and confirmed absence of airborne transmissibility are not biologically synonymous with attenuation. High PSR always requires BSL-3.',
+           es:'GR3* es una designación operativa de la Tabla 8, no un Grupo de Riesgo separado. Solo se aplica cuando se documentan una de las bases publicadas y la evidencia correspondiente. La base se registra por separado porque la inactivación validada y la ausencia confirmada de transmisibilidad aérea no son biológicamente sinónimos de atenuación. Un PSR Alto siempre exige NCB-3.'},
+  rg3RegLabel:{en:'EU regulatory notation (where applicable)',es:'Notación regulatoria UE (cuando proceda)'},
+  rg3RegCheck:{en:'RG3** documented in an authoritative regulatory classification',es:'GR3** documentado en una clasificación regulatoria autorizada'},
+  rg3RegSource:{en:'Authoritative regulatory classification source',es:'Fuente autorizada de clasificación regulatoria'},
+  rg3RegExplain:{en:'RG3** is an EU regulatory notation for certain agents that remain in Group 3. It is not a separate Risk Group and does not automatically establish RG3*.',es:'GR3** es una notación regulatoria de la UE para ciertos agentes que permanecen en el Grupo 3. No es un Grupo de Riesgo separado ni establece automáticamente GR3*.'},
+  rg3StarLabel:{en:'RG3* operational designation (Table 8)',es:'Designación operativa GR3* (Tabla 8)'},
+  rg3StarNone:{en:'Not established',es:'No establecida'},
+  rg3StarRepl:{en:'Replication incompetence',es:'Incompetencia para la replicación'},
+  rg3StarAir:{en:'Confirmed absence of airborne transmissibility',es:'Ausencia confirmada de transmisibilidad aérea'},
+  rg3StarInactive:{en:'Validated inactivation',es:'Inactivación validada'},
+  rg3StarEvidence:{en:'Evidence / reference supporting the selected RG3* basis (required)',es:'Evidencia / referencia que sustenta la base GR3* seleccionada (obligatoria)'},
   procName:{en:'Procedure name',es:'Nombre del procedimiento'},
   procPh:{en:'e.g., Ultracentrifugation (25,000 rpm, 2h)',es:'ej., Ultracentrifugación (25.000 rpm, 2h)'},
   aerosol:{en:'Aerosol generation potential',es:'Potencial de generación de aerosoles'},
   aeroLow:{en:'Minimal',es:'Mínimo'},aeroMod:{en:'Moderate',es:'Moderado'},aeroHigh:{en:'High',es:'Alto'},
+  aeroUnknown:{en:'Cannot be characterized — expert consultation required',es:'No puede caracterizarse — se requiere consulta experta'},
   volume:{en:'Working volume',es:'Volumen de trabajo'},
+  volumeValue:{en:'Observed/estimated volume (optional)',es:'Volumen observado/estimado (opcional)'},
+  volumeUnit:{en:'Volume unit',es:'Unidad de volumen'},
   conc:{en:'Concentration',es:'Concentración'},
+  concValue:{en:'Observed/estimated concentration (optional)',es:'Concentración observada/estimada (opcional)'},
+  concUnit:{en:'Concentration unit',es:'Unidad de concentración'},
+  quantitativeNote:{en:'Quantitative values are recorded for traceability. The selected PSR category remains authoritative in this validation release.',es:'Los valores cuantitativos se registran para trazabilidad. La categoría PSR seleccionada sigue siendo la referencia en esta versión de validación.'},
+  categoryMismatch:{en:'Value/category mismatch — review the selected category.',es:'Discordancia valor/categoría — revise la categoría seleccionada.'},
   addProc:{en:'+ Add another procedure',es:'+ Añadir otro procedimiento'},
   remove:{en:'Remove',es:'Eliminar'},
   procedure:{en:'Procedure',es:'Procedimiento'},
@@ -125,16 +159,36 @@ const T={
   incomplete:{en:'Incomplete data',es:'Datos incompletos'},
   favorable:{en:'Favorable',es:'Favorable'},neutral:{en:'Neutral',es:'Neutro'},unfavorable:{en:'Unfavorable',es:'Desfavorable'},
   unfavCount:{en:'Unfavorable',es:'Desfavorables'},favCount:{en:'Favorable',es:'Favorables'},
-  escalation:{en:'≥2 unfavorable factors: BSL escalation triggered',es:'≥2 factores desfavorables: escalación de NCB activada'},
+  escalation:{en:'≥2 unfavorable factors: containment escalation requires professional consideration and written justification; Step 3 PSR is unchanged.',es:'≥2 factores desfavorables: la escalación de contención requiere consideración profesional y justificación escrita; el PSR del Paso 3 no cambia.'},
+  indivSuscTitle:{en:'Individual susceptibility',es:'Susceptibilidad individual'},
+  indivSuscNote:{en:'Individual susceptibility affects the severity of consequences, not the probability of exposure. It is documented separately and never counts toward the ≥2 unfavorable procedural factors escalation threshold. Address through occupational health surveillance.',es:'La susceptibilidad individual afecta a la severidad de las consecuencias, no a la probabilidad de exposición. Se documenta por separado y nunca cuenta para el umbral de escalación de ≥2 factores procedimentales desfavorables. Se debe abordar mediante vigilancia de salud laboral.'},
+  indivSuscNone:{en:'None identified',es:'No se identifica ningún factor'},
+  indivSuscImmuno:{en:'Immunocompromised personnel',es:'Personal inmunocomprometido'},
+  indivSuscVaccine:{en:'Vaccination unavailable',es:'Vacunación no disponible'},
+  indivSuscOther:{en:'Other',es:'Otro'},
+  indivSuscOtherLabel:{en:'Specify other factor',es:'Especifique otro factor'},
+  occHealthAction:{en:'Occupational health action',es:'Medida de salud laboral'},
   integResult:{en:'Integration result',es:'Resultado de la integración'},
+  baselineSeverity:{en:'Baseline severity',es:'Severidad basal'},effectiveSeverity:{en:'Effective severity',es:'Severidad efectiva'},
+  severityModify:{en:'Apply a documented modification to effective severity',es:'Aplicar una modificación documentada de la severidad efectiva'},severityBasis:{en:'Severity-modification basis',es:'Base de modificación de la severidad'},severityJust:{en:'Severity-modification justification',es:'Justificación de la modificación de severidad'},severityEvidence:{en:'Severity evidence / reference',es:'Evidencia / referencia de severidad'},
+  severityBasisSelect:{en:'— select basis —',es:'— seleccione base —'},
+  severityBasisAirborne:{en:'Confirmed non-airborne transmission route',es:'Vía de transmisión no aérea confirmada'},
+  severityBasisTreatment:{en:'Effective treatment or PEP available',es:'Tratamiento o profilaxis postexposición eficaz disponible'},
+  severityBasisInactivation:{en:'Validated agent inactivation',es:'Inactivación del agente validada'},
+  severityBasisOtherOpt:{en:'Other (specify)',es:'Otra (especifique)'},
+  severityBasisOtherLabel:{en:'Specify other basis',es:'Especifique otra base'},
+  severityNotMoreSevere:{en:'Effective severity cannot exceed the Risk Group baseline. Increased individual risk (e.g. immunocompromised personnel) is addressed in the Individual susceptibility block of Step 4, not here.',es:'La severidad efectiva no puede superar la severidad base del Grupo de Riesgo. El aumento de riesgo individual (p. ej. personal inmunocomprometido) se aborda en el bloque de Susceptibilidad individual del Paso 4, no aquí.'},
+  likelihoodRange:{en:'Applicable likelihood range',es:'Rango de probabilidad aplicable'},baseLikelihoodRange:{en:'Initial PSR range',es:'Rango inicial según PSR'},likelihoodShift:{en:'Adjustment for ≥2 unfavorable factors: +1 category',es:'Ajuste por ≥2 factores desfavorables: +1 categoría'},singleLikelihood:{en:'The upward adjustment reaches the top of the scale; this is the only valid likelihood.',es:'El ajuste ascendente alcanza el máximo de la escala; esta es la única probabilidad válida.'},selectedLikelihood:{en:'Selected likelihood',es:'Probabilidad seleccionada'},likelihoodJust:{en:'Professional justification for likelihood selection',es:'Justificación profesional de la probabilidad seleccionada'},selectRequired:{en:'Select and justify a likelihood within the applicable range.',es:'Seleccione y justifique una probabilidad dentro del rango aplicable.'},overallRisk:{en:'Overall risk level',es:'Nivel de riesgo global'},
   assignedBSL:{en:'Assigned biosafety level',es:'Nivel de contención biológica asignado'},
+  matrixBsl:{en:'Deterministic Table 8 output',es:'Salida determinista de la Tabla 8'},finalBsl:{en:'Final proposed BSL (professional decision)',es:'NCB final propuesto (decisión profesional)'},overrideReason:{en:'Professional justification for selecting within/overriding the matrix branch',es:'Justificación profesional para seleccionar dentro de la rama o apartarse de la matriz'},decisionRequired:{en:'Select and document the final professional containment proposal.',es:'Seleccione y documente la propuesta profesional final de contención.'},
+  pauseTitle:{en:'PAUSE POINT — Expert/IBC review required',es:'PUNTO DE PAUSA — Se requiere revisión experta/CBS'},pauseRG:{en:'Risk Group is not established.',es:'El Grupo de Riesgo no está establecido.'},pauseAerosol:{en:'Aerosol potential cannot be characterized.',es:'El potencial de aerosoles no puede caracterizarse.'},pauseReview:{en:'BSL-3/4 matrix output or Very High/Critical overall risk requires full institutional review and regulatory review/notification where applicable.',es:'Una salida matricial NCB-3/4 o riesgo global Muy Alto/Crítico requiere revisión institucional completa y revisión/notificación regulatoria cuando proceda.'},
+  bsl2RiskAssessment:{en:'Documented risk assessment with explicit justification',es:'Evaluación de riesgos documentada con justificación explícita'},bsl2Status:{en:'Institutional biosafety status',es:'Estado institucional de bioseguridad'},bsl2Controls:{en:'Enhanced containment controls documented',es:'Controles de contención reforzada documentados'},bsl2Competency:{en:'Procedure-specific operator competency documented',es:'Competencia del operador específica del procedimiento documentada'},
   justification:{en:'Justification narrative',es:'Narrativa de justificación'},
   justPh:{en:'Provide the written rationale for this BSL assignment...',es:'Proporcione la justificación escrita para esta asignación de NCB...'},
-  rgOverrideLabel:{en:'Effective Risk Group classification',es:'Clasificación de Grupo de Riesgo efectivo'},
-  rgOverrideNote:{en:'The system auto-classifies this as RG3* (replication-defective GMO from RG3). If institutional evaluation supports reclassification to RG2 based on documented attenuation, select RG2 below. This requires written justification in Step 8.',
-                  es:'El sistema auto-clasifica como GR3* (OMG defectivo para replicación derivado de GR3). Si la evaluación institucional respalda la reclasificación a GR2 basada en atenuación documentada, seleccione GR2 abajo. Requiere justificación escrita en el Paso 8.'},
-  rg3starCond:{en:'BSL-2+ conditions for RG3* agents: (1) documented risk assessment, (2) IBC approval, (3) mandatory Class II BSC + double gloves + eye protection, (4) demonstrated personnel competency. Default to BSL-3 if uncertain.',
-               es:'Condiciones de NCB-2+ para agentes GR3*: (1) evaluación de riesgos documentada, (2) aprobación del CBS, (3) CSB Clase II obligatoria + doble guante + protección ocular, (4) competencia del personal demostrada. NCB-3 por defecto si hay incertidumbre.'},
+  justRequired:{en:'Written professional justification is required when containment escalation consideration is triggered.',es:'Se requiere justificación profesional escrita cuando se activa la consideración de escalación de la contención.'},
+  bsl2ConditionsRequired:{en:'Cannot finalize/export: the final proposed BSL is BSL-2+, and Table 8 requires ALL FOUR conditions to be simultaneously documented (risk assessment, institutional status beyond "conditions pending", enhanced controls, operator competency). Complete them in Step 6, or change the final BSL if they are not actually met.',es:'No se puede finalizar/exportar: el NCB final propuesto es NCB-2+, y la Tabla 8 exige que las CUATRO condiciones estén documentadas simultáneamente (evaluación de riesgo, estado institucional más allá de "condiciones pendientes", controles reforzados, competencia del operador). Complételas en el Paso 6, o cambie el NCB final si realmente no se cumplen.'},
+  rg3starCond:{en:'BSL-2+ conditions when the RG3* Table 8 condition applies: (1) documented risk assessment, (2) IBC approval, (3) mandatory Class II BSC + double gloves + eye protection + respiratory protection, (4) demonstrated personnel competency. Default to BSL-3 if uncertain.',
+               es:'Condiciones para NCB-2+ cuando resulta aplicable la condición GR3* de la Tabla 8: (1) evaluación de riesgos documentada, (2) aprobación del CBS, (3) CSB Clase II obligatoria + doble guante + protección ocular + protección respiratoria, (4) competencia del personal demostrada. NCB-3 por defecto si hay incertidumbre.'},
   engControls:{en:'Engineering controls',es:'Controles de ingeniería'},
   ppeControls:{en:'Personal protective equipment (PPE)',es:'Equipos de protección individual (EPI)'},
   adminControls:{en:'Administrative controls',es:'Controles administrativos'},
@@ -151,7 +205,7 @@ const T={
   triggersPh:{en:'e.g., Agent change, procedure modification, incident, annual review...',es:'ej., Cambio de agente, modificación del procedimiento, incidente, revisión anual...'},
   summary:{en:'Assessment summary',es:'Resumen de la evaluación'},
   agent:{en:'Agent',es:'Agente'},riskGroup:{en:'Risk Group',es:'Grupo de Riesgo'},
-  adjustedPSR:{en:'Adjusted PSR',es:'PSR ajustado'},bslAssigned:{en:'BSL assigned',es:'NCB asignado'},
+  psrLevel:{en:'Step 3 PSR',es:'PSR del Paso 3'},bslAssigned:{en:'BSL assigned',es:'NCB asignado'},
   unfavFactors:{en:'Unfavorable factors',es:'Factores desfavorables'},
   procsEval:{en:'Procedures evaluated',es:'Procedimientos evaluados'},
   exportPDF:{en:'Export assessment report (PDF)',es:'Exportar informe de evaluación (PDF)'},
@@ -160,13 +214,36 @@ const T={
   step1sub:{en:'Determine Risk Group (RG1–4). For GMOs, evaluate parental organism + genetic modification.',es:'Determine el Grupo de Riesgo (GR1–4). Para OMGs, evalúe organismo parental + modificación genética.'},
   step2sub:{en:'List all technical procedures; identify aerosol-generating steps; estimate volumes and concentrations.',es:'Liste todos los procedimientos técnicos; identifique pasos generadores de aerosoles; estime volúmenes y concentraciones.'},
   step3sub:{en:'Each procedure is assigned Low, Moderate, or High PSR based on the classification matrix.',es:'Cada procedimiento se clasifica como PSR Bajo, Moderado o Alto según la matriz de clasificación.'},
-  step4sub:{en:'Assess procedural modulators. ≥2 unfavorable factors triggers BSL escalation.',es:'Evalúe los moduladores procedimentales. ≥2 factores desfavorables activan escalación de NCB.'},
+  step4sub:{en:'Assess procedural modulators. ≥2 unfavorable factors trigger professional consideration of containment escalation without changing Step 3 PSR.',es:'Evalúe los moduladores procedimentales. ≥2 factores desfavorables requieren consideración profesional de escalación de la contención sin cambiar el PSR del Paso 3.'},
   psrLikelihood:{en:'PSR → Likelihood guidance: Low PSR = Rare–Possible; Moderate PSR = Possible–Likely; High PSR = Likely–Very Likely. With ≥2 unfavorable factors, shift one category up.',
                  es:'PSR → Probabilidad orientativa: PSR Bajo = Raro–Posible; PSR Moderado = Posible–Probable; PSR Alto = Probable–Muy probable. Con ≥2 factores desfavorables, desplace una categoría arriba.'},
-  step5sub:{en:'Risk = Hazard (agent) × Likelihood (procedure). Integrate agent RG with adjusted PSR.',es:'Riesgo = Peligrosidad (agente) × Probabilidad (procedimiento). Integre el GR del agente con el PSR ajustado.'},
+  step5sub:{en:'Risk = Hazard (agent) × Likelihood (procedure). Modulating factors inform likelihood and escalation consideration without changing Step 3 PSR.',es:'Riesgo = Peligrosidad (agente) × Probabilidad (procedimiento). Los factores moduladores informan la probabilidad y la consideración de escalación sin cambiar el PSR del Paso 3.'},
   step6sub:{en:'Apply the Agent–PSR combination matrix to assign biosafety level.',es:'Aplique la matriz combinada Agente–PSR para asignar el nivel de contención biológica.'},
   step7sub:{en:'Specify engineering controls, PPE, administrative measures, and training.',es:'Especifique controles de ingeniería, EPIs, medidas administrativas y formación.'},
   step8sub:{en:'Document assessment; obtain biosafety committee approval; establish review triggers.',es:'Documente la evaluación; obtenga la aprobación del comité de bioseguridad; establezca desencadenantes de revisión.'},
+  nextReviewDate:{en:'Next review date (≤12 months)',es:'Próxima fecha de revisión (≤12 meses)'},
+  workflowStatus:{en:'Workflow status',es:'Estado del flujo'},
+  wfDraft:{en:'Draft',es:'Borrador'},
+  wfFinalized:{en:'Finalized by assessor',es:'Finalizado por el evaluador'},
+  wfBso:{en:'BSO reviewed',es:'Revisado por el Responsable de Bioseguridad'},
+  wfInstPending:{en:'Institutional/IBC review pending',es:'Revisión institucional/CBS pendiente'},
+  wfApproved:{en:'Institutionally approved — user-recorded',es:'Aprobado institucionalmente — registrado por el usuario'},
+  wfRejected:{en:'Rejected / revision requested',es:'Rechazado / revisión solicitada'},
+  wfSuperseded:{en:'Superseded',es:'Sustituido'},
+  workflowNote:{en:'The software records this user statement; it does not grant approval.',es:'El programa registra esta declaración del usuario; no otorga la aprobación.'},
+  approvalReference:{en:'Approval reference',es:'Referencia de aprobación'},
+  approvingBody:{en:'Approving body',es:'Órgano que aprueba'},
+  approvalDate:{en:'Approval date',es:'Fecha de aprobación'},
+  escalationDecisionLabel:{en:'Escalation decision',es:'Decisión de escalada'},
+  escalationRationaleLabel:{en:'Escalation rationale',es:'Justificación de escalada'},
+  escRetained:{en:'Retained',es:'Mantener'},
+  escEscalated:{en:'Escalated',es:'Escalar'},
+  escPending:{en:'Pending review',es:'Pendiente de revisión'},
+  bsl2CondPending:{en:'Conditions pending',es:'Condiciones pendientes'},
+  bsl2CondEligible:{en:'Eligible subject to institutional approval',es:'Elegible sujeto a aprobación institucional'},
+  bsl2CondApproved:{en:'User-recorded as institutionally approved',es:'Registrado por el usuario como aprobado institucionalmente'},
+  table8NoteRg1Mod:{en:'Table 8 *: standard BSL-1 practices; enhanced documentation is recommended when working at scale.',es:'Tabla 8 *: prácticas NCB-1 estándar; se recomienda documentación reforzada cuando se trabaje a escala.'},
+  table8NoteRg1High:{en:'Table 8 **: BSL-2 practices apply only to the high-aerosol-generating step; all other steps remain BSL-1.',es:'Tabla 8 **: las prácticas NCB-2 se aplican solo al paso generador de aerosoles de alto riesgo; los demás pasos permanecen en NCB-1.'},
 };
 const t=(k)=>T[k]?.[lang]||k;
 
@@ -182,15 +259,15 @@ const MOD_FACTORS=[
   {id:'incidents',en:'Incident history',es:'Historial incid.',inc:{en:'Previous exposures',es:'Exposiciones previas'},dec:{en:'No incidents',es:'Sin incidentes'},neu:{en:'No data',es:'Sin datos'}},
 ];
 
-const BSL_MATRIX={RG1:{Low:'BSL-1',Moderate:'BSL-1*',High:'BSL-2**'},RG2:{Low:'BSL-2',Moderate:'BSL-2',High:'BSL-2+'},RG3:{Low:'BSL-2+',Moderate:'BSL-3',High:'BSL-3'},'RG3*':{Low:'BSL-2+',Moderate:'BSL-2+/BSL-3',High:'BSL-3'},RG4:{Low:'BSL-4',Moderate:'BSL-4',High:'BSL-4'}};
+const BSL_MATRIX=PSRCore.TABLE8;
 
 const p=(en,es)=>({en,es});
 const CONTROLS={
   'BSL-1':{eng:[p('Open bench','Mesa de trabajo abierta'),p('Handwashing sink','Lavabo para lavado de manos')],ppe:[p('Lab coat','Bata de laboratorio'),p('Gloves','Guantes'),p('Eye protection if splash','Protección ocular si hay salpicaduras')],admin:[p('Standard microbiological practices','Prácticas microbiológicas estándar'),p('Biohazard signage','Señalización de riesgo biológico')],decon:[p('70% ethanol or quaternary ammonium for surfaces','Etanol al 70% o amonio cuaternario para superficies'),p('Autoclave or validated chemical inactivation of waste before disposal','Autoclave o inactivación química validada de los residuos antes de su eliminación')]},
-  'BSL-1*':{eng:[p('BSC recommended for aerosol steps','CSB recomendada para pasos con aerosoles'),p('Contained sonicator','Sonicador confinado')],ppe:[p('Lab coat','Bata de laboratorio'),p('Gloves','Guantes'),p('Eye protection','Protección ocular'),p('N95 / FFP2 for aerosol','N95 / FFP2 para aerosoles')],admin:[p('Aerosol hazard training','Formación en riesgo por aerosoles'),p('SOPs for high-aerosol procedures','PNT para procedimientos de alta generación de aerosoles')],decon:[p('70% ethanol or quaternary ammonium for surfaces','Etanol al 70% o amonio cuaternario para superficies'),p('Autoclave aerosol-contaminated waste before disposal','Autoclavar los residuos contaminados por aerosoles antes de su eliminación')]},
+  'RG1_MODERATE':{eng:[p('Open bench','Mesa de trabajo abierta'),p('Handwashing sink','Lavabo para lavado de manos')],ppe:[p('Lab coat','Bata de laboratorio'),p('Gloves','Guantes'),p('Eye protection if splash','Protección ocular si hay salpicaduras')],admin:[p('Standard BSL-1 microbiological practices','Prácticas microbiológicas estándar de NCB-1'),p('Enhanced documentation recommended when working at scale','Documentación reforzada recomendada cuando se trabaje a escala')],decon:[p('70% ethanol or quaternary ammonium for surfaces','Etanol al 70% o amonio cuaternario para superficies'),p('Autoclave or validated chemical inactivation of waste before disposal','Autoclave o inactivación química validada de los residuos antes de su eliminación')]},
   'BSL-2':{eng:[p('Class II BSC for aerosol procedures','CSB Clase II para procedimientos con aerosoles'),p('Autoclave available','Autoclave disponible')],ppe:[p('Lab coat','Bata de laboratorio'),p('Gloves','Guantes'),p('Eye protection','Protección ocular'),p('Face shield if splash','Pantalla facial si hay salpicaduras')],admin:[p('Restricted access','Acceso restringido'),p('Biohazard signage','Señalización de riesgo biológico'),p('SOPs','PNT'),p('Spill response','Respuesta ante derrames')],decon:[p('Validated surface disinfectant matched to agent (70% ethanol / quaternary ammonium for enveloped agents)','Desinfectante de superficies validado y adecuado al agente (etanol al 70% / amonio cuaternario para agentes envueltos)'),p('Spill kit with appropriate disinfectant','Kit de derrames con desinfectante adecuado'),p('Autoclave or validated chemical treatment of all biological waste','Autoclave o tratamiento químico validado de todos los residuos biológicos')]},
   'BSL-2+':{eng:[p('Mandatory Class II BSC all procedures','CSB Clase II obligatoria en todos los procedimientos'),p('Sealed centrifuge buckets','Cubetas de centrífuga selladas'),p('Dedicated lab area recommended','Área de laboratorio dedicada recomendada')],ppe:[p('Double gloves','Doble guante'),p('Eye protection (goggles/face shield)','Protección ocular (gafas/pantalla facial)'),p('Lab coat or disposable gown','Bata de laboratorio o bata desechable'),p('N95 / FFP2 if aerosol risk','N95 / FFP2 si hay riesgo de aerosoles')],admin:[p('Documented risk assessment','Evaluación de riesgos documentada'),p('IBC/CBS approval','Aprobación del CBS'),p('Operator competency verification','Verificación de competencia del operador'),p('Direct supervision for new operators','Supervisión directa para operadores nuevos'),p('Specific training program','Programa de formación específico')],decon:[p('Agent-matched disinfectant with defined contact time','Desinfectante adecuado al agente con tiempo de contacto definido'),p('For non-enveloped viruses (e.g., AAV) or spores: ≥0.5% sodium hypochlorite or validated sporicidal/virucidal agent','Para virus no envueltos (p. ej., AAV) o esporas: hipoclorito sódico ≥0,5% o agente esporicida/virucida validado'),p('Decontaminate BSC surfaces after each session','Descontaminar las superficies de la CSB tras cada sesión'),p('Autoclave waste on-site before disposal','Autoclavar los residuos in situ antes de su eliminación')]},
-  'BSL-2**':{eng:[p('Class II BSC mandatory','CSB Clase II obligatoria'),p('Contained equipment for aerosol steps','Equipo confinado para pasos con aerosoles')],ppe:[p('Double gloves','Doble guante'),p('Eye protection','Protección ocular'),p('Lab coat','Bata de laboratorio')],admin:[p('Documented justification for enhanced RG1','Justificación documentada para GR1 reforzado'),p('Aerosol management SOP','PNT de gestión de aerosoles')],decon:[p('70% ethanol or quaternary ammonium for surfaces','Etanol al 70% o amonio cuaternario para superficies'),p('Autoclave aerosol-contaminated waste before disposal','Autoclavar los residuos contaminados por aerosoles antes de su eliminación')]},
+  'RG1_HIGH_STEP':{eng:[p('Class II BSC for the high-aerosol-generating step','CSB Clase II para el paso generador de aerosoles de alto riesgo'),p('Contained aerosol-generating equipment','Equipo generador de aerosoles confinado')],ppe:[p('Lab coat','Bata de laboratorio'),p('Gloves','Guantes'),p('Eye/face protection as indicated by the procedure','Protección ocular/facial según el procedimiento')],admin:[p('Documented procedure-specific risk assessment','Evaluación de riesgos específica del procedimiento documentada'),p('BSL-2 practices limited to the high-aerosol step; other steps remain BSL-1','Prácticas NCB-2 limitadas al paso de alto aerosol; los demás pasos permanecen en NCB-1')],decon:[p('Agent-matched validated surface disinfectant','Desinfectante de superficies validado y adecuado al agente'),p('Autoclave or validated chemical treatment of aerosol-contaminated waste','Autoclave o tratamiento químico validado de residuos contaminados por aerosoles')]},
   'BSL-2+/BSL-3':{eng:[p('Class II BSC mandatory or full BSL-3','CSB Clase II obligatoria o NCB-3 completo'),p('Sealed centrifuge buckets','Cubetas de centrífuga selladas'),p('HEPA exhaust (BSL-3)','Extracción HEPA (NCB-3)')],ppe:[p('Double gloves','Doble guante'),p('Eye protection','Protección ocular'),p('Respiratory protection (FFP3 / N99–N100)','Protección respiratoria (FFP3 / N99–N100)'),p('Disposable gown','Bata desechable')],admin:[p('IBC approval required','Se requiere aprobación del CBS'),p('Written risk assessment','Evaluación de riesgos por escrito'),p('Consider BSL-3 if ≥2 unfavorable factors','Considerar NCB-3 si ≥2 factores desfavorables')],decon:[p('Agent-matched disinfectant with validated contact time','Desinfectante adecuado al agente con tiempo de contacto validado'),p('≥0.5% sodium hypochlorite or sporicidal agent for non-enveloped viruses / spores','Hipoclorito sódico ≥0,5% o agente esporicida para virus no envueltos / esporas'),p('Autoclave all waste on-site before removal','Autoclavar todos los residuos in situ antes de retirarlos')]},
   'BSL-3':{eng:[p('BSL-3 facility with directional airflow','Instalación NCB-3 con flujo de aire direccional'),p('HEPA exhaust','Extracción HEPA'),p('Double-door interlocking','Doble puerta con enclavamiento'),p('Class II/III BSC','CSB Clase II/III')],ppe:[p('Dedicated clothing','Ropa dedicada'),p('Double gloves','Doble guante'),p('Respiratory protection (FFP3 / N99–N100)','Protección respiratoria (FFP3 / N99–N100)'),p('Full face shield','Pantalla facial completa')],admin:[p('Controlled entry','Entrada controlada'),p('Medical surveillance','Vigilancia médica'),p('Comprehensive training','Formación integral'),p('Emergency response plan','Plan de respuesta ante emergencias'),p('Incident reporting','Notificación de incidentes')],decon:[p('Validated surface disinfectant with documented contact time (e.g., 1% sodium hypochlorite, freshly prepared)','Desinfectante de superficies validado con tiempo de contacto documentado (p. ej., hipoclorito sódico al 1%, recién preparado)'),p('Sporicidal/virucidal agent for non-enveloped viruses and spores','Agente esporicida/virucida para virus no envueltos y esporas'),p('On-site autoclave; all waste inactivated before leaving containment','Autoclave in situ; todos los residuos inactivados antes de salir de la contención'),p('Periodic room/space decontamination per SOP','Descontaminación periódica de la sala/espacio según PNT')]},
   'BSL-4':{eng:[p('Maximum containment','Contención máxima'),p('Class III BSC or positive-pressure suit','CSB Clase III o traje de presión positiva'),p('Chemical shower','Ducha química'),p('Double HEPA exhaust','Doble extracción HEPA')],ppe:[p('Positive-pressure suit or Class III BSC','Traje de presión positiva o CSB Clase III'),p('Full personal decontamination','Descontaminación personal completa')],admin:[p('National-level authorization','Autorización a nivel nacional'),p('Dedicated team','Equipo dedicado'),p('Continuous monitoring','Monitorización continua'),p('Emergency protocols','Protocolos de emergencia')],decon:[p('Chemical shower for suit decontamination','Ducha química para descontaminación del traje'),p('Effluent decontamination system','Sistema de descontaminación de efluentes'),p('Double-door autoclave for all materials leaving containment','Autoclave de doble puerta para todo el material que sale de la contención')]},
@@ -198,25 +275,27 @@ const CONTROLS={
 const L=(x)=>(x&&typeof x==='object')?(x[lang]||x.en):x;
 const LE=(x)=>(x&&typeof x==='object')?(x.en||''):x;
 
-let D={agentName:'',riskGroup:'',isGMO:false,parentalOrg:'',geneticMod:'',replComp:'',rgOverride:'',
-  procedures:[{name:'',aerosol:'',volume:'',concentration:''}],
-  modFactors:{},justification:'',reviewer:'',reviewDate:'',triggers:'',addControls:''};
+let D={schemaVersion:PSRData.SCHEMA_VERSION,algorithmVersion:PSRData.ALGORITHM_VERSION,dataOrigin:'individual',studyId:'',scenarioId:'',scenarioVersion:'',raterId:'',institutionId:'',agentName:'',riskGroup:'',classificationSource:'',classificationSourceOther:'',transmissionRoute:'',environmentalStability:'',infectiousDose:'',treatmentAvailable:'',additionalHazards:'',isGMO:false,parentalOrg:'',geneticMod:'',replComp:'',
+  regulatoryNotation:null,regulatoryClassificationSource:'',regulatoryNotationDocumented:false,
+  rg3StarBasis:null,rg3StarDocumented:false,rg3StarEvidence:'',severityModification:false,effectiveSeverity:'',severityBasis:'',severityBasisOther:'',severityJustification:'',severityEvidence:'',selectedLikelihood:'',likelihoodJustification:'',finalProposedBsl:'',bslOverrideReason:'',escalationDecision:'',escalationRationale:'',bsl2RiskAssessmentDocumented:false,bsl2InstitutionalStatus:'conditions_pending',bsl2EnhancedControlsDocumented:false,bsl2OperatorCompetencyDocumented:false,
+  procedures:[{name:'',aerosol:'',volume:'',volumeValue:'',volumeUnit:'mL',concentration:'',concentrationValue:'',concentrationUnit:''}],
+  modFactors:{},individualSusceptibility:'none',individualSusceptibilityOther:'',occupationalHealthAction:'',justification:'',reviewer:'',reviewDate:'',nextReviewDate:'',triggers:'',addControls:'',workflowStatus:'draft',approvalReference:'',approvingBody:'',approvalDate:''};
 MOD_FACTORS.forEach(f=>D.modFactors[f.id]='neutral');
 
-const EX_S3={agentName:p('Third-generation SIN lentiviral vector (pLenti-CRISPR, HIV-1 backbone)','Vector lentiviral SIN de tercera generación (pLenti-CRISPR, esqueleto VIH-1)'),riskGroup:'RG3',isGMO:true,rgOverride:'',parentalOrg:'HIV-1',geneticMod:p('Third-generation self-inactivating lentiviral vector. Split-genome packaging (4-plasmid system). Deletions: gag, pol, env, tat, rev, vif, vpr, vpu, nef. Replication-incompetent. Max recombination risk <10⁻⁸.','Vector lentiviral autoinactivante de tercera generación. Empaquetamiento de genoma dividido (sistema de 4 plásmidos). Deleciones: gag, pol, env, tat, rev, vif, vpr, vpu, nef. Incompetente para la replicación. Riesgo máximo de recombinación <10⁻⁸.'),replComp:'no',
+const EX_S3={agentName:p('Third-generation SIN lentiviral vector (pLenti-CRISPR, HIV-1 backbone)','Vector lentiviral SIN de tercera generación (pLenti-CRISPR, esqueleto VIH-1)'),riskGroup:'RG2',isGMO:true,parentalOrg:'HIV-1',geneticMod:p('Third-generation self-inactivating lentiviral vector. Split-genome packaging (4-plasmid system). Deletions: gag, pol, env, tat, rev, vif, vpr, vpu, nef. Replication-incompetent. Max recombination risk <10⁻⁸.','Vector lentiviral autoinactivante de tercera generación. Empaquetamiento de genoma dividido (sistema de 4 plásmidos). Deleciones: gag, pol, env, tat, rev, vif, vpr, vpu, nef. Incompetente para la replicación. Riesgo máximo de recombinación <10⁻⁸.'),replComp:'no',regulatoryNotation:null,regulatoryClassificationSource:'BMBL Appendix B',regulatoryNotationDocumented:false,rg3StarBasis:null,rg3StarDocumented:false,rg3StarEvidence:'',
   procedures:[
-    {name:p('HEK293T transfection (T-175 flasks in BSC-II)','Transfección de HEK293T (frascos T-175 en CSB-II)'),aerosol:'low',volume:'high',concentration:'low'},
+    {name:p('HEK293T transfection (T-175 flasks in BSC-II, ~95 mL)','Transfección de HEK293T (frascos T-175 en CSB-II, ~95 mL)'),aerosol:'low',volume:'moderate',concentration:'low'},
     {name:p('Viral supernatant harvest (~120 mL, aspiration in BSC)','Recolección de sobrenadante viral (~120 mL, aspiración en CSB)'),aerosol:'low',volume:'high',concentration:'low'},
-    {name:p('Filtration 0.45 µm (syringe filter in BSC)','Filtración 0,45 µm (filtro de jeringa en CSB)'),aerosol:'low',volume:'high',concentration:'low'},
+    {name:p('Filtration 0.45 µm (syringe filter in BSC, ~95 mL)','Filtración 0,45 µm (filtro de jeringa en CSB, ~95 mL)'),aerosol:'low',volume:'moderate',concentration:'low'},
     {name:p('Ultracentrifugation (SW32Ti, 25,000 rpm, 90 min, non-sealed rotor)','Ultracentrifugación (SW32Ti, 25.000 rpm, 90 min, rotor no sellado)'),aerosol:'high',volume:'moderate',concentration:'high'},
     {name:p('Viral pellet resuspension (500 µL, high titer 10⁸ TU/mL in BSC)','Resuspensión del pellet viral (500 µL, título alto 10⁸ UT/mL en CSB)'),aerosol:'moderate',volume:'low',concentration:'high'},
     {name:p('Aliquoting (50 µL, multichannel pipette, 10⁸ TU/mL)','Alicuotado (50 µL, pipeta multicanal, 10⁸ UT/mL)'),aerosol:'low',volume:'low',concentration:'high'}
   ],
-  modFactors:{volume:'increase',concentration:'increase',frequency:'increase',aerosol:'increase',stability:'decrease',experience:'decrease',supervision:'decrease',infrastructure:'increase',incidents:'decrease'},
-  justification:p('Although the lentiviral vector is classified as RG3* (replication-defective GMO derived from HIV-1 RG3), high-speed ultracentrifugation (25,000 rpm, 90 min) of large volumes without sealed safety cups generates significant aerosol potential. Final titer 10⁸ TU/mL (1000× concentration). Four unfavorable modulating factors (frequency, scale, infrastructure, titer) trigger ≥2 escalation. BSL-2+ with respiratory protection is proportionate; standard BSL-2 insufficient, BSL-3 disproportionate given replication-defective status.','Aunque el vector lentiviral se clasifica como GR3* (OMG defectivo en replicación derivado del VIH-1 GR3), la ultracentrifugación a alta velocidad (25.000 rpm, 90 min) de grandes volúmenes sin cubetas de seguridad selladas genera un potencial de aerosoles significativo. Título final 10⁸ UT/mL (concentración 1000×). Cuatro factores moduladores desfavorables (frecuencia, escala, infraestructura, título) activan la escalación por ≥2. NCB-2+ con protección respiratoria es proporcionado; NCB-2 estándar es insuficiente y NCB-3 desproporcionado dado el carácter defectivo en replicación.'),
+  modFactors:{volume:'increase',concentration:'increase',frequency:'increase',aerosol:'neutral',stability:'decrease',experience:'decrease',supervision:'decrease',infrastructure:'increase',incidents:'neutral'},
+  justification:p('Classification: RG2 (documented attenuation per BMBL Appendix B), consistent with the third-generation split-genome replication-incompetent design (recombination risk <10⁻⁸). Because at least one procedural parameter is High, Step 3 PSR is High. Table 8 therefore assigns BSL-2+ for RG2 + High PSR. Four unfavorable procedural modulating factors (volume, concentration, frequency, infrastructure) trigger additional professional consideration for escalation but do not change the Step 3 PSR level.','Clasificación: GR2 (atenuación documentada según el Apéndice B de BMBL), coherente con el diseño de tercera generación de genoma dividido incompetente para la replicación (riesgo de recombinación <10⁻⁸). Como al menos un parámetro procedimental es Alto, el PSR del Paso 3 es Alto. Por tanto, la Tabla 8 asigna NCB-2+ para GR2 + PSR Alto. Cuatro factores moduladores procedimentales desfavorables (volumen, concentración, frecuencia, infraestructura) requieren consideración profesional adicional para la escalación, pero no cambian el nivel de PSR del Paso 3.'),
   reviewer:p('Dr. John Doe (Biosafety Officer)','Dr. John Doe (Responsable de Bioseguridad)'),reviewDate:'2025-01-15',triggers:p('Sealed rotor acquisition; new personnel; scale increase >200 mL; incident; annual review.','Adquisición de rotor sellado; personal nuevo; aumento de escala >200 mL; incidente; revisión anual.'),addControls:p('Mandatory BSC-II all steps. N95 during centrifuge ops. Double gloves for centrifugation/resuspension. Sealed buckets to acquire. Tube opening only in BSC-II. Wait 10 min post-centrifugation. 10% bleach 20 min before autoclaving. Negative pressure lab. Training SOP-LV-2025-001.','CSB-II obligatoria en todos los pasos. N95/FFP2 durante las operaciones de centrifugación. Doble guante para centrifugación/resuspensión. Cubetas selladas por adquirir. Apertura de tubos solo en CSB-II. Esperar 10 min tras la centrifugación. Lejía al 10% durante 20 min antes del autoclave. Laboratorio con presión negativa. Formación PNT-LV-2025-001.')};
 
-const EX_S4={agentName:p('Mycobacterium tuberculosis complex (heat-inactivated specimens and purified DNA)','Complejo Mycobacterium tuberculosis (muestras inactivadas por calor y ADN purificado)'),riskGroup:'RG3',isGMO:false,rgOverride:'',parentalOrg:'',geneticMod:'',replComp:'',
+const EX_S4={agentName:p('Mycobacterium tuberculosis complex (heat-inactivated specimens and purified DNA)','Complejo Mycobacterium tuberculosis (muestras inactivadas por calor y ADN purificado)'),riskGroup:'RG3',isGMO:false,parentalOrg:'',geneticMod:'',replComp:'',regulatoryNotation:null,regulatoryClassificationSource:'',regulatoryNotationDocumented:false,rg3StarBasis:'validated_inactivation',rg3StarDocumented:true,rg3StarEvidence:'Validated heat inactivation (56°C, 30 min) with culture-negative confirmation',
   procedures:[
     {name:p('Receipt of heat-inactivated specimens (2–5 mL, sealed tubes)','Recepción de muestras inactivadas por calor (2–5 mL, tubos sellados)'),aerosol:'low',volume:'low',concentration:'low'},
     {name:p('Automated DNA extraction (QIAcube in BSC, 200 µL, closed system)','Extracción automatizada de ADN (QIAcube en CSB, 200 µL, sistema cerrado)'),aerosol:'low',volume:'low',concentration:'low'},
@@ -229,7 +308,7 @@ const EX_S4={agentName:p('Mycobacterium tuberculosis complex (heat-inactivated s
   reviewer:p('Dr. Robert Chen (Lab Director & BSO)','Dr. Robert Chen (Director de Laboratorio y RBS)'),reviewDate:'2025-02-01',triggers:p('Introduction of viable M. tb cultures (IMMEDIATE BSL-3 upgrade); extraction method change; inactivation failure; exposure incident; regulatory updates.','Introducción de cultivos viables de M. tb (ELEVACIÓN INMEDIATA a NCB-3); cambio del método de extracción; fallo de inactivación; incidente de exposición; actualizaciones regulatorias.'),addControls:p('CRITICAL: validated inactivation protocol (56°C, 30 min) with culture-negative confirmation. Annual spot checks. Mandatory BSC for specimen handling. QIAcube closed system. TB screening at hire/annually. Autoclave 121°C 30 min. Incident reporting with root cause analysis.','CRÍTICO: protocolo de inactivación validado (56 °C, 30 min) con confirmación de cultivo negativo. Verificaciones aleatorias anuales. CSB obligatoria para la manipulación de muestras. Sistema cerrado QIAcube. Cribado de TB al contratar/anualmente. Autoclave 121 °C 30 min. Notificación de incidentes con análisis de causa raíz.')};
 
 function loadExample(which){
-  const ex=which==='s3'?EX_S3:EX_S4;
+  const ex={...(which==='s3'?EX_S3:EX_S4),schemaVersion:PSRData.SCHEMA_VERSION,algorithmVersion:PSRData.ALGORITHM_VERSION,dataOrigin:'demonstration'};
   const o=JSON.parse(JSON.stringify(ex));
   ['agentName','geneticMod','justification','triggers','addControls','reviewer'].forEach(k=>{o[k]=L(o[k]);});
   if(Array.isArray(o.procedures))o.procedures=o.procedures.map(pr=>({...pr,name:L(pr.name)}));
@@ -237,28 +316,27 @@ function loadExample(which){
   step=0;render();
 }
 
-function classifyPSR(a,v,c){
-  const s={l:0,m:0,h:0};
-  [a,v,c].forEach(x=>{if(x==='low')s.l++;else if(x==='moderate')s.m++;else if(x==='high')s.h++});
-  if(s.h>=2||(s.h>=1&&s.m>=1))return'High';
-  if(s.m>=2||(s.h===1&&s.l>=2))return'Moderate';
-  return'Low';
-}
-
-function getEffectiveRG(){if(D.rgOverride)return D.rgOverride;return D.isGMO&&D.replComp==='no'&&D.riskGroup==='RG3'?'RG3*':D.riskGroup}
+const classifyPSR=PSRCore.classifyPSR;
+function getTable8Notation(){return PSRCore.getTable8Notation({...D,rg3StarApplicable:!!D.rg3StarBasis})}
+function getEffectiveRG(){return D.riskGroup}
 function getProcPSRs(){return D.procedures.map(p=>p.aerosol&&p.volume&&p.concentration?classifyPSR(p.aerosol,p.volume,p.concentration):null)}
 function getMaxPSR(){const psrs=getProcPSRs();const ord={Low:0,Moderate:1,High:2};return psrs.reduce((m,p)=>p&&ord[p]>ord[m]?p:m,'Low')}
-function getUnfav(){return Object.values(D.modFactors).filter(v=>v==='increase').length}
-function getFav(){return Object.values(D.modFactors).filter(v=>v==='decrease').length}
-function getAdjustedPSR(){const mx=getMaxPSR(),u=getUnfav();if(u>=2&&mx==='Low')return'Moderate';if(u>=2&&mx==='Moderate')return'High';return mx}
-function getBSL(){const rg=getEffectiveRG(),psr=getAdjustedPSR();return rg&&psr?BSL_MATRIX[rg]?.[psr]||'—':'—'}
+function getUnfav(){return PSRCore.evaluateModulatingFactors(D.modFactors).unfavorableFactorCount}
+function getFav(){return PSRCore.evaluateModulatingFactors(D.modFactors).favorableFactorCount}
+function getEscalationConsideration(){return PSRCore.evaluateModulatingFactors(D.modFactors).escalationConsideration}
+function getBSL(){return PSRCore.assignMatrixBSL({...D,rg3StarApplicable:!!D.rg3StarBasis},getMaxPSR()).matrixBsl||'—'}
+function getStep5(){return PSRCore.evaluateStep5({riskGroup:D.riskGroup,psrLevel:getMaxPSR(),modulatingFactors:D.modFactors,severityModification:D.severityModification,effectiveSeverity:D.effectiveSeverity,severityBasis:D.severityBasis,severityBasisOther:D.severityBasisOther,severityJustification:D.severityJustification,severityEvidence:D.severityEvidence,selectedLikelihood:D.selectedLikelihood,likelihoodJustification:D.likelihoodJustification})}
+function getDecision(){return PSRCore.evaluateContainmentDecision({agent:{...D,rg3StarApplicable:!!D.rg3StarBasis},psrLevel:getMaxPSR(),escalationConsideration:getEscalationConsideration(),escalationDecision:D.escalationDecision,escalationRationale:D.escalationRationale,finalProposedBsl:D.finalProposedBsl,bslOverrideReason:D.bslOverrideReason,bsl2Conditions:{riskAssessmentDocumented:D.bsl2RiskAssessmentDocumented,institutionalStatus:D.bsl2InstitutionalStatus,enhancedControlsDocumented:D.bsl2EnhancedControlsDocumented,operatorCompetencyDocumented:D.bsl2OperatorCompetencyDocumented}})}
+function getEffectiveWorkflowStatus(){const d=getDecision();return d.escalationDecision==='pending_review'?'institutional_review_pending':D.workflowStatus}
+function getPausePoints(){const d=getDecision(),s=getStep5();return PSRCore.evaluatePausePoints({riskGroup:D.riskGroup,aerosolUncharacterized:D.procedures.some(p=>p.aerosol==='unknown'),matrixBsl:d.matrixBsl,overallRiskLevel:s.overallRiskLevel})}
+function bsl2ConditionsMet(){const d=getDecision();return !d.requiresRg3LowBsl2Conditions||d.rg3LowConditionsMet}
 
 function psrPill(level){const c=level==='Low'?'green':level==='Moderate'?'amber':'red';return`<span class="pill pill-${c}">${level} PSR</span>`}
 function bslPill(level){const m={'BSL-1':'green','BSL-1*':'green','BSL-2':'blue','BSL-2**':'blue','BSL-2+':'amber','BSL-2+/BSL-3':'amber','BSL-3':'red','BSL-4':'purple'};return`<span class="pill pill-${m[level]||'gray'}">${level}</span>`}
 
 function render(){
   const subs=[t('step1sub'),t('step2sub'),t('step3sub'),t('step4sub'),t('step5sub'),t('step6sub'),t('step7sub'),t('step8sub')];
-  let h=`<h1>${t('title')}</h1><p class="sub">${t('subtitle')}</p>`;
+  let h=`<h1>${t('title')}</h1><p class="sub">${t('subtitle')}</p><div class="note">${lang==='es'?'PSR es un marco profesional de apoyo a decisiones de bioseguridad. No sustituye la revisión experta, la autorización institucional ni los requisitos regulatorios aplicables. Los umbrales cuantitativos son heurísticas operativas descritas en el marco publicado.':'PSR is a professional biosafety decision-support framework. It does not replace expert biosafety review, institutional authorization, or applicable regulatory requirements. Quantitative thresholds are operational heuristics as described in the published framework.'}</div>`;
   h+=`<div style="display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap"><button class="btn btn-outline" style="font-size:11px;padding:5px 12px" onclick="loadExample('s3')">${t('loadEx3')}</button><button class="btn btn-outline" style="font-size:11px;padding:5px 12px" onclick="loadExample('s4')">${t('loadEx4')}</button></div>`;
   
   // Step bar
@@ -296,17 +374,29 @@ function render(){
   h+=`</div>`;
 
   document.getElementById('app').innerHTML=h;
+  PSRA11y.enhance(document.getElementById('app'),lang);
 }
 
 function renderStep1(){
   let h=`<div class="field"><label class="field-label">${t('agentName')}</label>
     <input type="text" value="${esc(D.agentName)}" onchange="D.agentName=this.value" placeholder="${t('agentPh')}"></div>`;
+  h+=`<div class="field"><label class="field-label">${t('classificationSourceLabel')}</label><select onchange="D.classificationSource=this.value;render()"><option value="">${t('classificationSourceSelect')}</option><option value="WHO" ${D.classificationSource==='WHO'?'selected':''}>${t('classSrcWHO')}</option><option value="BMBL" ${D.classificationSource==='BMBL'?'selected':''}>${t('classSrcBMBL')}</option><option value="EU_Directive_2000_54_EC" ${D.classificationSource==='EU_Directive_2000_54_EC'?'selected':''}>${t('classSrcEU')}</option><option value="INSST" ${D.classificationSource==='INSST'?'selected':''}>${t('classSrcINSST')}</option><option value="Other" ${D.classificationSource==='Other'?'selected':''}>${t('classSrcOther')}</option></select></div>`;
+  if(D.classificationSource==='Other')h+=`<div class="field"><label class="field-label">${t('classSrcOtherLabel')}</label><input type="text" value="${esc(D.classificationSourceOther)}" onchange="D.classificationSourceOther=this.value"></div>`;
   h+=`<div class="field"><label class="field-label">${t('rgLabel')}</label><div class="opt-grid c2">`;
   [{v:'RG1',d:'rg1d'},{v:'RG2',d:'rg2d'},{v:'RG3',d:'rg3d'},{v:'RG4',d:'rg4d'}].forEach(r=>{
     h+=`<button class="opt ${D.riskGroup===r.v?'selected':''}" onclick="D.riskGroup='${r.v}';render()">
       <div class="opt-label">${r.v}</div><div class="opt-desc">${t(r.d)}</div></button>`;
   });
   h+=`</div></div>`;
+  if(D.riskGroup==='RG3'){
+    h+=`<div class="note note-teal">${t('rg3RegExplain')}</div>`;
+    h+=`<div class="field"><label class="check-label"><input type="checkbox" ${D.regulatoryNotationDocumented?'checked':''} onchange="D.regulatoryNotationDocumented=this.checked;D.regulatoryNotation=this.checked?'RG3**':null;render()"> ${t('rg3RegCheck')}</label></div>`;
+    if(D.regulatoryNotationDocumented)h+=`<div class="field"><label class="field-label">${t('rg3RegSource')}</label><input type="text" value="${esc(D.regulatoryClassificationSource)}" onchange="D.regulatoryClassificationSource=this.value"></div>`;
+    h+=`<div class="field"><label class="field-label">${t('rg3StarLabel')}</label><select onchange="D.rg3StarBasis=this.value||null;D.rg3StarDocumented=!!this.value;render()"><option value="">${t('rg3StarNone')}</option><option value="replication_incompetence" ${D.rg3StarBasis==='replication_incompetence'?'selected':''}>${t('rg3StarRepl')}</option><option value="confirmed_absence_airborne_transmissibility" ${D.rg3StarBasis==='confirmed_absence_airborne_transmissibility'?'selected':''}>${t('rg3StarAir')}</option><option value="validated_inactivation" ${D.rg3StarBasis==='validated_inactivation'?'selected':''}>${t('rg3StarInactive')}</option></select></div>`;
+    if(D.rg3StarBasis)h+=`<div class="field"><label class="field-label">${t('rg3StarEvidence')}</label><input type="text" value="${esc(D.rg3StarEvidence)}" onchange="D.rg3StarEvidence=this.value;render()"></div>`;
+    h+=`<div class="note note-amber">${t('rg3star')}</div>`;
+  }
+  h+=`<details style="margin-top:18px"><summary style="cursor:pointer;font-weight:600">Additional characterization / Caracterización adicional</summary><div style="padding-top:12px">`;
   h+=`<div class="field"><label class="check-label"><input type="checkbox" ${D.isGMO?'checked':''} onchange="D.isGMO=this.checked;render()"> ${t('isGMO')}</label></div>`;
   if(D.isGMO){
     h+=`<div style="padding:16px;background:var(--bg2);border-radius:var(--radius);margin-top:8px">`;
@@ -317,21 +407,20 @@ function renderStep1(){
       h+=`<button class="opt ${D.replComp===r.v?'selected':''}" onclick="D.replComp='${r.v}';render()"><div class="opt-label">${t(r.l)}</div></button>`;
     });
     h+=`</div></div>`;
-    if(D.replComp==='no'&&D.riskGroup==='RG3'){
-      h+=`<div class="note note-teal">${t('rg3star')}</div>`;
-      h+=`<div class="field" style="margin-top:12px"><label class="field-label">${t('rgOverrideLabel')}</label>`;
-      h+=`<div style="font-size:12px;color:var(--text2);margin-bottom:8px">${t('rgOverrideNote')}</div>`;
-      h+=`<div class="opt-grid c2">`;
-      [{v:'',l:'RG3* (auto)'},{v:'RG2',l:'RG2 (documented attenuation)'}].forEach(r=>{
-        h+=`<button class="opt ${D.rgOverride===r.v?'selected':''}" onclick="D.rgOverride='${r.v}';render()"><div class="opt-label">${r.l}</div></button>`;
-      });
-      h+=`</div></div>`;
-    }
     h+=`</div>`;
   }
+  h+=`<div style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)"><label class="field-label" style="font-weight:600">${t('agentTraitsTitle')}</label>`;
+  h+=`<div class="field"><label class="field-label">${t('transmissionRoute')}</label><input type="text" value="${esc(D.transmissionRoute)}" onchange="D.transmissionRoute=this.value"></div>`;
+  h+=`<div class="field"><label class="field-label">${t('environmentalStability')}</label><input type="text" value="${esc(D.environmentalStability)}" onchange="D.environmentalStability=this.value"></div>`;
+  h+=`<div class="field"><label class="field-label">${t('infectiousDose')}</label><input type="text" value="${esc(D.infectiousDose)}" onchange="D.infectiousDose=this.value"></div>`;
+  h+=`<div class="field"><label class="field-label">${t('treatmentAvailable')}</label><input type="text" value="${esc(D.treatmentAvailable)}" onchange="D.treatmentAvailable=this.value"></div>`;
+  h+=`<div class="field"><label class="field-label">${t('additionalHazards')}</label><input type="text" value="${esc(D.additionalHazards)}" onchange="D.additionalHazards=this.value"></div>`;
+  h+=`</div>`;
+  h+=`</div></details>`;
   return h;
 }
 
+function expectedNumericCategory(v,type){v=Number(v);if(!Number.isFinite(v)||v<0)return null;if(type==='volume')return v<10?'low':v<=100?'moderate':'high';return v<1e6?'low':v<=1e8?'moderate':'high';}
 function renderStep2(){
   let h='';
   D.procedures.forEach((p,i)=>{
@@ -340,12 +429,17 @@ function renderStep2(){
     if(D.procedures.length>1)h+=`<button style="font-size:12px;color:var(--red-text);background:none;border:none;cursor:pointer" onclick="D.procedures.splice(${i},1);render()">${t('remove')}</button>`;
     h+=`</div>`;
     h+=`<div class="field"><label class="field-label">${t('procName')}</label><input type="text" value="${esc(p.name)}" onchange="D.procedures[${i}].name=this.value" placeholder="${t('procPh')}"></div>`;
-    h+=radioGroup(t('aerosol'),[{v:'low',l:t('aeroLow')},{v:'moderate',l:t('aeroMod')},{v:'high',l:t('aeroHigh')}],p.aerosol,`D.procedures[${i}].aerosol`,3);
+    h+=radioGroup(t('aerosol'),[{v:'low',l:t('aeroLow')},{v:'moderate',l:t('aeroMod')},{v:'high',l:t('aeroHigh')},{v:'unknown',l:t('aeroUnknown')}],p.aerosol,`D.procedures[${i}].aerosol`,2);
+    h+=`<div class="grid2"><div class="field"><label class="field-label">${t('volumeValue')}</label><input type="number" min="0" step="any" value="${esc(p.volumeValue??'')}" onchange="D.procedures[${i}].volumeValue=this.value;render()"></div><div class="field"><label class="field-label">${t('volumeUnit')}</label><select onchange="D.procedures[${i}].volumeUnit=this.value;render()"><option value="mL" ${(p.volumeUnit||'mL')==='mL'?'selected':''}>mL</option><option value="µL" ${p.volumeUnit==='µL'?'selected':''}>µL</option><option value="L" ${p.volumeUnit==='L'?'selected':''}>L</option></select></div></div>`;
     h+=radioGroup(t('volume'),[{v:'low',l:'<10 mL'},{v:'moderate',l:'10–100 mL'},{v:'high',l:'>100 mL'}],p.volume,`D.procedures[${i}].volume`,3);
+    if(p.volumeValue!=='' && (p.volumeUnit||'mL')==='mL' && p.volume && expectedNumericCategory(p.volumeValue,'volume')!==p.volume)h+=`<div class="note note-red">${t('categoryMismatch')}</div>`;
+    h+=`<div class="grid2"><div class="field"><label class="field-label">${t('concValue')}</label><input type="number" min="0" step="any" value="${esc(p.concentrationValue??'')}" onchange="D.procedures[${i}].concentrationValue=this.value;render()"></div><div class="field"><label class="field-label">${t('concUnit')}</label><input type="text" value="${esc(p.concentrationUnit||'')}" placeholder="PFU/mL, CFU/mL, TCID₅₀/mL…" onchange="D.procedures[${i}].concentrationUnit=this.value;render()"></div></div>`;
     h+=radioGroup(t('conc'),[{v:'low',l:'<10⁶'},{v:'moderate',l:'10⁶–10⁸'},{v:'high',l:'>10⁸'}],p.concentration,`D.procedures[${i}].concentration`,3);
+    if(p.concentrationValue!=='' && p.concentration && expectedNumericCategory(p.concentrationValue,'concentration')!==p.concentration)h+=`<div class="note note-red">${t('categoryMismatch')}</div>`;
+    h+=`<div class="note" style="font-size:10px">${t('quantitativeNote')}</div>`;
     h+=`</div>`;
   });
-  h+=`<button class="btn btn-outline" style="width:100%;border-style:dashed" onclick="D.procedures.push({name:'',aerosol:'',volume:'',concentration:''});render()">${t('addProc')}</button>`;
+  h+=`<button class="btn btn-outline" style="width:100%;border-style:dashed" onclick="D.procedures.push({name:'',aerosol:'',volume:'',volumeValue:'',volumeUnit:'mL',concentration:'',concentrationValue:'',concentrationUnit:''});render()">${t('addProc')}</button>`;
   return h;
 }
 
@@ -377,34 +471,51 @@ function renderStep4(){
   h+=`<div style="display:flex;gap:12px;margin-top:16px">
     <div class="metric" ${u>=2?'style="background:var(--red-bg)"':''}><div class="metric-val" ${u>=2?'style="color:var(--red-text)"':''}>${u}</div><div class="metric-label">${t('unfavCount')}</div></div>
     <div class="metric"><div class="metric-val">${f}</div><div class="metric-label">${t('favCount')}</div></div></div>`;
-  if(u>=2)h+=`<div class="note note-red">${t('escalation')} (${getMaxPSR()} → ${getAdjustedPSR()} PSR)</div>`;
+  if(u>=2)h+=`<div class="note note-red">${t('escalation')}</div>`;
+  h+=`<div class="field" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border)"><label class="field-label" style="font-weight:600">${t('indivSuscTitle')}</label><div class="note" style="margin:6px 0 10px">${t('indivSuscNote')}</div>`;
+  h+=`<select onchange="D.individualSusceptibility=this.value;render()"><option value="none" ${D.individualSusceptibility==='none'?'selected':''}>${t('indivSuscNone')}</option><option value="immunocompromised" ${D.individualSusceptibility==='immunocompromised'?'selected':''}>${t('indivSuscImmuno')}</option><option value="vaccination_unavailable" ${D.individualSusceptibility==='vaccination_unavailable'?'selected':''}>${t('indivSuscVaccine')}</option><option value="other" ${D.individualSusceptibility==='other'?'selected':''}>${t('indivSuscOther')}</option></select>`;
+  if(D.individualSusceptibility==='other')h+=`<div style="margin-top:8px"><label class="field-label">${t('indivSuscOtherLabel')}</label><input value="${esc(D.individualSusceptibilityOther)}" onchange="D.individualSusceptibilityOther=this.value;render()"></div>`;
+  if(D.individualSusceptibility!=='none')h+=`<div style="margin-top:8px"><label class="field-label">${t('occHealthAction')}</label><textarea onchange="D.occupationalHealthAction=this.value;render()">${esc(D.occupationalHealthAction)}</textarea></div>`;
+  h+=`</div>`;
   return h;
 }
 
 function renderStep5(){
-  const erg=getEffectiveRG(),apsr=getAdjustedPSR();
+  const s=getStep5(),base=s.baseLikelihoodRange||[],range=s.likelihoodRange||[];
   let h=`<div class="note note-purple" style="margin-bottom:14px;font-size:12px;line-height:1.6">${t('psrLikelihood')}</div>`;
-  h+=`<div style="overflow-x:auto"><table class="matrix"><thead><tr><th style="text-align:left">${t('riskGroup')}</th><th>Low PSR</th><th>Moderate PSR</th><th>High PSR</th></tr></thead><tbody>`;
-  Object.entries(BSL_MATRIX).forEach(([rg,psrs])=>{
-    h+=`<tr><td>${rg}</td>`;
-    ['Low','Moderate','High'].forEach(p=>{
-      const active=rg===erg&&p===apsr;
-      h+=`<td ${active?'class="active-cell"':''}>${psrs[p]}</td>`;
-    });
-    h+=`</tr>`;
-  });
-  h+=`</tbody></table></div>`;
-  h+=`<div class="integration"><div style="font-size:13px;margin-bottom:8px">${t('integResult')}</div>
-    <div class="eq"><span class="pill pill-gray">${erg||'—'}</span><span>×</span>${psrPill(apsr)}<span>=</span>${bslPill(getBSL())}</div></div>`;
+  h+=`<div class="metric-grid"><div class="metric"><div class="metric-val">${s.baselineSeverity||'—'}</div><div class="metric-label">${t('baselineSeverity')}</div></div><div class="metric"><div class="metric-val">${s.effectiveSeverity||'—'}</div><div class="metric-label">${t('effectiveSeverity')}</div></div><div class="metric"><div class="metric-val">${base.join(' – ')||'—'}</div><div class="metric-label">${t('baseLikelihoodRange')}</div></div><div class="metric"><div class="metric-val">${range.join(' – ')||'—'}</div><div class="metric-label">${t('likelihoodRange')}</div></div></div>`;
+  if(s.likelihoodShiftApplied)h+=`<div class="note note-amber">${t('likelihoodShift')}${range.length===1?`<br><strong>${t('singleLikelihood')}</strong>`:''}</div>`;
+  h+=`<div class="field"><label class="check-label"><input type="checkbox" ${D.severityModification?'checked':''} onchange="D.severityModification=this.checked;render()"> ${t('severityModify')}</label></div>`;
+  if(D.severityModification){
+    const baseIdx=PSRCore.SEVERITY_ORDER.indexOf(s.baselineSeverity),allowedLevels=PSRCore.SEVERITY_ORDER.filter((v,i)=>i<=baseIdx);
+    const requestedIdx=PSRCore.SEVERITY_ORDER.indexOf(D.effectiveSeverity);
+    h+=`<div class="field"><label class="field-label">${t('effectiveSeverity')}</label><select onchange="D.effectiveSeverity=this.value;render()"><option value="">—</option>${allowedLevels.map(v=>`<option ${D.effectiveSeverity===v?'selected':''}>${v}</option>`).join('')}</select></div>`;
+    h+=`<div class="field"><label class="field-label">${t('severityBasis')}</label><select onchange="D.severityBasis=this.value;render()"><option value="">${t('severityBasisSelect')}</option><option value="confirmed_non_airborne_transmission" ${D.severityBasis==='confirmed_non_airborne_transmission'?'selected':''}>${t('severityBasisAirborne')}</option><option value="effective_treatment_or_pep_available" ${D.severityBasis==='effective_treatment_or_pep_available'?'selected':''}>${t('severityBasisTreatment')}</option><option value="validated_agent_inactivation" ${D.severityBasis==='validated_agent_inactivation'?'selected':''}>${t('severityBasisInactivation')}</option><option value="other" ${D.severityBasis==='other'?'selected':''}>${t('severityBasisOtherOpt')}</option></select></div>`;
+    if(D.severityBasis==='other')h+=`<div class="field"><label class="field-label">${t('severityBasisOtherLabel')}</label><input value="${esc(D.severityBasisOther)}" onchange="D.severityBasisOther=this.value;render()"></div>`;
+    h+=`<div class="field"><label class="field-label">${t('severityJust')}</label><textarea onchange="D.severityJustification=this.value;render()">${esc(D.severityJustification)}</textarea></div><div class="field"><label class="field-label">${t('severityEvidence')}</label><input value="${esc(D.severityEvidence)}" onchange="D.severityEvidence=this.value;render()"></div>`;
+    if(requestedIdx>baseIdx)h+=`<div class="note note-red">${t('severityNotMoreSevere')}</div>`;
+  }
+  h+=`<div class="field"><label class="field-label">${t('selectedLikelihood')}</label><select onchange="D.selectedLikelihood=this.value;render()"><option value="">—</option>${range.map(v=>`<option value="${v}" ${D.selectedLikelihood===v?'selected':''}>${v}</option>`).join('')}</select></div>`;
+  if(range.length>1)h+=`<div class="field"><label class="field-label">${t('likelihoodJust')}</label><textarea onchange="D.likelihoodJustification=this.value;render()">${esc(D.likelihoodJustification)}</textarea></div>`;
+  h+=`<div class="integration"><div style="font-size:13px;margin-bottom:8px">${t('integResult')}</div><div class="eq"><span class="pill pill-gray">${s.effectiveSeverity||'—'}</span><span>×</span><span class="pill pill-gray">${s.selectedLikelihood||'—'}</span><span>=</span><span class="pill pill-gray">${s.overallRiskLevel||'—'}</span></div></div>`;
+  if(!s.likelihoodSelectionDocumented)h+=`<div class="note note-amber">${t('selectRequired')}</div>`;
   return h;
 }
 
 function renderStep6(){
-  const bsl=getBSL(),erg=getEffectiveRG();
-  let h=`<div class="result-big"><div style="font-size:14px;color:var(--text2);margin-bottom:8px">${t('assignedBSL')}</div>
+  const decision=getDecision(),bsl=decision.matrixBsl||'—',erg=getTable8Notation(),pause=getPausePoints();
+  let h=`<div class="result-big"><div style="font-size:14px;color:var(--text2);margin-bottom:8px">${t('matrixBsl')}</div>
     <div class="bsl">${bsl}</div>
-    <div style="margin-top:12px"><span class="pill pill-gray">${esc(D.agentName)||'—'}</span> · <span class="pill pill-gray">${erg}</span> · ${psrPill(getAdjustedPSR())}</div></div>`;
+    <div style="margin-top:12px"><span class="pill pill-gray">${esc(D.agentName)||'—'}</span> · <span class="pill pill-gray">${erg}</span> · ${psrPill(getMaxPSR())}</div></div>`;
+  if(pause.paused)h+=`<div class="note note-red"><b>${t('pauseTitle')}</b><br>${pause.reasons.map(r=>r==='risk_group_not_established'?t('pauseRG'):r==='aerosol_uncharacterized'?t('pauseAerosol'):t('pauseReview')).join('<br>')}</div>`;
   if(erg==='RG3*'&&bsl.includes('BSL-2+'))h+=`<div class="note note-amber">${t('rg3starCond')}</div>`;
+  if(decision.matrixCondition==='rg1_moderate_standard_bsl1')h+=`<div class="note note-amber">${t('table8NoteRg1Mod')}</div>`;
+  if(decision.matrixCondition==='rg1_high_step_only_bsl2')h+=`<div class="note note-amber">${t('table8NoteRg1High')}</div>`;
+  h+=`<div class="field"><label class="field-label">${t('finalBsl')}</label><select onchange="D.finalProposedBsl=this.value;render()"><option value="">—</option>${decision.allowedFinalBslOptions.map(v=>`<option value="${v}" ${D.finalProposedBsl===v?'selected':''}>${v}</option>`).join('')}</select></div>`;
+  if(decision.escalationConsideration)h+=`<div class="field"><label class="field-label">${t('escalationDecisionLabel')}</label><select onchange="D.escalationDecision=this.value;render()"><option value="">—</option><option value="retained" ${D.escalationDecision==='retained'?'selected':''}>${t('escRetained')}</option><option value="escalated" ${D.escalationDecision==='escalated'?'selected':''}>${t('escEscalated')}</option><option value="pending_review" ${D.escalationDecision==='pending_review'?'selected':''}>${t('escPending')}</option></select></div><div class="field"><label class="field-label">${t('escalationRationaleLabel')}</label><textarea onchange="D.escalationRationale=this.value;render()">${esc(D.escalationRationale||'')}</textarea></div>`;
+  if(D.finalProposedBsl&&(D.finalProposedBsl!==decision.matrixBsl||decision.allowedFinalBslOptions.length>1))h+=`<div class="field"><label class="field-label">${t('overrideReason')}</label><textarea onchange="D.bslOverrideReason=this.value;render()">${esc(D.bslOverrideReason)}</textarea></div>`;
+  if(decision.requiresRg3LowBsl2Conditions)h+=`<div class="field"><label class="check-label"><input type="checkbox" ${D.bsl2RiskAssessmentDocumented?'checked':''} onchange="D.bsl2RiskAssessmentDocumented=this.checked"> ${t('bsl2RiskAssessment')}</label></div><div class="field"><label class="field-label">${t('bsl2Status')}</label><select onchange="D.bsl2InstitutionalStatus=this.value"><option value="conditions_pending">${t('bsl2CondPending')}</option><option value="eligible_pending_approval">${t('bsl2CondEligible')}</option><option value="user_recorded_approved">${t('bsl2CondApproved')}</option></select></div><div class="field"><label class="check-label"><input type="checkbox" ${D.bsl2EnhancedControlsDocumented?'checked':''} onchange="D.bsl2EnhancedControlsDocumented=this.checked"> ${t('bsl2Controls')}</label></div><div class="field"><label class="check-label"><input type="checkbox" ${D.bsl2OperatorCompetencyDocumented?'checked':''} onchange="D.bsl2OperatorCompetencyDocumented=this.checked"> ${t('bsl2Competency')}</label></div>`;
+  if(!decision.decisionDocumented)h+=`<div class="note note-amber">${t('decisionRequired')}</div>`;
   h+=`<div class="field" style="margin-top:16px"><label class="field-label">${t('justification')}</label>
     <textarea rows="5" onchange="D.justification=this.value" placeholder="${t('justPh')}">${esc(D.justification)}</textarea></div>`;
   return h;
@@ -412,8 +523,8 @@ function renderStep6(){
 
 // Non-enveloped viruses & spore-formers: ethanol-resistant, need sporicidal/virucidal agents
 const RESISTANT_AGENTS=/aav|adeno-?associated|adenoasociad|adenovir|parvovir|norovir|rotavir|enterovir|poliovir|coxsackie|hepatitis a|hav\b|papillomavir|papilomavir|\bhpv\b|\bvph\b|calicivir|reovir|bacillus|anthrac|[áa]ntrax|carbunco|clostrid|difficile|c\.?\s*diff|spore|espora|prion|crypto|cripto/i;
-function getDecon(bsl){
-  const base=(CONTROLS[bsl]||CONTROLS['BSL-2']).decon||[];
+function getDecon(profile){
+  const base=(CONTROLS[profile]||CONTROLS['BSL-2']).decon||[];
   const nameHit=RESISTANT_AGENTS.test(D.agentName||'')||RESISTANT_AGENTS.test(D.parentalOrg||'');
   const resistant=D.modFactors.stability==='increase'||nameHit;
   const lead=resistant
@@ -422,7 +533,7 @@ function getDecon(bsl){
   return [lead,...base];
 }
 function renderStep7(){
-  const bsl=getBSL(),ctrl=CONTROLS[bsl]||CONTROLS['BSL-2'];
+  const decision=getDecision(),bsl=decision.matrixBsl||'—',profile=decision.controlProfile||bsl,ctrl=CONTROLS[profile]||CONTROLS['BSL-2'];
   let h=`<p style="font-size:13px;color:var(--text2);margin-bottom:16px">${t('recControls')} ${bslPill(bsl)}</p>`;
   [{k:'eng',t:t('engControls')},{k:'ppe',t:t('ppeControls')},{k:'admin',t:t('adminControls')}].forEach(s=>{
     h+=`<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:500;margin-bottom:8px">${s.t}</div>`;
@@ -431,7 +542,7 @@ function renderStep7(){
     h+=`</div>`;
   });
   h+=`<div style="margin-bottom:16px"><div style="font-size:14px;font-weight:500;margin-bottom:8px">${t('deconControls')}</div>`;
-  getDecon(bsl).forEach(item=>{h+=`<label class="check-label" style="margin-bottom:4px"><input type="checkbox" checked> ${L(item)}</label>`});
+  getDecon(profile).forEach(item=>{h+=`<label class="check-label" style="margin-bottom:4px"><input type="checkbox" checked> ${L(item)}</label>`});
   h+=`</div>`;
   h+=`<div class="field"><label class="field-label">${t('addControls')}</label><textarea rows="3" onchange="D.addControls=this.value" placeholder="${t('addControlsPh')}">${esc(D.addControls)}</textarea></div>`;
   return h;
@@ -441,6 +552,9 @@ function renderStep8(){
   const psrs=getProcPSRs(),bsl=getBSL(),erg=getEffectiveRG();
   let h=`<div class="field"><label class="field-label">${t('assessor')}</label><input type="text" value="${esc(D.reviewer)}" onchange="D.reviewer=this.value"></div>`;
   h+=`<div class="field"><label class="field-label">${t('assessDate')}</label><input type="date" value="${esc(D.reviewDate)}" onchange="D.reviewDate=this.value"></div>`;
+  h+=`<div class="field"><label class="field-label">${t('nextReviewDate')}</label><input type="date" value="${esc(D.nextReviewDate)}" onchange="D.nextReviewDate=this.value"></div>`;
+  h+=`<div class="field"><label class="field-label">${t('workflowStatus')}</label><select onchange="D.workflowStatus=this.value;render()">${[['draft','wfDraft'],['finalized_by_assessor','wfFinalized'],['bso_reviewed','wfBso'],['institutional_review_pending','wfInstPending'],['institutionally_approved','wfApproved'],['rejected_revision_requested','wfRejected'],['superseded','wfSuperseded']].map(([v,l])=>`<option value="${v}" ${D.workflowStatus===v?'selected':''}>${t(l)}</option>`).join('')}</select><small>${t('workflowNote')}</small></div>`;
+  if(D.workflowStatus==='institutionally_approved')h+=`<div class="field"><label class="field-label">${t('approvalReference')}</label><input value="${esc(D.approvalReference)}" onchange="D.approvalReference=this.value"></div><div class="field"><label class="field-label">${t('approvingBody')}</label><input value="${esc(D.approvingBody)}" onchange="D.approvingBody=this.value"></div><div class="field"><label class="field-label">${t('approvalDate')}</label><input type="date" value="${esc(D.approvalDate)}" onchange="D.approvalDate=this.value"></div>`;
   h+=`<div class="field"><label class="field-label">${t('triggers')}</label><textarea rows="3" onchange="D.triggers=this.value" placeholder="${t('triggersPh')}">${esc(D.triggers)}</textarea></div>`;
   
   h+=`<div style="margin-top:20px;padding:20px;background:var(--bg2);border-radius:var(--radius-lg)">
@@ -449,7 +563,7 @@ function renderStep8(){
       <div><span class="lbl">${t('agent')}:</span> ${esc(D.agentName)||'—'}</div>
       <div><span class="lbl">${t('riskGroup')}:</span> ${erg||'—'}</div>
       <div><span class="lbl">${t('maxPSR')}:</span> ${psrPill(getMaxPSR())}</div>
-      <div><span class="lbl">${t('adjustedPSR')}:</span> ${psrPill(getAdjustedPSR())}</div>
+      <div><span class="lbl">${t('psrLevel')}:</span> ${psrPill(getMaxPSR())}</div>
       <div><span class="lbl">${t('bslAssigned')}:</span> ${bslPill(bsl)}</div>
       <div><span class="lbl">${t('unfavFactors')}:</span> ${getUnfav()}</div>
     </div>
@@ -475,30 +589,47 @@ function radioGroup(label,options,val,path,cols){
 }
 
 // ── Bilingual assessment report (enriched TXT + printable PDF) ──
-const REPORT_VERSION='1.4.0';
+const REPORT_VERSION='2.0.0';
 const LVL=(x)=>({low:p('Low','Bajo'),moderate:p('Moderate','Moderado'),high:p('High','Alto')}[x]||p(x||'—',x||'—'));
 const PSRW=(x)=>({Low:p('Low','Bajo'),Moderate:p('Moderate','Moderado'),High:p('High','Alto')}[x]||p(x||'—',x||'—'));
 const FSTAT=(v)=>v==='increase'?p('Unfavorable','Desfavorable'):v==='decrease'?p('Favorable','Favorable'):p('Neutral','Neutro');
 const RESP_BIL=p('Respiratory protection is specified as a protection level; the certified device follows the applicable regional standard — NIOSH N95/N99/N100 (US/Canada) and EN 149 FFP2/FFP3 (EU). N95 ≈ FFP2; FFP3 (≥99%) is recommended for the highest-risk aerosol-generating procedures.','La protección respiratoria se indica como nivel de protección; el dispositivo certificado sigue el estándar regional aplicable — NIOSH N95/N99/N100 (EE.UU./Canadá) y EN 149 FFP2/FFP3 (UE). N95 ≈ FFP2; FFP3 (≥99%) se recomienda para los procedimientos generadores de aerosoles de mayor riesgo.');
 
 function reportModel(){
-  const erg=getEffectiveRG(),bsl=getBSL(),mx=getMaxPSR(),adj=getAdjustedPSR(),u=getUnfav(),f=getFav(),psrs=getProcPSRs();
-  const ctrl=CONTROLS[bsl]||CONTROLS['BSL-2'];
+  const erg=getEffectiveRG(),table8Notation=getTable8Notation(),decision=getDecision(),bsl=decision.matrixBsl||'—',mx=getMaxPSR(),u=getUnfav(),f=getFav(),psrs=getProcPSRs();
+  const profile=decision.controlProfile||bsl,ctrl=CONTROLS[profile]||CONTROLS['BSL-2'];
   const now=new Date();
   const rid='PSR-'+(D.reviewDate||now.toISOString().slice(0,10))+'-'+Math.random().toString(36).slice(2,6).toUpperCase();
   const S=[];
 
   // 1 — Agent & classification
+  const classSrcLabel=D.classificationSource==='WHO'?T.classSrcWHO.en+' / '+T.classSrcWHO.es
+    :D.classificationSource==='BMBL'?T.classSrcBMBL.en+' / '+T.classSrcBMBL.es
+    :D.classificationSource==='EU_Directive_2000_54_EC'?T.classSrcEU.en+' / '+T.classSrcEU.es
+    :D.classificationSource==='INSST'?T.classSrcINSST.en+' / '+T.classSrcINSST.es
+    :D.classificationSource==='Other'?(D.classificationSourceOther||T.classSrcOther.en+' / '+T.classSrcOther.es)
+    :'—';
   const b1=[{type:'kv',k:p('Biological agent','Agente biológico'),v:D.agentName||'—'},
             {type:'kv',k:p('Risk Group','Grupo de Riesgo'),v:D.riskGroup||'—'},
-            {type:'kv',k:p('Effective RG','GR efectivo'),v:erg||'—'}];
+            {type:'kv',k:p('Classification source','Fuente de clasificación'),v:classSrcLabel},
+            {type:'kv',k:p('EU regulatory notation','Notación regulatoria UE'),v:D.regulatoryNotationDocumented&&D.regulatoryClassificationSource?D.regulatoryNotation||'—':'—'},
+            {type:'kv',k:p('Regulatory source','Fuente regulatoria'),v:D.regulatoryClassificationSource||'—'},
+            {type:'kv',k:p('RG3* Table 8 condition','Condición GR3* de la Tabla 8'),v:table8Notation==='RG3*'?'Applicable / Aplicable':'Not established / No establecida'},
+            {type:'kv',k:p('RG3* basis','Base de GR3*'),v:D.rg3StarBasis||'—'},
+            {type:'kv',k:p('Supporting evidence','Evidencia de apoyo'),v:D.rg3StarEvidence||'—'}];
   if(D.isGMO){
     b1.push({type:'kv',k:p('GMO','OMG'),v:'Yes / Sí'});
     b1.push({type:'kv',k:p('Parental organism','Organismo parental'),v:D.parentalOrg||'—'});
     b1.push({type:'kv',k:p('Genetic modification','Modificación genética'),v:D.geneticMod||'—'});
     b1.push({type:'kv',k:p('Replication competent','Competente para replicación'),v:D.replComp==='no'?'No':(D.replComp==='yes'?'Yes / Sí':'—')});
   } else b1.push({type:'kv',k:p('GMO','OMG'),v:'No'});
-  if(erg==='RG3*')b1.push({type:'note',en:T.rg3starCond.en,es:T.rg3starCond.es});
+  if(table8Notation==='RG3*')b1.push({type:'note',en:T.rg3star.en,es:T.rg3star.es});
+  b1.push({type:'sub',k:p('Agent characterization (Supplementary Appendix S1, Section 2)','Caracterización del agente (Apéndice S1, Sección 2)')});
+  b1.push({type:'kv',k:p('Route of transmission','Vía de transmisión'),v:D.transmissionRoute||'—'});
+  b1.push({type:'kv',k:p('Environmental stability','Estabilidad ambiental'),v:D.environmentalStability||'—'});
+  b1.push({type:'kv',k:p('Infectious dose','Dosis infecciosa'),v:D.infectiousDose||'—'});
+  b1.push({type:'kv',k:p('Treatment available','Tratamiento disponible'),v:D.treatmentAvailable||'—'});
+  b1.push({type:'kv',k:p('Additional hazards','Peligros adicionales'),v:D.additionalHazards||'—'});
   S.push({title:p('1. Agent & classification','1. Agente y clasificación'),body:b1});
 
   // 2 — Procedures
@@ -508,40 +639,73 @@ function reportModel(){
 
   // 3 — PSR determination
   const factors=MOD_FACTORS.map(fc=>{const v=D.modFactors[fc.id];const d=v==='increase'?fc.inc:v==='decrease'?fc.dec:fc.neu;return{label:p(fc.en,fc.es),status:FSTAT(v),desc:p(d.en,d.es)};});
-  const escalated=adj!==mx;
-  const escNote=escalated
-    ? p('Escalation rule applied: ≥2 unfavorable factors → PSR escalated from '+mx+' to '+adj+'.','Regla de escalación aplicada: ≥2 factores desfavorables → PSR escalado de '+PSRW(mx).es+' a '+PSRW(adj).es+'.')
-    : p('No escalation: fewer than 2 unfavorable factors (or maximum PSR already High).','Sin escalación: menos de 2 factores desfavorables (o PSR máximo ya Alto).');
+  const escNote=getEscalationConsideration()
+    ? p('Containment escalation requires professional consideration and written justification; Step 3 PSR remains '+mx+'.','La escalación de contención requiere consideración profesional y justificación escrita; el PSR del Paso 3 permanece '+PSRW(mx).es+'.')
+    : p('Containment-escalation consideration not triggered: fewer than 2 unfavorable procedural factors.','Consideración de escalación de contención no activada: menos de 2 factores procedimentales desfavorables.');
   S.push({title:p('3. PSR determination','3. Determinación del PSR'),body:[
     {type:'kv',k:p('Maximum PSR','PSR máximo'),v:PSRW(mx).en+' / '+PSRW(mx).es},
     {type:'factors',items:factors},
     {type:'kv',k:p('Unfavorable factors','Factores desfavorables'),v:String(u)},
     {type:'kv',k:p('Favorable factors','Factores favorables'),v:String(f)},
     {type:'note',en:escNote.en,es:escNote.es},
-    {type:'kv',k:p('Adjusted PSR','PSR ajustado'),v:PSRW(adj).en+' / '+PSRW(adj).es},
+    {type:'kv',k:p('Step 3 PSR (unchanged)','PSR del Paso 3 (sin cambios)'),v:PSRW(mx).en+' / '+PSRW(mx).es},
+    {type:'sub',k:p('Individual susceptibility (documented separately — affects severity, not exposure probability; excluded from the ≥2 factor threshold)','Susceptibilidad individual (documentada por separado — afecta a la severidad, no a la probabilidad de exposición; excluida del umbral de ≥2 factores)')},
+    {type:'kv',k:p('Factor identified','Factor identificado'),v:D.individualSusceptibility==='none'?T.indivSuscNone.en+' / '+T.indivSuscNone.es:D.individualSusceptibility==='immunocompromised'?T.indivSuscImmuno.en+' / '+T.indivSuscImmuno.es:D.individualSusceptibility==='vaccination_unavailable'?T.indivSuscVaccine.en+' / '+T.indivSuscVaccine.es:(D.individualSusceptibilityOther||T.indivSuscOther.en+' / '+T.indivSuscOther.es)},
+    ...(D.individualSusceptibility!=='none'?[{type:'kv',k:p('Occupational health action','Medida de salud laboral'),v:D.occupationalHealthAction||'—'}]:[]),
   ]});
 
-  // 4 — BSL assignment
-  const b4=[{type:'kv',k:p('Matrix cell','Celda de la matriz'),v:(erg||'—')+' × '+PSRW(adj).en+'/'+PSRW(adj).es+' PSR'},
-            {type:'kv',k:p('Assigned BSL','NCB asignado'),v:bsl}];
-  if(erg==='RG3*'&&bsl.indexOf('BSL-2+')>-1)b4.push({type:'note',en:T.rg3starCond.en,es:T.rg3starCond.es});
-  S.push({title:p('4. BSL assignment','4. Asignación de NCB'),body:b4});
+  // 4 — Likelihood × Severity integration (Step 5)
+  const s5=getStep5();
+  const sevBasisLabel=s5.severityBasis==='confirmed_non_airborne_transmission'?T.severityBasisAirborne.en+' / '+T.severityBasisAirborne.es
+    :s5.severityBasis==='effective_treatment_or_pep_available'?T.severityBasisTreatment.en+' / '+T.severityBasisTreatment.es
+    :s5.severityBasis==='validated_agent_inactivation'?T.severityBasisInactivation.en+' / '+T.severityBasisInactivation.es
+    :s5.severityBasis==='other'?(s5.severityBasisOther||T.severityBasisOtherOpt.en+' / '+T.severityBasisOtherOpt.es)
+    :'—';
+  const b3b=[
+    {type:'kv',k:p('Baseline severity (Risk Group)','Severidad basal (Grupo de Riesgo)'),v:s5.baselineSeverity||'—'},
+    {type:'kv',k:p('Effective severity','Severidad efectiva'),v:s5.effectiveSeverity||'—'},
+    {type:'kv',k:p('Severity modification applied','Modificación de severidad aplicada'),v:s5.severityModification?'Yes / Sí':'No'},
+  ];
+  if(s5.severityModification){
+    b3b.push({type:'kv',k:p('Severity-modification basis','Base de modificación de la severidad'),v:sevBasisLabel});
+    b3b.push({type:'kv',k:p('Severity-modification justification','Justificación de la modificación de severidad'),v:s5.severityJustification||'—'});
+    b3b.push({type:'kv',k:p('Severity evidence / reference','Evidencia / referencia de severidad'),v:s5.severityEvidence||'—'});
+  }
+  b3b.push({type:'kv',k:p('Initial PSR-based likelihood range','Rango inicial de probabilidad según PSR'),v:(s5.baseLikelihoodRange||[]).join(' – ')||'—'});
+  b3b.push({type:'kv',k:p('Applicable likelihood range','Rango de probabilidad aplicable'),v:(s5.likelihoodRange||[]).join(' – ')||'—'});
+  if(s5.likelihoodShiftApplied)b3b.push({type:'note',en:'≥2 unfavorable procedural factors shift the likelihood range one category upward (Table 5).',es:'≥2 factores procedimentales desfavorables desplazan el rango de probabilidad una categoría hacia arriba (Tabla 5).'});
+  b3b.push({type:'kv',k:p('Selected likelihood','Probabilidad seleccionada'),v:s5.selectedLikelihood||'—'});
+  if((s5.likelihoodRange||[]).length>1)b3b.push({type:'kv',k:p('Likelihood-selection justification','Justificación de la probabilidad seleccionada'),v:s5.likelihoodJustification||'—'});
+  b3b.push({type:'kv',k:p('Overall risk level (Severity × Likelihood)','Nivel de riesgo global (Severidad × Probabilidad)'),v:s5.overallRiskLevel||'—'});
+  S.push({title:p('4. Likelihood × Severity integration','4. Integración Probabilidad × Severidad'),body:b3b});
 
-  // 5 — Recommended controls
-  S.push({title:p('5. Recommended controls','5. Controles recomendados'),body:[
+  // 5 — BSL assignment
+  const b4=[{type:'kv',k:p('Table 8 notation applied','Notación de Tabla 8 aplicada'),v:table8Notation||'—'},
+            {type:'kv',k:p('Matrix cell','Celda de la matriz'),v:(table8Notation||'—')+' × '+PSRW(mx).en+'/'+PSRW(mx).es+' PSR'},
+            {type:'kv',k:p('Deterministic matrix BSL','NCB matricial determinista'),v:bsl},
+            {type:'kv',k:p('Table 8 footnote condition','Condición de nota al pie de la Tabla 8'),v:decision.matrixCondition||'—'},
+            {type:'kv',k:p('Final proposed BSL','NCB final propuesto'),v:decision.finalProposedBsl||'—'},
+            {type:'kv',k:p('BSL override/branch selection','Selección de rama/excepción de NCB'),v:decision.bslOverride?'Yes / Sí':'No'},
+            {type:'kv',k:p('Professional decision reason','Motivo de la decisión profesional'),v:D.bslOverrideReason||'—'},
+            {type:'kv',k:p('Institutional status','Estado institucional'),v:D.bsl2InstitutionalStatus||'Not recorded / No registrado'}];
+  if(table8Notation==='RG3*'&&bsl.indexOf('BSL-2+')>-1)b4.push({type:'note',en:T.rg3star.en,es:T.rg3star.es});
+  S.push({title:p('5. BSL assignment','5. Asignación de NCB'),body:b4});
+
+  // 6 — Recommended controls
+  S.push({title:p('6. Recommended controls','6. Controles recomendados'),body:[
     {type:'sub',k:p('Engineering controls','Controles de ingeniería')},{type:'list',items:(ctrl.eng||[])},
     {type:'sub',k:p('Personal protective equipment (PPE)','Equipo de protección individual (EPI)')},{type:'list',items:(ctrl.ppe||[])},
     {type:'note',en:RESP_BIL.en,es:RESP_BIL.es},
     {type:'sub',k:p('Administrative controls','Controles administrativos')},{type:'list',items:(ctrl.admin||[])},
-    {type:'sub',k:p('Decontamination & waste inactivation','Descontaminación e inactivación de residuos')},{type:'list',items:getDecon(bsl)},
+    {type:'sub',k:p('Decontamination & waste inactivation','Descontaminación e inactivación de residuos')},{type:'list',items:getDecon(profile)},
     ...(D.addControls?[{type:'sub',k:p('Additional controls','Controles adicionales')},{type:'text',v:D.addControls}]:[]),
   ]});
 
-  // 6 — Justification
-  S.push({title:p('6. Justification','6. Justificación'),body:[{type:'text',v:D.justification||'—'}]});
+  // 7 — Justification
+  S.push({title:p('7. Justification','7. Justificación'),body:[{type:'text',v:D.justification||'—'}]});
 
-  // 7 — Documentation & review
-  S.push({title:p('7. Documentation & review','7. Documentación y revisión'),body:[
+  // 8 — Documentation & review
+  S.push({title:p('8. Documentation & review','8. Documentación y revisión'),body:[
     {type:'kv',k:p('Assessor','Evaluador'),v:D.reviewer||'—'},
     {type:'kv',k:p('Date','Fecha'),v:D.reviewDate||'—'},
     {type:'kv',k:p('Review triggers','Desencadenantes de revisión'),v:D.triggers||'—'},
@@ -550,7 +714,7 @@ function reportModel(){
   return {meta:{version:REPORT_VERSION,generated:now.toISOString().slice(0,19).replace('T',' '),rid},sections:S};
 }
 
-const CIT='Cena-Diez R. An 8-Step Procedure-Specific Risk Framework Enables Reproducible Biosafety Level Assignment Beyond Agent-Based Classification. Frontiers in Bioengineering and Biotechnology [manuscript submitted].';
+const CIT='Cena-Diez R. (2026). An 8-step procedure-specific risk framework enables reproducible biosafety level assignment beyond agent-based classification. Frontiers in Bioengineering and Biotechnology 14:1879247. doi:10.3389/fbioe.2026.1879247.';
 const REGBASIS='WHO Laboratory Biosafety Manual 4th ed. (2020); BMBL 6th ed. (2020); CDC Biological Risk Assessment (2024); INSST (2024); EU Directives 2000/54/EC & 2009/41/EC; EN 149:2001+A1:2009; NIOSH 42 CFR Part 84.';
 const DISC=p('This report supports but does not replace the judgement of the institutional biosafety committee.','Este informe apoya pero no sustituye el criterio del comité de bioseguridad institucional.');
 
@@ -609,6 +773,9 @@ function reportHTML(M){
 function s_(x){return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
 function exportReport(){
+  if(getPausePoints().paused){alert(t('pauseTitle'));return;}
+  if(getEscalationConsideration()&&!String(D.justification||'').trim()){alert(t('justRequired'));step=5;render();return;}
+  if(!bsl2ConditionsMet()){alert(t('bsl2ConditionsRequired'));step=5;render();return;}
   const r=reportTXT(reportModel());
   const blob=new Blob([r],{type:'text/plain;charset=utf-8'});
   const a=document.createElement('a');
@@ -617,6 +784,9 @@ function exportReport(){
   a.click();URL.revokeObjectURL(a.href);
 }
 function printReport(){
+  if(getPausePoints().paused){alert(t('pauseTitle'));return;}
+  if(getEscalationConsideration()&&!String(D.justification||'').trim()){alert(t('justRequired'));step=5;render();return;}
+  if(!bsl2ConditionsMet()){alert(t('bsl2ConditionsRequired'));step=5;render();return;}
   const html=reportHTML(reportModel());
   const w=window.open('','_blank');
   if(!w){alert(lang==='es'?'Permita las ventanas emergentes para generar el PDF.':'Please allow pop-ups to generate the PDF.');return;}
