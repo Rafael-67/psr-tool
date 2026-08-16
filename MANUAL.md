@@ -2,6 +2,9 @@
 
 *(Español más abajo / Spanish below)*
 
+**Software version:** 2.0.0 · **Schema version:** 2.0.0 · **Algorithm version:** 2.0.1<br>
+**Version DOI:** [10.5281/zenodo.21964810](https://doi.org/10.5281/zenodo.21964810)
+
 ## 1. Which interface should I use?
 
 | | `tool.html` | `platform.html` |
@@ -68,6 +71,9 @@ Check that every assessment you expect to compare has `dataOrigin = study`, all 
 ---
 
 # Manual de uso — Herramienta de Evaluación de Bioseguridad PSR
+
+**Versión del software:** 2.0.0 · **Versión del esquema:** 2.0.0 · **Versión del algoritmo:** 2.0.1<br>
+**DOI de la versión:** [10.5281/zenodo.21964810](https://doi.org/10.5281/zenodo.21964810)
 
 ## 1. ¿Qué interfaz debo usar?
 

@@ -16,6 +16,7 @@ authors:
 version: 2.0.0
 date-released: "2026-08-16"
 license: MIT
+doi: 10.5281/zenodo.21964810
 repository-code: "https://github.com/Rafael-67/psr-tool"
 url: "https://rafael-67.github.io/psr-tool/"
 keywords:
@@ -28,7 +29,7 @@ keywords:
   - inter-rater reliability
 identifiers:
   - type: doi
-    value: 10.5281/zenodo.21964810
+    value: 10.5281/zenodo.21964809
     description: "Concept DOI for all versions of this software"
 preferred-citation:
   type: article
@@ -41,6 +42,3 @@ preferred-citation:
   volume: 14
   year: 2026
   doi: 10.3389/fbioe.2026.1879247
-  identifiers:
-    - type: doi
-      value: 10.3389/fbioe.2026.1879247

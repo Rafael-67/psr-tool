@@ -2,6 +2,8 @@
 
 Interactive digital implementation of the 8-step **Procedure-Specific Risk (PSR)** framework for biosafety level (BSL) assignment in modern biotechnology laboratories. Bilingual (English/Spanish), runs entirely client-side.
 
+**Version:** 2.0.0<br>
+**Version DOI:** [10.5281/zenodo.21964810](https://doi.org/10.5281/zenodo.21964810)<br>
 **Live demo:** https://rafael-67.github.io/psr-tool/
 
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21964810.svg)](https://doi.org/10.5281/zenodo.21964810)
@@ -19,6 +21,8 @@ Interactive digital implementation of the 8-step **Procedure-Specific Risk (PSR)
 | `psr-irr.js` | Formal Inter-Rater Reliability engine (Cohen's κ, Fleiss' κ) — requires study/scenario/rater/institution metadata |
 | `psr-examples.js` | Demonstration/example assessments adapted from the published repository cases |
 | `psr-a11y.js` | Small accessibility helper (label/control association, tab order, heading focus) |
+| `PSR_Cases_v7_2026-05-06_corrected.csv` | Demonstration cases for reproducibility and validation |
+| `MANUAL.md` | Bilingual user manual and workflow guidance |
 
 All four `.html` files load the shared `.js` modules via `<script src="...">` — keep them in the same directory.
 
@@ -29,6 +33,16 @@ This tool implements the framework described in:
 > Cena-Diez R. (2026). *An 8-Step Procedure-Specific Risk Framework Enables Reproducible Biosafety Level Assignment Beyond Agent-Based Classification.* Frontiers in Bioengineering and Biotechnology 14:1879247. doi:10.3389/fbioe.2026.1879247.
 
 Based on WHO (2020), BMBL (2020), CDC (2024), and INSST (2024) guidelines.
+
+## Citation
+
+For reproducibility, cite the exact software version used:
+
+> Cena-Diez, R. (2026). *PSR Biosafety Assessment Tool* (Version 2.0.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.21964810
+
+Please also cite the associated article above when referring to the PSR methodology. Machine-readable citation metadata are provided in [`CITATION.cff`](CITATION.cff).
+
+See [`MANUAL.md`](MANUAL.md) for operating instructions, data persistence, import/export, and formal IRR requirements.
 
 ## Deployment
 
@@ -52,6 +66,8 @@ This tool supports but does not replace the judgement of the institutional biosa
 
 Implementación digital interactiva del framework de **Riesgo Específico del Procedimiento (PSR/REP)** en 8 pasos para la asignación de nivel de bioseguridad (NCB) en laboratorios de biotecnología moderna. Bilingüe (inglés/español), funciona completamente en el navegador (sin servidor).
 
+**Versión:** 2.0.0<br>
+**DOI de la versión:** [10.5281/zenodo.21964810](https://doi.org/10.5281/zenodo.21964810)<br>
 **Demo en vivo:** https://rafael-67.github.io/psr-tool/
 
 ## Contenido del repositorio
@@ -67,6 +83,8 @@ Implementación digital interactiva del framework de **Riesgo Específico del Pr
 | `psr-irr.js` | Motor de fiabilidad inter-evaluador formal (κ de Cohen, κ de Fleiss) — requiere metadatos de estudio/escenario/evaluador/institución |
 | `psr-examples.js` | Evaluaciones de ejemplo adaptadas de los casos publicados en el repositorio |
 | `psr-a11y.js` | Ayudante de accesibilidad (asociación label/control, orden de tabulación, foco en encabezados) |
+| `PSR_Cases_v7_2026-05-06_corrected.csv` | Casos de demostración para reproducibilidad y validación |
+| `MANUAL.md` | Manual de uso bilingüe y guía del flujo de trabajo |
 
 Los cuatro archivos `.html` cargan los módulos `.js` compartidos mediante `<script src="...">` — mantenlos en el mismo directorio.
 
@@ -77,6 +95,16 @@ Esta herramienta implementa el framework descrito en:
 > Cena-Diez R. (2026). *An 8-Step Procedure-Specific Risk Framework Enables Reproducible Biosafety Level Assignment Beyond Agent-Based Classification.* Frontiers in Bioengineering and Biotechnology 14:1879247. doi:10.3389/fbioe.2026.1879247.
 
 Basado en las directrices de OMS (2020), BMBL (2020), CDC (2024) e INSST (2024).
+
+## Citación
+
+Para garantizar la reproducibilidad, cita la versión exacta del software utilizada:
+
+> Cena-Diez, R. (2026). *PSR Biosafety Assessment Tool* (Version 2.0.0) [Computer software]. Zenodo. https://doi.org/10.5281/zenodo.21964810
+
+Cita también el artículo asociado indicado arriba cuando te refieras a la metodología PSR. Los metadatos de citación legibles por máquina están en [`CITATION.cff`](CITATION.cff).
+
+Consulta [`MANUAL.md`](MANUAL.md) para las instrucciones de uso, persistencia de datos, importación/exportación y requisitos de IRR formal.
 
 ## Despliegue
 
