@@ -28,8 +28,8 @@ keywords:
   - inter-rater reliability
 identifiers:
   - type: doi
-    value: 10.5281/zenodo.PLACEHOLDER
-    description: "Concept DOI for all versions of this software (update after first Zenodo release)"
+    value: 10.5281/zenodo.21964810
+    description: "Concept DOI for all versions of this software"
 preferred-citation:
   type: article
   title: "An 8-Step Procedure-Specific Risk Framework Enables Reproducible Biosafety Level Assignment Beyond Agent-Based Classification"

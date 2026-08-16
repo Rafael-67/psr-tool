@@ -4,6 +4,8 @@ Interactive digital implementation of the 8-step **Procedure-Specific Risk (PSR)
 
 **Live demo:** https://rafael-67.github.io/psr-tool/
 
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.21964810.svg)](https://doi.org/10.5281/zenodo.21964810)
+
 ## What's in this repo
 
 | File | Purpose |
