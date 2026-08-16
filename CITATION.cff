@@ -1,0 +1,46 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite the article it implements (see preferred-citation) and, for the specific software version used, the software entry below."
+type: software
+title: "PSR Biosafety Assessment Tool"
+abstract: >-
+  Interactive, bilingual (English/Spanish) digital implementation of the
+  8-step Procedure-Specific Risk (PSR) framework for biosafety level (BSL)
+  assignment in modern biotechnology laboratories. Includes a standalone
+  quick-assessment tool, a multi-user assessment platform with persistent
+  local storage, and a data analytics module with formal Cohen's kappa /
+  Fleiss' kappa inter-rater reliability analysis.
+authors:
+  - family-names: Cena-Diez
+    given-names: R.
+    orcid: "https://orcid.org/0000-0001-9987-395X"
+version: 2.0.0
+date-released: "2026-08-16"
+license: MIT
+repository-code: "https://github.com/Rafael-67/psr-tool"
+url: "https://rafael-67.github.io/psr-tool/"
+keywords:
+  - biosafety
+  - biosafety level
+  - risk assessment
+  - laboratory safety
+  - procedure-specific risk
+  - GMO
+  - inter-rater reliability
+identifiers:
+  - type: doi
+    value: 10.5281/zenodo.PLACEHOLDER
+    description: "Concept DOI for all versions of this software (update after first Zenodo release)"
+preferred-citation:
+  type: article
+  title: "An 8-Step Procedure-Specific Risk Framework Enables Reproducible Biosafety Level Assignment Beyond Agent-Based Classification"
+  authors:
+    - family-names: Cena-Diez
+      given-names: R.
+      orcid: "https://orcid.org/0000-0001-9987-395X"
+  journal: "Frontiers in Bioengineering and Biotechnology"
+  volume: 14
+  year: 2026
+  doi: 10.3389/fbioe.2026.1879247
+  identifiers:
+    - type: doi
+      value: 10.3389/fbioe.2026.1879247
